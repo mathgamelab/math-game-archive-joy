@@ -34,6 +34,21 @@ const highSchoolTabs: TabData[] = [
   { id: 'ai-math', label: '인공지능 수학', description: 'AI와 수학을 결합한 미래형 게임' }
 ];
 
+const breakGameTabs: TabData[] = [
+  { id: 'break-game', label: '몸 풀기 게임', description: '간단한 몸풀기 수학 게임' }
+];
+
+const classManagementTabs: TabData[] = [
+  { id: 'class-management', label: '학급운영', description: '학급운영 도구 및 활동' }
+];
+
+const mainTabs = [
+  { id: 'middle', label: '중학수학' },
+  { id: 'high', label: '고등수학' },
+  { id: 'break-game', label: '몸 풀기 게임' },
+  { id: 'class-management', label: '학급운영' },
+];
+
 const Index = () => {
   const [activeSection, setActiveSection] = useState('middle');
   const [activeTab, setActiveTab] = useState('middle1');
@@ -56,10 +71,19 @@ const Index = () => {
       setActiveTab('middle1');
     } else if (sectionId === 'high') {
       setActiveTab('common-math');
+    } else if (sectionId === 'break-game') {
+      setActiveTab('break-game');
+    } else if (sectionId === 'class-management') {
+      setActiveTab('class-management');
     }
   };
 
-  const currentTabs = activeSection === 'middle' ? middleSchoolTabs : highSchoolTabs;
+  let currentTabs: TabData[] = [];
+  if (activeSection === 'middle') currentTabs = middleSchoolTabs;
+  else if (activeSection === 'high') currentTabs = highSchoolTabs;
+  else if (activeSection === 'break-game') currentTabs = breakGameTabs;
+  else if (activeSection === 'class-management') currentTabs = classManagementTabs;
+
   const currentGames = gamesData[activeTab] || [];
   const currentTabData = currentTabs.find(tab => tab.id === activeTab);
 
@@ -119,28 +143,19 @@ const Index = () => {
       <section className="sticky top-16 z-40 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div className="container mx-auto px-4">
           <div className="flex space-x-8 py-4">
-            <button
-              onClick={() => handleSectionChange('middle')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                activeSection === 'middle'
-                  ? 'bg-blue-100 text-blue-700 font-semibold'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              <BookOpen className="h-4 w-4" />
-              <span>중학수학</span>
-            </button>
-            <button
-              onClick={() => handleSectionChange('high')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                activeSection === 'high'
-                  ? 'bg-purple-100 text-purple-700 font-semibold'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              <TrendingUp className="h-4 w-4" />
-              <span>고등수학</span>
-            </button>
+            {mainTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => handleSectionChange(tab.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                  activeSection === tab.id
+                    ? 'bg-blue-100 text-blue-700 font-semibold'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -258,8 +273,8 @@ const Index = () => {
       <footer className="bg-gray-900 text-white py-12 mt-16">
         <div className="container mx-auto px-4 text-center">
           <div className="flex justify-center items-center space-x-2 mb-4">
-            <div className="text-2xl">📐</div>
-            <h3 className="text-xl font-bold">Play Math Archive</h3>
+            <div className="text-2xl">🎮</div>
+            <h3 className="text-xl font-bold">Math Game Archive</h3>
           </div>
           <p className="text-gray-300 mb-4">
             행복한 수학, 함께 만들어요 😊

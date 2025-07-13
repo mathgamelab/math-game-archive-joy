@@ -37,6 +37,7 @@ jobs:
         run: |
           rm -rf docs
           mv dist docs
+          cp CNAME docs/CNAME
 
       # 6) 변경된 docs/를 커밋·푸시
       - name: Commit and Push docs

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매쓰 시티 (Math City) - 최종 완성판</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- 기본 및 애니메이션 스타일 --- */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .card-flip { perspective: 1000px; }
+        .card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+        .card-flip.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { backface-visibility: hidden; }
+        .card-back { transform: rotateY(180deg); }
+        @keyframes ripple { to { transform: scale(2.5); opacity: 0; } }
+        .ripple { animation: ripple 0.6s linear; transform-origin: center; }
+        .animated-line { stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw-line 1.2s forwards; }
+        @keyframes draw-line { to { stroke-dashoffset: 0; } }
+        @keyframes score-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.25); color: #a7f3d0; } 100% { transform: scale(1); } }
+        .score-pulse-animation { animation: score-pulse 0.5s ease-in-out; }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        .shake-animation { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+        #x-axis-label, #y-axis-label { cursor: pointer; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 min-h-screen text-white flex flex-col">
+    <div class="bg-black/30 backdrop-blur-sm border-b border-blue-500/30 p-4 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div><h1 class="text-3xl font-bold text-blue-300">🏙️ 매쓰 시티</h1><p class="text-blue-200">좌표 평면의 지배자가 되어보세요!</p></div>
+            <div class="flex gap-4 text-center items-center">
+                <div class="bg-blue-600/30 rounded-lg p-3 w-32"><div class="text-2xl font-bold text-yellow-300" id="playerCP">0</div><div class="text-sm text-blue-200">건설 점수 (CP)</div></div>
+                <div class="bg-purple-600/30 rounded-lg p-3 w-24"><div class="text-2xl font-bold text-green-300" id="playerLevel">1</div><div class="text-sm text-purple-200">레벨</div></div>
+                <button id="event-button" onclick="handleEventButtonClick()" class="bg-yellow-600/30 rounded-lg p-3 text-center cursor-pointer hover:bg-yellow-500/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"><div class="text-2xl mb-1">⚡</div><div class="text-xs text-yellow-200">이벤트</div></button>
+                <button onclick="resetGame()" class="bg-red-600/30 hover:bg-red-500/30 rounded-lg p-3 text-center transition-colors"><div class="text-2xl mb-1">🔄</div><div class="text-xs text-red-200">새게임</div></button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-grow">
+        <div class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30">
+                    <div class="relative bg-slate-800 rounded-lg" style="padding-bottom: 83.33%;"><svg class="absolute inset-0 w-full h-full" viewBox="0 0 600 500" id="game-board" onclick="handleCoordinateClick(event)"><g id="gridLines"></g><g id="landmarks"></g><g id="roads"></g><line x1="50" y1="250" x2="550" y2="250" stroke="#3b82f6" stroke-width="2"/><polygon points="545,245 555,250 545,255" fill="#3b82f6"/><text id="x-axis-label" x="560" y="255" fill="#3b82f6" font-size="12">X</text><line x1="300" y1="50" x2="300" y2="450" stroke="#3b82f6" stroke-width="2"/><polygon points="295,55 300,45 305,55" fill="#3b82f6"/><text id="y-axis-label" x="305" y="40" fill="#3b82f6" font-size="12">Y</text><g id="coordinateLabels"></g><g id="gridPoints"></g><g id="buildings"></g><g id="effects"></g><g id="clickableAreas"></g></svg></div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30">
+                    <h3 class="text-lg font-semibold mb-4 text-blue-300">🎯 현재 미션</h3>
+                    <div id="mission-header" class="mb-2"></div>
+                    <div id="currentMission" class="bg-blue-600/20 rounded-lg p-4 border border-blue-400/30 min-h-[210px]"></div>
+                </div>
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-blue-500/30"><h3 class="text-lg font-semibold mb-4 text-blue-300">📜 게임 로그</h3><div id="gameLog" class="space-y-2 h-48 overflow-y-auto pr-2"></div></div>
+            </div>
+        </div>
+    </main>
+
+    <div id="successModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50">
+        <div class="bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl p-8 max-w-md mx-4 text-center shadow-2xl">
+            <div class="text-6xl mb-4 animate-bounce">🎉</div><h3 class="text-2xl font-bold mb-4">미션 성공!</h3><div id="successMessage" class="mb-6"></div>
+            <button onclick="closeModal()" class="bg-white text-green-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition-transform hover:scale-105">계속하기</button>
+        </div>
+    </div>
+    
+    <footer class="text-center text-xs text-gray-400 py-4">
+        <p>행복한 수학, 함께 만들어요! 😊</p>
+        <p>© 행복한윤쌤 | <a href="https://blog.naver.com/happy_yoonssam" target="_blank" class="hover:text-white transition-colors">https://blog.naver.com/happy_yoonssam</a></p>
+    </footer>
+
+    <script>
+        // --- 게임 상태 및 설정 ---
+        let gameState = { cp: 0, level: 1, currentMission: null, cityData: {}, hasCompletedOnce: false };
+        let eventState = { activeEvent: null, constructionBoomTurns: 0, isEventUsedThisMission: false, timerId: null, firstTry: true };
+        let builtBuildings = [];
+        let currentPhase = "construction";
+        let currentStep = 0;
+        let debugClickState = 0;
+
+        const gamePhases = {
+            construction: [{ building: "house", name: "주택", emoji: "🏠", reward: 15 }, { building: "shop", name: "상점", emoji: "🏪", reward: 18 }, { building: "school", name: "학교", emoji: "🏫", reward: 20 }, { building: "hospital", name: "병원", emoji: "🏥", reward: 25 }],
+            road_connection: [{ name: "도로 연결 1", reward: 25 }, { name: "도로 연결 2", reward: 25 }, { name: "도로 연결 3", reward: 25 }],
+            internal_division: [{ building: "bus_stop", name: "버스정류장", emoji: "🚌", reward: 30 }],
+            perpendicular_line: [{ name: "버스 노선", reward: 35 }],
+            circle_through_point: [{ id: "park", name: "공원", emoji: "🌳", reward: 40, targetBuilding: "house" }, { id: "powerplant", name: "발전소", emoji: "⚡", reward: 50, targetBuilding: "hospital" }],
+            redevelopment: [{ name: "공원 재개발", type: "parallel_translation", targetId: "park", reward: 45 }, { name: "발전소 재개발", type: "symmetric_translation", targetId: "powerplant", reward: 55 }]
+        };
+        
+        const events = [
+            { name: "승부수", description: "다음 미션, 첫 시도에 성공 시 보상 2배! (실패 시 투자금만 손실)", weight: 35 },
+            { name: "타임어택", description: "다음 미션, 2분 안에 성공 시 보상 3배! (시간 초과 시 투자금만 손실)", weight: 30 },
+            { name: "건설붐", description: "다음 3번의 미션 동안 추가 +15 CP!", weight: 20 },
+            { name: "잭팟!", description: "즉시 +100 CP 획득!", weight: 10 },
+            { name: "유레카!", description: "다음 미션의 정답을 즉시 공개!", weight: 5 }
+        ];
+
+        // --- 초기화 ---
+        function initGame() {
+            gameState.hasCompletedOnce = localStorage.getItem('mathCityCompleted') === 'true';
+            drawGrid();
+            loadNewMission();
+            updateUI();
+            addLog("🎮 매쓰 시티에 오신 것을 환영합니다!", "text-green-300");
+            addLog("📍 좌표 평면에서 도시 건설을 시작하세요.", "text-blue-300");
+        }
+
+        // --- 그리기 함수 ---
+        function drawGrid() {
+            const gridLines = document.getElementById('gridLines'), gridPoints = document.getElementById('gridPoints');
+            const coordinateLabels = document.getElementById('coordinateLabels'), clickableAreas = document.getElementById('clickableAreas');
+            gridLines.innerHTML = '', gridPoints.innerHTML = '', coordinateLabels.innerHTML = '', clickableAreas.innerHTML = '';
+            const rangeX = 8, rangeY = 6, scale = 30, originX = 300, originY = 250;
+            for (let x = -rangeX; x <= rangeX; x++) {
+                const svgX = originX + x * scale;
+                gridLines.innerHTML += `<line x1="${svgX}" y1="${originY - rangeY * scale}" x2="${svgX}" y2="${originY + rangeY * scale}" stroke="#334155" stroke-width="1" opacity="0.2"/>`;
+                if (x !== 0) coordinateLabels.innerHTML += `<text x="${svgX}" y="${originY + 15}" text-anchor="middle" fill="#94a3b8" font-size="12">${x}</text>`;
+            }
+            for (let y = -rangeY; y <= rangeY; y++) {
+                const svgY = originY - y * scale;
+                gridLines.innerHTML += `<line x1="${originX - rangeX * scale}" y1="${svgY}" x2="${originX + rangeX * scale}" y2="${svgY}" stroke="#334155" stroke-width="1" opacity="0.2"/>`;
+                if (y !== 0) coordinateLabels.innerHTML += `<text x="${originX - 15}" y="${svgY + 4}" text-anchor="end" fill="#94a3b8" font-size="12">${y}</text>`;
+            }
+            for (let x = -rangeX; x <= rangeX; x++) for (let y = -rangeY; y <= rangeY; y++) {
+                const svgX = originX + x * scale, svgY = originY - y * scale;
+                gridPoints.innerHTML += `<circle cx="${svgX}" cy="${svgY}" r="2" fill="#64748b" opacity="0.7"/>`;
+                clickableAreas.innerHTML += `<circle cx="${svgX}" cy="${svgY}" r="${scale/2}" fill="transparent" class="cursor-pointer" data-x="${x}" data-y="${y}"/>`;
+            }
+        }
+
+        // --- 미션 관리 ---
+        function loadNewMission() {
+            eventState.isEventUsedThisMission = false;
+            eventState.firstTry = true;
+            updateEventButton();
+            document.getElementById('mission-header').innerHTML = '';
+
+            const phases = {
+                construction: loadConstructionMission, road_connection: loadRoadConnectionMission,
+                internal_division: loadInternalDivisionMission, perpendicular_line: loadPerpendicularLineMission,
+                circle_through_point: loadCircleThroughPointMission, redevelopment: loadRedevelopmentMission
+            };
+            if (phases[currentPhase]) phases[currentPhase]();
+            
+            if (eventState.activeEvent) {
+                const event = events.find(e => e.name === eventState.activeEvent);
+                if (event) {
+                    if (event.name === '유레카!') {
+                        addLog(`💡 유레카! 정답은 ${getDebugAnswer(gameState.currentMission)} 입니다.`, "text-yellow-300");
+                        setTimeout(() => handleMissionSuccess(false, true), 1000);
+                    } else if (event.name === '타임어택') {
+                        startTimer();
+                    }
+                }
+            }
+        }
+
+        function loadConstructionMission() {
+            if (currentStep >= gamePhases.construction.length) return startPhase("road_connection", "🏢 모든 기본 건물이 건설되었습니다! 이제 도로망을 구축합니다.");
+            const info = gamePhases.construction[currentStep], coords = generateRandomCoordinates();
+            gameState.currentMission = { type: "placement", targetX: coords.x, targetY: coords.y, building: info.building, reward: info.reward };
+            document.getElementById('currentMission').innerHTML = `<div class="text-sm text-blue-200 mb-2">🏗️ 1단계: 도시 건설 (${currentStep + 1}/${gamePhases.construction.length})</div><div class="font-medium mb-3">좌표 (${formatNumber(coords.x)}, ${formatNumber(coords.y)})에 ${info.name}${info.emoji}을 건설하세요.</div><div class="text-sm text-yellow-300 mb-3">💡 좌표 평면에서 해당 위치를 클릭하세요!</div><div class="bg-slate-700 rounded-lg p-2 text-center"><div class="text-sm text-gray-300">보상: ${info.reward} CP</div></div>`;
+        }
+
+        function loadRoadConnectionMission() {
+            if (currentStep >= gamePhases.road_connection.length) return startPhase("internal_division", "🔗 도시 도로망 완성! 이제 대중교통을 도입합니다.");
+            const connections = [[0, 1], [1, 2], [2, 3]];
+            const b1 = builtBuildings[connections[currentStep][0]], b2 = builtBuildings[connections[currentStep][1]];
+            const info = gamePhases.road_connection[currentStep];
+            gameState.currentMission = { type: "road_connection", b1, b2, reward: info.reward };
+            document.getElementById('currentMission').innerHTML = `<div class="text-sm text-orange-200 mb-2">🔗 2단계: 도로 연결 (${currentStep + 1}/${gamePhases.road_connection.length})</div><div class="font-medium mb-3">${b1.name}(${formatNumber(b1.x)}, ${formatNumber(b1.y)})과 ${b2.name}(${formatNumber(b2.x)}, ${formatNumber(b2.y)})을 잇는 도로의 방정식을 구하세요.</div><input type="text" id="missionAnswer" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white mb-2" placeholder="예: y = 2x + 1"><div class="text-xs text-gray-400 mb-3">💡 y = ax + b 또는 ax + by + c = 0 형태</div><button onclick="checkAnswer()" class="w-full bg-orange-600 hover:bg-orange-500 rounded-lg p-2 font-medium transition-colors">도로 건설 (보상: ${info.reward} CP)</button>`;
+        }
+
+        function loadInternalDivisionMission() {
+            if (currentStep >= gamePhases.internal_division.length) return startPhase("perpendicular_line", "🚌 버스정류장 건설 완료! 이제 새로운 버스 노선을 설계합니다.");
+            const info = gamePhases.internal_division[0];
+            const house = builtBuildings.find(b => b.building === 'house'), school = builtBuildings.find(b => b.building === 'school');
+            const m = 2, n = 3;
+            const busStopX = (m * house.x + n * school.x) / (m + n), busStopY = (m * house.y + n * school.y) / (m + n);
+            gameState.cityData.busStop = { x: busStopX, y: busStopY };
+            gameState.currentMission = { type: "internal_division", answer: { x: busStopX, y: busStopY }, reward: info.reward, info: info };
+            document.getElementById('currentMission').innerHTML = `<div class="text-sm text-cyan-200 mb-2">🚌 3단계: 버스정류장 건설</div><div class="font-medium mb-3">학교(${formatNumber(school.x)}, ${formatNumber(school.y)})와 주택(${formatNumber(house.x)}, ${formatNumber(house.y)})을 2:3으로 내분하는 지점에 ${info.name}${info.emoji}을 건설하세요.</div><input type="text" id="missionAnswer" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white mb-2" placeholder="예: (4.2, 5.4)"><div class="text-xs text-gray-400 mb-3">💡 내분점의 좌표를 (x, y) 형식으로 입력하세요.</div><button onclick="checkAnswer()" class="w-full bg-cyan-600 hover:bg-cyan-500 rounded-lg p-2 font-medium transition-colors">정류장 건설 (보상: ${info.reward} CP)</button>`;
+        }
+
+        function loadPerpendicularLineMission() {
+            if (currentStep >= gamePhases.perpendicular_line.length) return startPhase("circle_through_point", "✔️ 새로운 버스 노선이 개통되었습니다! 이제 시민들을 위한 편의시설을 만듭니다.");
+            const info = gamePhases.perpendicular_line[0];
+            const buildings = [...builtBuildings].sort(() => 0.5 - Math.random());
+            const passThroughPoint = buildings.pop(), lineP1 = buildings.pop(), lineP2 = buildings.pop();
+            gameState.currentMission = { type: "perpendicular_line", passThroughPoint, lineP1, lineP2, reward: info.reward };
+            document.getElementById('currentMission').innerHTML = `<div class="text-sm text-purple-200 mb-2">🚍 4단계: 버스 노선 설계</div><div class="font-medium mb-3">${passThroughPoint.name}을 지나고, ${lineP1.name}과 ${lineP2.name}을 잇는 직선에 수직인 새 버스 노선의 방정식을 구하세요.</div><input type="text" id="missionAnswer" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white mb-2" placeholder="예: y = -0.5x + 3"><div class="text-xs text-gray-400 mb-3">💡 y = ax + b 또는 ax + by + c = 0 형태</div><button onclick="checkAnswer()" class="w-full bg-purple-600 hover:bg-purple-500 rounded-lg p-2 font-medium transition-colors">노선 설계 (보상: ${info.reward} CP)</button>`;
+        }
+
+        function loadCircleThroughPointMission() {
+            if (currentStep >= gamePhases.circle_through_point.length) return startPhase("redevelopment", "🏛️ 주요 랜드마크 건설 완료! 이제 도시 재개발 프로젝트를 시작합니다.");
+            const info = gamePhases.circle_through_point[currentStep];
+            const target = builtBuildings.find(b => b.building === info.targetBuilding);
+            let missionDetails = {}, html = '';
+            const stageNum = 5 + currentStep;
+            if (info.id === 'park') {
+                const rSq = target.x**2 + target.y**2;
+                missionDetails = { type: 'circle_origin', center: {x:0, y:0}, radiusSq: rSq, reward: info.reward, info };
+                gameState.cityData.park = missionDetails;
+                html = `<div class="text-sm text-green-200 mb-2">🌳 ${stageNum}단계: 공원 경계 설정</div><div class="font-medium mb-3">원점을 중심으로 주택(${formatNumber(target.x)}, ${formatNumber(target.y)})을 지나는 공원의 경계 방정식을 구하세요.</div><input type="text" id="missionAnswer" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white mb-2" placeholder="예: x^2 + y^2 = 25"><div class="text-xs text-gray-400 mb-3">💡 원의 방정식을 x^2 + y^2 = r^2 형태로 입력</div><button onclick="checkAnswer()" class="w-full bg-green-600 hover:bg-green-500 rounded-lg p-2 font-medium transition-colors">${info.name} 건설 (보상: ${info.reward} CP)</button>`;
+            } else { // powerplant
+                const center = generateRandomCoordinates();
+                const rSq = (target.x - center.x)**2 + (target.y - center.y)**2;
+                missionDetails = { type: 'circle_offset', center, radiusSq: rSq, reward: info.reward, info };
+                gameState.cityData.powerplant = missionDetails;
+                html = `<div class="text-sm text-yellow-200 mb-2">⚡ ${stageNum}단계: 발전소 범위 설정</div><div class="font-medium mb-3">점 (${formatNumber(center.x)}, ${formatNumber(center.y)})을 중심으로 병원(${formatNumber(target.x)}, ${formatNumber(target.y)})을 지나는 발전소의 전력 공급 범위 방정식을 구하세요.</div><input type="text" id="missionAnswer" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white mb-2" placeholder="예: (x-1)^2 + (y+2)^2 = 16"><div class="text-xs text-gray-400 mb-3">💡 (x-h)^2 + (y-k)^2 = r^2 형태</div><button onclick="checkAnswer()" class="w-full bg-yellow-600 hover:bg-yellow-500 rounded-lg p-2 font-medium transition-colors">${info.name} 건설 (보상: ${info.reward} CP)</button>`;
+            }
+            gameState.currentMission = missionDetails;
+            document.getElementById('currentMission').innerHTML = html;
+        }
+
+        function loadRedevelopmentMission() {
+            if (currentStep >= gamePhases.redevelopment.length) return showGameComplete();
+            const info = gamePhases.redevelopment[currentStep];
+            let html = '';
+            const stageNum = 7 + currentStep;
+            if (info.type === 'parallel_translation') {
+                const park = gameState.cityData.park;
+                gameState.currentMission = { type: 'parallel_translation', original: park, reward: info.reward, info };
+                html = `<div class="text-sm text-lime-300 mb-2">🌳 ${stageNum}단계: 공원 평행이동</div><div class="font-medium mb-3">시민 편의를 위해 공원을 x축 방향으로 2, y축 방향으로 -1만큼 평행이동시킨 새로운 경계 방정식을 구하세요.</div><input type="text" id="missionAnswer" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white mb-2" placeholder="예: (x-2)^2 + (y+1)^2 = 25"><div class="text-xs text-gray-400 mb-3">💡 평행이동된 원의 방정식을 입력하세요.</div><button onclick="checkAnswer()" class="w-full bg-lime-600 hover:bg-lime-500 rounded-lg p-2 font-medium transition-colors">공원 재개발 (보상: ${info.reward} CP)</button>`;
+            } else { // symmetric_translation
+                const powerplant = gameState.cityData.powerplant;
+                gameState.currentMission = { type: 'symmetric_translation', original: powerplant, reward: info.reward, info };
+                html = `<div class="text-sm text-amber-300 mb-2">⚡ ${stageNum}단계: 발전소 대칭이동</div><div class="font-medium mb-3">도시 균형을 위해 발전소를 직선 y=x에 대칭이동시킨 새로운 전력 공급 범위 방정식을 구하세요.</div><input type="text" id="missionAnswer" class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white mb-2" placeholder="예: (x-5)^2 + (y-3)^2 = 16"><div class="text-xs text-gray-400 mb-3">💡 대칭이동된 원의 방정식을 입력하세요.</div><button onclick="checkAnswer()" class="w-full bg-amber-600 hover:bg-amber-500 rounded-lg p-2 font-medium transition-colors">발전소 재개발 (보상: ${info.reward} CP)</button>`;
+            }
+            document.getElementById('currentMission').innerHTML = html;
+        }
+
+        function startPhase(phase, logMessage) {
+            currentPhase = phase; currentStep = 0;
+            addLog(logMessage, "text-green-300 font-semibold");
+            loadNewMission();
+        }
+
+        // --- 사용자 입력 처리 ---
+        function handleCoordinateClick(event) {
+            const clickedId = event.target.id;
+            if (clickedId === 'x-axis-label') { debugClickState = 1; return; }
+            if (clickedId === 'y-axis-label' && debugClickState === 1) { addLog("🐛 시크릿 디버그 모드 발동!", "text-yellow-400"); handleMissionSuccess(true); debugClickState = 0; return; }
+            if (clickedId !== 'y-axis-label') debugClickState = 0;
+            const clickedElement = event.target;
+            if (!clickedElement.hasAttribute('data-x')) return;
+            const clickedX = parseInt(clickedElement.getAttribute('data-x')), clickedY = parseInt(clickedElement.getAttribute('data-y'));
+            const mission = gameState.currentMission;
+            if (!mission || mission.type !== 'placement') return;
+            createClickEffect(300 + clickedX * 30, 250 - clickedY * 30);
+            if (clickedX === mission.targetX && clickedY === mission.targetY) handleMissionSuccess(false);
+            else addLog(`❌ 잘못된 위치입니다. (${clickedX}, ${clickedY}) → 목표: (${mission.targetX}, ${mission.targetY})`, "text-red-300");
+        }
+
+        function handleMissionSuccess(isSkip = false, isEureka = false) {
+            const mission = gameState.currentMission;
+            if (isSkip) addLog(`(정답: ${getDebugAnswer(mission)})`, "text-gray-400");
+            
+            let reward = isSkip ? 0 : mission.reward;
+            if (eventState.activeEvent === '승부수' && eventState.firstTry && !isSkip) reward *= 2;
+            if (eventState.activeEvent === '타임어택' && !isSkip) reward *= 3;
+            if (eventState.constructionBoomTurns > 0 && !isSkip) reward += 15;
+
+            const logMsg = isSkip ? `🐛 미션 건너뛰기` : `✅ 미션 성공!`;
+            const successActions = {
+                placement: () => { const info = gamePhases.construction.find(b => b.building === mission.building); placeBuilding(mission.targetX, mission.targetY, info.building, info.name, info.emoji); builtBuildings.push({ x: mission.targetX, y: mission.targetY, ...info }); },
+                road_connection: () => drawRoad(mission.b1, mission.b2),
+                internal_division: () => { placeBuilding(mission.answer.x, mission.answer.y, mission.info.building, mission.info.name, mission.info.emoji); builtBuildings.forEach(b => drawRoad(gameState.cityData.busStop, b, "animated-line opacity-40 stroke-cyan-400")); },
+                perpendicular_line: () => { const dx = mission.lineP2.x - mission.lineP1.x, dy = mission.lineP2.y - mission.lineP1.y; const pSlope = (Math.abs(dy) < 0.01) ? 1000 : -dx / dy; const p1 = mission.passThroughPoint; const p2 = { x: p1.x + 5, y: p1.y + 5 * pSlope }; drawRoad(p1, p2, "animated-line stroke-purple-400"); },
+                circle_origin: () => drawLandmark(mission.center.x, mission.center.y, Math.sqrt(mission.radiusSq), mission.info),
+                circle_offset: () => drawLandmark(mission.center.x, mission.center.y, Math.sqrt(mission.radiusSq), mission.info),
+                parallel_translation: () => { document.getElementById(`landmark-${mission.info.targetId}`)?.remove(); drawLandmark(mission.original.center.x + 2, mission.original.center.y - 1, Math.sqrt(mission.original.radiusSq), { ...mission.original.info, name: "새 공원" }); },
+                symmetric_translation: () => { document.getElementById(`landmark-${mission.info.targetId}`)?.remove(); drawLandmark(mission.original.center.y, mission.original.center.x, Math.sqrt(mission.original.radiusSq), { ...mission.original.info, name: "새 발전소" }); }
+            };
+            if (successActions[mission.type]) successActions[mission.type]();
+            
+            gainCP(reward, logMsg, isSkip);
+            
+            if (eventState.constructionBoomTurns > 0 && !isEureka) eventState.constructionBoomTurns--;
+            eventState.activeEvent = null;
+            if(eventState.timerId) { clearInterval(eventState.timerId); eventState.timerId = null; }
+
+            currentStep++;
+            setTimeout(loadNewMission, isSkip ? 100 : 1500);
+        }
+
+        function checkAnswer() {
+            const mission = gameState.currentMission, answerInput = document.getElementById('missionAnswer');
+            const userInput = answerInput.value.trim();
+            if (!userInput) return addLog("❌ 답을 입력해주세요.", "text-red-300");
+            let isCorrect = false;
+            const checkFunctions = {
+                road_connection: () => checkLineEquation(userInput, mission.b1, mission.b2),
+                internal_division: () => checkInternalDivisionAnswer(userInput, mission.answer),
+                perpendicular_line: () => checkPerpendicularLineAnswer(userInput, mission),
+                circle_origin: () => checkCircleEquation(userInput, mission.center.x, mission.center.y, mission.radiusSq),
+                circle_offset: () => checkCircleEquation(userInput, mission.center.x, mission.center.y, mission.radiusSq),
+                parallel_translation: () => checkParallelTranslationAnswer(userInput, mission.original),
+                symmetric_translation: () => checkSymmetricTranslationAnswer(userInput, mission.original),
+            };
+            if(checkFunctions[mission.type]) isCorrect = checkFunctions[mission.type]();
+            if (isCorrect) {
+                handleMissionSuccess(false);
+            } else {
+                if (eventState.activeEvent === '승부수') {
+                    addLog(`🎲 승부수 실패! 투자금 30 CP를 잃었습니다.`, "text-red-500");
+                    eventState.activeEvent = null; 
+                }
+                addLog(`❌ 틀렸습니다. 다시 확인해보세요!`, "text-red-300");
+                answerInput.classList.add('shake-animation');
+                setTimeout(() => answerInput.classList.remove('shake-animation'), 820);
+            }
+            eventState.firstTry = false;
+        }
+
+        // --- 검증 함수 ---
+        function checkInternalDivisionAnswer(userInput, answer) { const cleaned = userInput.replace(/[()\s]/g, ''), parts = cleaned.split(','); if (parts.length !== 2) return false; const userX = parseFloat(parts[0]), userY = parseFloat(parts[1]); return Math.abs(userX - answer.x) < 0.1 && Math.abs(userY - answer.y) < 0.1; }
+        function checkLineEquation(userInput, p1, p2) { const dx = p2.x - p1.x, dy = p2.y - p1.y; const correctA = -dy, correctB = dx, correctC = -(-dy * p1.x + dx * p1.y); return compareLineCoefficients(userInput, correctA, correctB, correctC); }
+        function checkPerpendicularLineAnswer(userInput, {passThroughPoint, lineP1, lineP2}) { const dx = lineP2.x - lineP1.x, dy = lineP2.y - lineP1.y; const correctA = dx, correctB = dy, correctC = -(dx * passThroughPoint.x + dy * passThroughPoint.y); return compareLineCoefficients(userInput, correctA, correctB, correctC); }
+        function compareLineCoefficients(userInput, cA, cB, cC) { const pUser = parseLineEquation(userInput); if (!pUser) return false; const {a, b, c} = pUser; if (Math.abs(cA) > 0.01) { const r = a / cA; return Math.abs(b - cB * r) < 0.1 && Math.abs(c - cC * r) < 0.1; } if (Math.abs(cB) > 0.01) { const r = b / cB; return Math.abs(a - cA * r) < 0.1 && Math.abs(c - cC * r) < 0.1; } return false; }
+        function parseLineEquation(input) {
+            let expr = input.replace(/\s/g, '').replace(/--/g, '+').replace(/\+-/g, '-');
+            const eqParts = expr.split('=');
+            expr = eqParts[0];
+            if (eqParts.length === 2) expr += `-(${eqParts[1]})`;
+            
+            expr = expr.replace(/([=+-]|^)x/g, '$11x').replace(/([=+-]|^)y/g, '$11y');
+
+            const getCoeff = (v) => {
+                const regex = new RegExp(`([+-]?(?:\\d*\\.\\d+|\\d+\\.?))${v}`, 'g');
+                let coeff = 0;
+                let match;
+                while ((match = regex.exec(expr))) {
+                    coeff += parseFloat(match[1]);
+                }
+                return coeff;
+            };
+            const getConst = (e) => {
+                const simplified = e.replace(/([+-]?\d*\.?\d*)x/g, '').replace(/([+-]?\d*\.?\d*)y/g, '');
+                try { return eval(simplified || '0'); } catch { return 0; }
+            };
+            let a = getCoeff('x'), b = getCoeff('y'), c = getConst(expr);
+            if (isNaN(a) || isNaN(b)) return null;
+            return {a, b, c};
+        }
+        function parseCircleEquation(input) { const cleaned = input.replace(/\s/g, '').replace(/\^2/g, '^2').toLowerCase(); const parts = cleaned.split('='); if (parts.length !== 2) return null; const rSq = parseFloat(parts[1]); if (isNaN(rSq)) return null; let h = 0, k = 0; const xMatch = cleaned.match(/\(x([+-]\d+\.?\d*)\)/); if (xMatch) h = -parseFloat(xMatch[1]); const yMatch = cleaned.match(/\(y([+-]\d+\.?\d*)\)/); if (yMatch) k = -parseFloat(yMatch[1]); const structureCheck = parts[0].replace(/\(x[+-]\d+\.?\d*\)\^2/, 'X').replace(/x\^2/, 'X').replace(/\(y[+-]\d+\.?\d*\)\^2/, 'Y').replace(/y\^2/, 'Y'); if (structureCheck !== 'X+Y' && structureCheck !== 'Y+X') return null; return { h, k, rSq }; }
+        function checkCircleEquation(userInput, correctH, correctK, correctRSq) { const parsed = parseCircleEquation(userInput); if (!parsed) return false; return Math.abs(parsed.h - correctH) < 0.1 && Math.abs(parsed.k - correctK) < 0.1 && Math.abs(parsed.rSq - correctRSq) < 0.1; }
+        function checkParallelTranslationAnswer(userInput, original) { return checkCircleEquation(userInput, original.center.x + 2, original.center.y - 1, original.radiusSq); }
+        function checkSymmetricTranslationAnswer(userInput, original) { return checkCircleEquation(userInput, original.center.y, original.center.x, original.radiusSq); }
+
+        // --- 시각 효과 및 UI 업데이트 ---
+        function formatNumber(num) { const fixed = num.toFixed(1); return fixed.endsWith('.0') ? parseInt(fixed) : fixed; }
+        function placeBuilding(x, y, type, name, emoji) { document.getElementById('buildings').innerHTML += `<g class="building-icon"><circle cx="${300 + x * 30}" cy="${250 - y * 30}" r="12" fill="${getBuildingColor(type)}" opacity="0.8"/><text x="${300 + x * 30}" y="${250 - y * 30 + 4}" text-anchor="middle" font-size="16">${emoji}</text><text x="${300 + x * 30}" y="${250 - y * 30 + 25}" text-anchor="middle" font-size="10" fill="#e2e8f0">${name}(${formatNumber(x)},${formatNumber(y)})</text></g>`; }
+        function drawRoad(b1, b2, cssClass = "animated-line") { const x1 = 300 + b1.x * 30, y1 = 250 - b1.y * 30, x2 = 300 + b2.x * 30, y2 = 250 - b2.y * 30; document.getElementById('roads').innerHTML += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#fbbf24" stroke-width="3" opacity="0.8" class="${cssClass}"/>`; }
+        function drawLandmark(h, k, r, info, extraAttributes = '') { const svgCenterX = 300 + h * 30, svgCenterY = 250 - k * 30, svgRadius = r * 30; const color = getBuildingColor(info.id); const g = document.createElementNS('http://www.w3.org/2000/svg', 'g'); g.setAttribute('id', `landmark-${info.id}`); g.innerHTML = `<circle cx="${svgCenterX}" cy="${svgCenterY}" r="${svgRadius}" fill="${color}" fill-opacity="0.2"/><circle cx="${svgCenterX}" cy="${svgCenterY}" r="${svgRadius}" fill="none" stroke="${color}" stroke-width="3" class="animated-line" ${extraAttributes}/><g class="building-icon"><circle cx="${svgCenterX}" cy="${svgCenterY}" r="12" fill="${color}" opacity="0.8"/><text x="${svgCenterX}" y="${svgCenterY + 4}" text-anchor="middle" font-size="16">${info.emoji}</text><text x="${svgCenterX}" y="${svgCenterY + 25}" text-anchor="middle" font-size="10" fill="#e2e8f0">${info.name}(${formatNumber(h)},${formatNumber(k)})</text></g>`; document.getElementById('landmarks').appendChild(g); }
+        function createClickEffect(x, y) { const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle'); circle.setAttribute('cx', x); circle.setAttribute('cy', y); circle.setAttribute('r', '15'); circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', '#3b82f6'); circle.setAttribute('stroke-width', '2'); circle.classList.add('ripple'); document.getElementById('effects').appendChild(circle); setTimeout(() => circle.remove(), 600); }
+        function updateUI() { document.getElementById('playerCP').textContent = gameState.cp; document.getElementById('playerLevel').textContent = gameState.level; updateEventButton(); }
+        function gainCP(amount, logMessage, isSkip = false) { gameState.cp += amount; gameState.level = Math.floor(gameState.cp / 50) + 1; const cpElement = document.getElementById('playerCP'); if (!isSkip) { cpElement.classList.add('score-pulse-animation'); setTimeout(() => cpElement.classList.remove('score-pulse-animation'), 500); showSuccessModal(`정답입니다! ${Math.round(amount)} CP를 획득했습니다.`); } updateUI(); addLog(`${logMessage} +${Math.round(amount)} CP`, isSkip ? "text-gray-400" : "text-green-300"); }
+
+        // --- 이벤트 및 기타 함수 ---
+        function updateEventButton() { const btn = document.getElementById('event-button'); btn.disabled = !gameState.hasCompletedOnce || gameState.cp < 30 || eventState.isEventUsedThisMission || builtBuildings.length === 0; }
+        function handleEventButtonClick() { if (!gameState.hasCompletedOnce) { addLog("먼저 도시를 완성하여 이벤트를 해금하세요!", "text-gray-400"); return; } if (document.getElementById('event-button').disabled) return; activateRandomEvent(); }
+        function activateRandomEvent() { gameState.cp -= 30; eventState.isEventUsedThisMission = true; const event = getRandomWeightedEvent(); eventState.activeEvent = event.name; addLog(`⚡ 이벤트 발동: ${event.name}!`, "text-yellow-300"); addLog(event.description, "text-yellow-200"); updateUI(); if (event.name === '잭팟!') { gainCP(100, "잭팟!"); eventState.activeEvent = null; } if (event.name === '건설붐') { eventState.constructionBoomTurns = 3; eventState.activeEvent = null; } loadNewMission(); }
+        function getRandomWeightedEvent() { const totalWeight = events.reduce((sum, event) => sum + event.weight, 0); let random = Math.random() * totalWeight; for (const event of events) { if (random < event.weight) return event; random -= event.weight; } }
+        function startTimer() { let timeLeft = 120; const timerDiv = document.createElement('div'); timerDiv.className = "text-center text-red-500 text-2xl font-bold"; document.getElementById('mission-header').appendChild(timerDiv); eventState.timerId = setInterval(() => { timeLeft--; timerDiv.textContent = `남은 시간: ${timeLeft}초`; if (timeLeft <= 0) { clearInterval(eventState.timerId); addLog("⏰ 타임어택 실패! 투자금 30 CP를 잃었습니다.", "text-red-500"); eventState.activeEvent = null; currentStep++; setTimeout(loadNewMission, 1500); } }, 1000); }
+        function getDebugAnswer(mission) {
+            const formatEq = (a, b, c) => { let str = ''; if (Math.abs(a) > 0.01) { str += (Math.abs(a) === 1 ? '' : formatNumber(Math.abs(a))) + 'x '; } if (Math.abs(b) > 0.01) { str += `${b > 0 ? '+' : '-'} ` + (Math.abs(b) === 1 ? '' : formatNumber(Math.abs(b))) + 'y '; } if (Math.abs(c) > 0.01) { str += `${c > 0 ? '+' : '-'} ${formatNumber(Math.abs(c))} `; } return str.replace(/\+ -/g, '- ').replace(/^x/, 'x').trim() + ' = 0'; };
+            switch (mission.type) {
+                case 'placement': return `(${mission.targetX}, ${mission.targetY})`;
+                case 'road_connection': { const dx = mission.b2.x - mission.b1.x, dy = mission.b2.y - mission.b1.y; const a = -dy, b = dx, c = -(-dy * mission.b1.x + dx * mission.b1.y); return formatEq(a, b, c); }
+                case 'internal_division': return `(${formatNumber(mission.answer.x)}, ${formatNumber(mission.answer.y)})`;
+                case 'perpendicular_line': { const dx = mission.lineP2.x - mission.lineP1.x, dy = mission.lineP2.y - mission.lineP1.y; const a = dx, b = dy, c = -(dx * mission.passThroughPoint.x + dy * mission.passThroughPoint.y); return formatEq(a, b, c); }
+                case 'circle_origin': return `x^2 + y^2 = ${formatNumber(mission.radiusSq)}`;
+                case 'circle_offset': return `(x - ${formatNumber(mission.center.x)})^2 + (y - ${formatNumber(mission.center.y)})^2 = ${formatNumber(mission.radiusSq)}`;
+                case 'parallel_translation': return `(x - ${formatNumber(mission.original.center.x + 2)})^2 + (y - ${formatNumber(mission.original.center.y - 1)})^2 = ${formatNumber(mission.original.radiusSq)}`;
+                case 'symmetric_translation': return `(x - ${formatNumber(mission.original.center.y)})^2 + (y - ${formatNumber(mission.original.center.x)})^2 = ${formatNumber(mission.original.radiusSq)}`;
+                default: return "알 수 없음";
+            }
+        }
+        function generateRandomCoordinates() { let x, y, valid, isOrigin; do { valid = true; x = Math.floor(Math.random() * 17) - 8; y = Math.floor(Math.random() * 13) - 6; isOrigin = x === 0 && y === 0; if (isOrigin) continue; for (let b of builtBuildings) if (Math.sqrt((x - b.x)**2 + (y - b.y)**2) < 2.5) { valid = false; break; } } while (!valid || isOrigin); return { x, y }; }
+        function getBuildingColor(type) { const colors = { house: '#10b981', shop: '#3b82f6', school: '#8b5cf6', hospital: '#ef4444', park: '#10b981', powerplant: '#f59e0b', bus_stop: '#f97316'}; return colors[type] || '#64748b'; }
+        function addLog(msg, c) { const log = document.getElementById('gameLog'); log.innerHTML += `<div class="text-sm ${c}">${msg}</div>`; log.scrollTop = log.scrollHeight; }
+        function showSuccessModal(msg) { document.getElementById('successMessage').textContent = msg; document.getElementById('successModal').classList.remove('hidden'); document.getElementById('successModal').classList.add('flex'); }
+        function closeModal() { document.getElementById('successModal').classList.add('hidden'); document.getElementById('successModal').classList.remove('flex'); }
+        function showGameComplete() { if (!gameState.hasCompletedOnce) { addLog("✨ '이벤트' 버튼이 해금되었습니다! 다음 게임부터 더 높은 점수에 도전해보세요!", "text-yellow-300 font-bold"); } document.getElementById('currentMission').innerHTML = `<div class="text-center flex flex-col justify-center items-center h-full"><div class="text-6xl mb-4">🏆</div><div class="text-xl font-bold text-green-300 mb-2">도시 건설 완료!</div><div class="text-sm text-gray-300 mb-4">축하합니다! 당신은 매쓰 시티의 지배자입니다!</div><div class="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg p-3"><div class="text-lg font-bold">최종 점수: ${gameState.cp} CP</div><div class="text-sm">달성 레벨: ${gameState.level}</div></div></div>`; addLog("🏆 축하합니다! 매쓰 시티 건설을 완료했습니다!", "text-yellow-300"); localStorage.setItem('mathCityCompleted', 'true'); }
+        function resetGame() { gameState = { cp: 0, level: 1, currentMission: null, cityData: {}, hasCompletedOnce: localStorage.getItem('mathCityCompleted') === 'true' }; builtBuildings = []; currentPhase = "construction"; currentStep = 0; eventState = { activeEvent: null, constructionBoomTurns: 0, isEventUsedThisMission: false, timerId: null, firstTry: true }; ['buildings', 'roads', 'landmarks', 'effects'].forEach(id => document.getElementById(id).innerHTML = ''); initGame(); addLog("🔄 새로운 게임을 시작합니다!", "text-yellow-300"); }
+
+        // --- 게임 시작 ---
+        initGame();
+    </script>
+</body>
+</html>

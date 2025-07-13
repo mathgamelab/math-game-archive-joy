@@ -1,0 +1,746 @@
+
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사과 수학 게임</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+
+        .game-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .score-board {
+            display: flex;
+            gap: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .score-item.timer {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .start-button {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 25px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .score-item {
+            background: white;
+            padding: 10px 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(20, 35px);
+            grid-template-rows: repeat(10, 35px);
+            gap: 2px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            position: relative;
+            user-select: none;
+        }
+
+        .apple-cell {
+            width: 35px;
+            height: 35px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .apple-cell::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: 8px;
+            width: 8px;
+            height: 6px;
+            background: #4a5568;
+            border-radius: 0 0 50% 50%;
+        }
+
+        .apple-cell::after {
+            content: '';
+            position: absolute;
+            top: -1px;
+            right: 12px;
+            width: 6px;
+            height: 4px;
+            background: #68d391;
+            border-radius: 50%;
+            transform: rotate(45deg);
+        }
+
+        .apple-cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .apple-cell.selected {
+            background: linear-gradient(135deg, #ffd93d, #ff9500);
+            transform: scale(1.05);
+        }
+
+        .apple-cell.highlighted {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.6), rgba(238, 90, 82, 0.6));
+            transform: scale(1.02);
+            opacity: 0.7;
+            filter: blur(1px);
+        }
+
+        .apple-cell.first-click {
+            background: linear-gradient(135deg, #ffd93d, #ff9500);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 217, 61, 0.8);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1.1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .apple-cell.removing {
+            animation: disappear 0.5s ease-out forwards;
+        }
+
+        @keyframes disappear {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .selection-overlay {
+            position: absolute;
+            border: 3px solid #4299e1;
+            background: rgba(66, 153, 225, 0.2);
+            pointer-events: none;
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        .game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .game-over-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .restart-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .restart-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .instructions {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .selection-guide {
+            background: linear-gradient(135deg, #4299e1, #3182ce);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .restart-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            z-index: 100;
+        }
+
+        .restart-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .creator-info {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #4a5568;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .creator-info p {
+            margin: 2px 0;
+        }
+
+        .creator-info a {
+            color: #4299e1;
+            text-decoration: none;
+        }
+
+        .creator-info a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1 class="game-title">🍎 사과 수학 게임</h1>
+        <div class="score-board">
+            <div class="score-item">점수: <span id="score">0</span></div>
+            <div class="score-item">제거한 사과: <span id="removed">0</span></div>
+            <div class="score-item timer" id="timer">⏰ 2:00</div>
+        </div>
+    </div>
+
+    <button class="restart-button" onclick="restartGame()">🔄 새로하기</button>
+    
+    <div class="game-container">
+        <div class="selection-guide" id="selectionGuide" style="display: none;">📱 드래그 또는 클릭으로 직사각형을 만들어 합이 10이 되도록하세요</div>
+        <button class="start-button" id="startButton" onclick="startGame()">🎮 게임 시작</button>
+        <div class="game-grid" id="gameGrid" style="display: none;"></div>
+    </div>
+
+    <div class="game-over" id="gameOver" style="display: none;">
+        <div class="game-over-content">
+            <h2>게임 종료!</h2>
+            <p>더 이상 합이 10이 되는 조합을 만들 수 없습니다.</p>
+            <p>최종 점수: <span id="finalScore">0</span></p>
+            <button class="restart-btn" onclick="restartGame()">다시 시작</button>
+        </div>
+    </div>
+
+    <div class="creator-info">
+        <p>행복한 수학, 함께 만들어요 😊</p>
+        <p>© 행복한윤쌤 | <a href="https://blog.naver.com/happy_yoonssam" target="_blank">https://blog.naver.com/happy_yoonssam</a></p>
+    </div>
+
+    <script>
+        let grid = [];
+        let score = 0;
+        let removedCount = 0;
+        let isSelecting = false;
+        let startCell = null;
+        let selectionOverlay = null;
+        let gameStarted = false;
+        let timeLeft = 120; // 2분 = 120초
+        let timerInterval = null;
+        let clickSelectionMode = false;
+        let firstClickCell = null;
+
+        function startGame() {
+            gameStarted = true;
+            timeLeft = 120;
+            document.getElementById('startButton').style.display = 'none';
+            document.getElementById('gameGrid').style.display = 'grid';
+            document.getElementById('selectionGuide').style.display = 'block';
+            
+            initGame();
+            startTimer();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timer').textContent = `⏰ ${timeString}`;
+        }
+
+        function initGame() {
+            const gameGrid = document.getElementById('gameGrid');
+            gameGrid.innerHTML = '';
+            grid = [];
+            score = 0;
+            removedCount = 0;
+            updateScore();
+
+            // 20x10 격자 생성
+            for (let row = 0; row < 10; row++) {
+                grid[row] = [];
+                for (let col = 0; col < 20; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'apple-cell';
+                    const number = Math.floor(Math.random() * 9) + 1;
+                    cell.textContent = number;
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.dataset.number = number;
+                    
+                    gameGrid.appendChild(cell);
+                    grid[row][col] = { element: cell, number: number, exists: true };
+                }
+            }
+
+            setupEventListeners();
+        }
+
+        function setupEventListeners() {
+            const gameGrid = document.getElementById('gameGrid');
+            
+            gameGrid.addEventListener('mousedown', startSelection);
+            gameGrid.addEventListener('mousemove', updateSelection);
+            gameGrid.addEventListener('mouseup', endSelection);
+            gameGrid.addEventListener('mouseleave', endSelection);
+            gameGrid.addEventListener('click', handleClick);
+            
+            // ESC 키로 선택 취소
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    cancelSelection();
+                }
+            });
+        }
+
+        function handleClick(e) {
+            if (!gameStarted || isSelecting) return;
+            
+            const target = e.target;
+            if (!target.classList.contains('apple-cell')) return;
+            
+            const row = parseInt(target.dataset.row);
+            const col = parseInt(target.dataset.col);
+            
+            if (!grid[row][col].exists) return;
+            
+            if (!clickSelectionMode) {
+                // 첫 번째 클릭
+                firstClickCell = { row, col };
+                clickSelectionMode = true;
+                target.classList.add('first-click');
+                updateSelectionGuide('2단계: 끝점을 클릭하세요 (ESC로 취소)');
+            } else {
+                // 두 번째 클릭
+                const secondClickCell = { row, col };
+                checkClickSelection(firstClickCell, secondClickCell);
+                cancelSelection();
+            }
+            
+            e.stopPropagation();
+        }
+
+        function checkClickSelection(firstCell, secondCell) {
+            const minRow = Math.min(firstCell.row, secondCell.row);
+            const maxRow = Math.max(firstCell.row, secondCell.row);
+            const minCol = Math.min(firstCell.col, secondCell.col);
+            const maxCol = Math.max(firstCell.col, secondCell.col);
+
+            let sum = 0;
+            const selectedCells = [];
+
+            for (let row = minRow; row <= maxRow; row++) {
+                for (let col = minCol; col <= maxCol; col++) {
+                    if (grid[row][col].exists) {
+                        sum += grid[row][col].number;
+                        selectedCells.push({row, col});
+                    }
+                }
+            }
+
+            if (sum === 10 && selectedCells.length > 0) {
+                // 성공! 사과들 제거
+                selectedCells.forEach(({row, col}) => {
+                    grid[row][col].element.classList.add('removing');
+                    setTimeout(() => {
+                        grid[row][col].element.style.visibility = 'hidden';
+                        grid[row][col].exists = false;
+                    }, 500);
+                });
+
+                const points = selectedCells.length - 1;
+                score += points;
+                removedCount += selectedCells.length;
+                updateScore();
+
+                setTimeout(() => {
+                    if (!canMakeMoreMoves()) {
+                        endGame();
+                    }
+                }, 600);
+            }
+        }
+
+        function cancelSelection() {
+            if (firstClickCell) {
+                const firstElement = grid[firstClickCell.row][firstClickCell.col].element;
+                firstElement.classList.remove('first-click');
+            }
+            
+            clickSelectionMode = false;
+            firstClickCell = null;
+            updateSelectionGuide('📱 드래그 또는 클릭으로 직사각형을 만들어 합이 10이 되도록하세요');
+        }
+
+        function updateSelectionGuide(text) {
+            document.getElementById('selectionGuide').textContent = text;
+        }
+
+        function startSelection(e) {
+            if (!gameStarted || clickSelectionMode) return;
+            
+            const rect = document.getElementById('gameGrid').getBoundingClientRect();
+            
+            isSelecting = true;
+            startCell = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+            
+            createSelectionOverlay();
+            e.preventDefault();
+        }
+
+        function updateSelection(e) {
+            if (!isSelecting || !startCell) return;
+
+            const rect = document.getElementById('gameGrid').getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+            
+            updateSelectionOverlay(startCell.x, startCell.y, currentX, currentY);
+        }
+
+        function endSelection(e) {
+            if (!isSelecting || !startCell) return;
+
+            const rect = document.getElementById('gameGrid').getBoundingClientRect();
+            const endX = e.clientX - rect.left;
+            const endY = e.clientY - rect.top;
+            
+            checkSelectionByCoords(startCell.x, startCell.y, endX, endY);
+
+            isSelecting = false;
+            startCell = null;
+            removeSelectionOverlay();
+            clearHighlights();
+        }
+
+        function createSelectionOverlay() {
+            selectionOverlay = document.createElement('div');
+            selectionOverlay.className = 'selection-overlay';
+            document.getElementById('gameGrid').appendChild(selectionOverlay);
+        }
+
+        function updateSelectionOverlay(startX, startY, endX, endY) {
+            if (!selectionOverlay) return;
+
+            const minX = Math.min(startX, endX);
+            const maxX = Math.max(startX, endX);
+            const minY = Math.min(startY, endY);
+            const maxY = Math.max(startY, endY);
+            
+            selectionOverlay.style.left = minX + 'px';
+            selectionOverlay.style.top = minY + 'px';
+            selectionOverlay.style.width = (maxX - minX) + 'px';
+            selectionOverlay.style.height = (maxY - minY) + 'px';
+
+            // 선택된 영역의 사과들 하이라이트
+            highlightSelectedApples(minX, maxX, minY, maxY);
+        }
+
+        function removeSelectionOverlay() {
+            if (selectionOverlay) {
+                selectionOverlay.remove();
+                selectionOverlay = null;
+            }
+        }
+
+        function highlightSelectedApples(minX, maxX, minY, maxY) {
+            clearHighlights();
+            
+            const cellSize = 37;
+            
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 20; col++) {
+                    if (!grid[row][col].exists) continue;
+                    
+                    const cellLeft = col * cellSize + 10;
+                    const cellRight = cellLeft + 35;
+                    const cellTop = row * cellSize + 10;
+                    const cellBottom = cellTop + 35;
+                    
+                    // 셀이 선택 영역과 겹치는지 확인
+                    if (cellRight > minX && cellLeft < maxX && cellBottom > minY && cellTop < maxY) {
+                        grid[row][col].element.classList.add('highlighted');
+                    }
+                }
+            }
+        }
+
+        function clearHighlights() {
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 20; col++) {
+                    if (grid[row][col] && grid[row][col].element) {
+                        grid[row][col].element.classList.remove('highlighted');
+                    }
+                }
+            }
+        }
+
+        function checkSelectionByCoords(startX, startY, endX, endY) {
+            const minX = Math.min(startX, endX);
+            const maxX = Math.max(startX, endX);
+            const minY = Math.min(startY, endY);
+            const maxY = Math.max(startY, endY);
+            
+            const cellSize = 37;
+            let sum = 0;
+            const selectedCells = [];
+
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 20; col++) {
+                    if (!grid[row][col].exists) continue;
+                    
+                    const cellLeft = col * cellSize + 10;
+                    const cellRight = cellLeft + 35;
+                    const cellTop = row * cellSize + 10;
+                    const cellBottom = cellTop + 35;
+                    
+                    // 셀이 선택 영역과 겹치는지 확인
+                    if (cellRight > minX && cellLeft < maxX && cellBottom > minY && cellTop < maxY) {
+                        sum += grid[row][col].number;
+                        selectedCells.push({row, col});
+                    }
+                }
+            }
+
+            if (sum === 10 && selectedCells.length > 0) {
+                // 성공! 사과들 제거
+                selectedCells.forEach(({row, col}) => {
+                    grid[row][col].element.classList.add('removing');
+                    setTimeout(() => {
+                        grid[row][col].element.style.visibility = 'hidden';
+                        grid[row][col].exists = false;
+                    }, 500);
+                });
+
+                // 점수 계산: 2개=1점, 3개=2점, 4개=3점...
+                const points = selectedCells.length - 1;
+                score += points;
+                removedCount += selectedCells.length;
+                updateScore();
+
+                // 게임 종료 체크
+                setTimeout(() => {
+                    if (!canMakeMoreMoves()) {
+                        endGame();
+                    }
+                }, 600);
+            }
+        }
+
+        function checkSelection(startRow, startCol, endRow, endCol) {
+            const minRow = Math.min(startRow, endRow);
+            const maxRow = Math.max(startRow, endRow);
+            const minCol = Math.min(startCol, endCol);
+            const maxCol = Math.max(startCol, endCol);
+
+            let sum = 0;
+            const selectedCells = [];
+
+            for (let row = minRow; row <= maxRow; row++) {
+                for (let col = minCol; col <= maxCol; col++) {
+                    if (grid[row][col].exists) {
+                        sum += grid[row][col].number;
+                        selectedCells.push({row, col});
+                    }
+                }
+            }
+
+            if (sum === 10 && selectedCells.length > 0) {
+                // 성공! 사과들 제거
+                selectedCells.forEach(({row, col}) => {
+                    grid[row][col].element.classList.add('removing');
+                    setTimeout(() => {
+                        grid[row][col].element.style.visibility = 'hidden';
+                        grid[row][col].exists = false;
+                    }, 500);
+                });
+
+                score += selectedCells.length * 10;
+                removedCount += selectedCells.length;
+                updateScore();
+
+                // 게임 종료 체크
+                setTimeout(() => {
+                    if (!canMakeMoreMoves()) {
+                        endGame();
+                    }
+                }, 600);
+            }
+        }
+
+        function canMakeMoreMoves() {
+            // 모든 가능한 직사각형 조합을 확인
+            for (let startRow = 0; startRow < 10; startRow++) {
+                for (let startCol = 0; startCol < 20; startCol++) {
+                    for (let endRow = startRow; endRow < 10; endRow++) {
+                        for (let endCol = startCol; endCol < 20; endCol++) {
+                            let sum = 0;
+                            let hasApples = false;
+                            
+                            for (let row = startRow; row <= endRow; row++) {
+                                for (let col = startCol; col <= endCol; col++) {
+                                    if (grid[row][col].exists) {
+                                        sum += grid[row][col].number;
+                                        hasApples = true;
+                                    }
+                                }
+                            }
+                            
+                            if (sum === 10 && hasApples) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('removed').textContent = removedCount;
+        }
+
+        function endGame() {
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').style.display = 'flex';
+        }
+
+        function restartGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            gameStarted = false;
+            timeLeft = 120;
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            cancelSelection();
+            
+            document.getElementById('timer').textContent = '⏰ 2:00';
+            document.getElementById('startButton').style.display = 'block';
+            document.getElementById('gameGrid').style.display = 'none';
+            document.getElementById('selectionGuide').style.display = 'none';
+        }
+
+        // 초기 설정
+        updateScore();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'95e76ba2106cea17',t:'MTc1MjM5NTQ0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

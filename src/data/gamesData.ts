@@ -179,7 +179,7 @@ export const gamesData: Record<string, GameData[]> = {
       status: 'playable',
       difficulty: '초급',
       estimatedTime: '5분',
-      url: '/docs/apple_game.html',
+      url: '/apple_game.html',
       type: '몸 풀기 게임',
       summary: '사과를 모으며 빠른 연산과 순발력을 기르는 몸풀기 게임입니다.'
     },
@@ -198,7 +198,7 @@ export const gamesData: Record<string, GameData[]> = {
       status: 'playable',
       difficulty: '초급',
       estimatedTime: '7분',
-      url: '/docs/number_flow.html',
+      url: '/number_flow.html',
       type: '몸 풀기 게임',
       summary: '숫자의 흐름과 패턴을 빠르게 인식하는 몸풀기 게임입니다.'
     }
@@ -242,7 +242,7 @@ export const gamesData: Record<string, GameData[]> = {
       status: 'playable',
       difficulty: '중급',
       estimatedTime: '15분',
-      url: '/docs/polynomial_duel.html',
+      url: '/polynomial_duel.html',
       type: '카드 게임',
       summary: '카드를 활용해 다항식 연산을 대결하는 전략 게임입니다.'
     },
@@ -266,7 +266,7 @@ export const gamesData: Record<string, GameData[]> = {
       status: 'playable',
       difficulty: '중급',
       estimatedTime: '20분',
-      url: '/docs/math_city.html',
+      url: '/math_city.html',
       type: '도시 게임',
       summary: '수학 도시에서 다양한 미션을 해결하며 개념을 익힙니다.'
     },
@@ -288,7 +288,7 @@ export const gamesData: Record<string, GameData[]> = {
       status: 'playable',
       difficulty: '중급',
       estimatedTime: '15분',
-      url: '/docs/coordinate_chess.html',
+      url: '/coordinate_chess.html',
       type: '체스 게임',
       summary: '좌표평면에서 체스 전략을 익히는 수학 게임입니다.'
     }

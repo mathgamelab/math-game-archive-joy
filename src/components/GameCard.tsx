@@ -16,6 +16,7 @@ export interface GameData {
   standard?: string;
   type?: string;
   url?: string;
+  summary?: string;
 }
 
 interface GameCardProps {
@@ -56,7 +57,13 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
           </h3>
           
           <p className="text-sm text-muted-foreground mb-4 flex-1 leading-relaxed">
-            {game.description}
+            {game.summary
+              ? game.summary
+              : (() => {
+                  const firstLine = game.description.split('\n')[0];
+                  return firstLine.length > 40 ? firstLine.slice(0, 40) + '...' : firstLine;
+                })()
+            }
           </p>
 
           {/* Footer Tags */}

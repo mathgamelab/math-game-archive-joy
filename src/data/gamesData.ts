@@ -25,7 +25,8 @@ export const gamesData: Record<string, GameData[]> = {
       content: '정수의 사칙연산',
       terms: '양수, 음수, 절댓값',
       standard: '7수01-01',
-      type: '연산 게임'
+      type: '연산 게임',
+      summary: '정수의 사칙연산을 게임처럼 연습하며 연산 감각을 키울 수 있습니다.'
     },
     {
       id: 'divisibility-puzzle',
@@ -49,7 +50,8 @@ export const gamesData: Record<string, GameData[]> = {
       content: '일차방정식의 해',
       terms: '방정식, 해, 등식의 성질',
       standard: '7수02-02',
-      type: '퍼즐 게임'
+      type: '퍼즐 게임',
+      summary: '방정식을 풀며 숨겨진 그림을 완성하는 퍼즐 게임입니다.'
     },
     {
       id: 'angle-shooter',
@@ -73,7 +75,8 @@ export const gamesData: Record<string, GameData[]> = {
       content: '식의 계산',
       terms: '동류항, 분배법칙',
       standard: '7수02-01',
-      type: '매칭 게임'
+      type: '매칭 게임',
+      summary: '같은 값을 가진 식을 찾아 매칭하는 연산 게임입니다.'
     }
   ],
   'middle2': [
@@ -94,7 +97,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '🗺️',
       status: 'development',
       difficulty: '중급',
-      estimatedTime: '20분'
+      estimatedTime: '20분',
+      summary: '유리수의 사칙연산과 순환소수를 재미있게 익힐 수 있습니다.'
     },
     {
       id: 'linear-functions',
@@ -113,7 +117,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '📊',
       status: 'development',
       difficulty: '중급',
-      estimatedTime: '15분'
+      estimatedTime: '15분',
+      summary: '일차함수의 그래프와 기울기를 시각적으로 학습합니다.'
     }
   ],
   'middle3': [
@@ -134,7 +139,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '📈',
       status: 'development',
       difficulty: '고급',
-      estimatedTime: '25분'
+      estimatedTime: '25분',
+      summary: '이차함수의 그래프 변화를 시뮬레이션으로 체험할 수 있습니다.'
     },
     {
       id: 'circle-geometry',
@@ -153,7 +159,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '⭕',
       status: 'development',
       difficulty: '중급',
-      estimatedTime: '18분'
+      estimatedTime: '18분',
+      summary: '원의 성질을 다양한 게임 미션으로 탐구합니다.'
     }
   ],
   'break-game': [
@@ -173,7 +180,8 @@ export const gamesData: Record<string, GameData[]> = {
       difficulty: '초급',
       estimatedTime: '5분',
       url: '/docs/apple_game.html',
-      type: '몸 풀기 게임'
+      type: '몸 풀기 게임',
+      summary: '사과를 모으며 빠른 연산과 순발력을 기르는 몸풀기 게임입니다.'
     },
     {
       id: 'number-flow',
@@ -191,7 +199,8 @@ export const gamesData: Record<string, GameData[]> = {
       difficulty: '초급',
       estimatedTime: '7분',
       url: '/docs/number_flow.html',
-      type: '몸 풀기 게임'
+      type: '몸 풀기 게임',
+      summary: '숫자의 흐름과 패턴을 빠르게 인식하는 몸풀기 게임입니다.'
     }
   ],
   'class-management': [],
@@ -212,7 +221,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '🏗️',
       status: 'development',
       difficulty: '초급',
-      estimatedTime: '12분'
+      estimatedTime: '12분',
+      summary: '실수의 사칙연산 등 수학의 기초 개념을 복습할 수 있습니다.'
     },
     {
       id: 'polynomial-card-battle',
@@ -233,7 +243,8 @@ export const gamesData: Record<string, GameData[]> = {
       difficulty: '중급',
       estimatedTime: '15분',
       url: '/docs/polynomial_duel.html',
-      type: '카드 게임'
+      type: '카드 게임',
+      summary: '카드를 활용해 다항식 연산을 대결하는 전략 게임입니다.'
     },
     {
       id: 'math-city',
@@ -256,7 +267,8 @@ export const gamesData: Record<string, GameData[]> = {
       difficulty: '중급',
       estimatedTime: '20분',
       url: '/docs/math_city.html',
-      type: '도시 게임'
+      type: '도시 게임',
+      summary: '수학 도시에서 다양한 미션을 해결하며 개념을 익힙니다.'
     },
     {
       id: 'coordinate-chess',
@@ -277,7 +289,8 @@ export const gamesData: Record<string, GameData[]> = {
       difficulty: '중급',
       estimatedTime: '15분',
       url: '/docs/coordinate_chess.html',
-      type: '체스 게임'
+      type: '체스 게임',
+      summary: '좌표평면에서 체스 전략을 익히는 수학 게임입니다.'
     }
   ],
   'algebra': [
@@ -285,7 +298,7 @@ export const gamesData: Record<string, GameData[]> = {
       id: 'polynomial-puzzle',
       title: '다항식 퍼즐',
       description: `🎮게임명 : 다항식 퍼즐
-📘 교과명 : 수학1/다항식
+�� 교과명 : 수학1/다항식
 📂 내용범주 : 다항식의 연산
 📌 내용요소 : 다항식의 인수분해, 나머지정리
 ✏️ 학습 가능 용어 : 인수분해, 나머지정리, 인수정리, 조립제법
@@ -298,7 +311,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '🧮',
       status: 'development',
       difficulty: '중급',
-      estimatedTime: '20분'
+      estimatedTime: '20분',
+      summary: '다항식의 인수분해와 나머지정리를 퍼즐로 연습합니다.'
     }
   ],
   'calculus1': [
@@ -319,7 +333,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '🔍',
       status: 'development',
       difficulty: '고급',
-      estimatedTime: '30분'
+      estimatedTime: '30분',
+      summary: '함수의 극한 개념을 시각적으로 탐험하는 게임입니다.'
     }
   ],
   'calculus2': [
@@ -340,7 +355,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '📐',
       status: 'development',
       difficulty: '고급',
-      estimatedTime: '25분'
+      estimatedTime: '25분',
+      summary: '적분의 개념과 넓이 계산을 게임으로 익힙니다.'
     }
   ],
   'probability': [
@@ -361,7 +377,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '🎲',
       status: 'development',
       difficulty: '중급',
-      estimatedTime: '15분'
+      estimatedTime: '15분',
+      summary: '주사위를 굴리며 확률의 기본 개념을 익힙니다.'
     }
   ],
   'geometry': [
@@ -382,7 +399,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '📐',
       status: 'development',
       difficulty: '중급',
-      estimatedTime: '20분'
+      estimatedTime: '20분',
+      summary: '평면도형의 성질을 다양한 도형 만들기로 학습합니다.'
     }
   ],
   'ai-math': [
@@ -400,7 +418,8 @@ export const gamesData: Record<string, GameData[]> = {
       icon: '🤖',
       status: 'development',
       difficulty: '고급',
-      estimatedTime: '35분'
+      estimatedTime: '35분',
+      summary: 'AI와 함께 수학적 패턴을 찾아내는 협력 게임입니다.'
     }
   ]
 };

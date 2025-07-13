@@ -32,7 +32,7 @@ export const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose }) =
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300"
       onClick={handleOverlayClick}
     >
-      <div className="bg-card rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-modal animate-in zoom-in-95 duration-300 ease-spring">
+      <div className="bg-card rounded-xl max-w-2xl w-full max-h-[95vh] overflow-y-auto shadow-modal animate-in zoom-in-95 duration-300 ease-spring">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div className="flex items-center gap-3">
@@ -60,11 +60,13 @@ export const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose }) =
                 : 'bg-warning text-warning-foreground'
             }
           >
-            {game.status === 'playable' ? '플레이 가능' : '제작중'}
+            {game.status === 'playable' ? '플레이 가능' : '개발 중'}
           </Badge>
 
           {/* Description */}
-          <p className="text-muted-foreground leading-relaxed">{game.description}</p>
+          <p className="text-muted-foreground leading-relaxed whitespace-pre-line" style={{wordBreak: 'keep-all'}}>
+            {game.description}
+          </p>
 
           {/* Game Details */}
           {hasDetailedInfo ? (
@@ -111,7 +113,7 @@ export const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose }) =
           ) : (
             <div className="bg-muted/30 rounded-lg p-4 text-center">
               <p className="text-muted-foreground">
-                이 게임은 현재 준비 중입니다. 곧 만나볼 수 있어요! 🚀
+                이 게임은 준비 중입니다. 곧 만나요! 🚀
               </p>
             </div>
           )}

@@ -5,7 +5,7 @@ export const gamesData: Record<string, GameData[]> = {
   'middle1': [
     {
       id: 'integers-game',
-      title: '정수 게임 게임',
+      title: '정수 게임',
       description: '양수와 음수의 사칙연산을 게임처럼 연습해보세요',
       icon: '🔢',
       status: 'development',

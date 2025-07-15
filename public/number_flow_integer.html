@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Flow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* General Body and Reset Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #AEE1E1 0%, #FFF5BA 50%, #FFC1C1 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2D3748;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .score {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #4A5568;
+            background: rgba(174, 225, 225, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+        }
+
+        /* Game Container Layout */
+        .game-container {
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+            min-height: calc(100vh - 120px);
+        }
+
+        .main-area {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 1200px;
+            position: relative;
+            max-height: 600px;
+        }
+
+        /* SVG Overlay for drawing arrows */
+        .arrow-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Tower and Card Styles */
+        .tower-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 2rem;
+            padding: 2rem 0;
+            z-index: 2;
+        }
+
+        .tower-level {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            position: relative;
+            width: 100%;
+            justify-content: flex-start;
+        }
+        
+        /* Card Slot Styles */
+        .slot {
+            width: 70px;
+            height: 70px;
+            border: 2px dashed #CBD5E0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
+            z-index: 3;
+            background: rgba(255, 255, 255, 0.8);
+            flex-shrink: 0;
+        }
+
+        .slot:hover:not(.filled) {
+            border-color: #48BB78;
+            background: rgba(72, 187, 120, 0.1);
+            transform: scale(1.05);
+        }
+
+        .slot.selected {
+            border-color: #9F7AEA;
+            background: rgba(159, 122, 234, 0.2);
+            transform: scale(1.1);
+        }
+
+        .slot.filled { border-color: transparent; }
+
+        /* Card Styles */
+        .card {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #fff 0%, #f7fafc 100%);
+            border: 2px solid #E2E8F0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2D3748;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            user-select: none;
+            position: relative;
+            z-index: 4;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .card.current-card {
+            width: 140px;
+            height: 60px;
+        }
+
+        .card.wild {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #8B4513;
+            font-size: 2rem;
+        }
+        
+        .joker-card.used {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #A0AEC0;
+        }
+        
+        /* --- Stream Highlighting by Group --- */
+        .slot.stream .card {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        }
+        .slot.stream-group-0 .card { background: linear-gradient(135deg, #fbcfe8, #fecdd3); }
+        .slot.stream-group-1 .card { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+        .slot.stream-group-2 .card { background: linear-gradient(135deg, #fef3c7, #fde68a); }
+        .slot.stream-group-3 .card { background: linear-gradient(135deg, #cffafe, #a5f3fc); }
+        .slot.stream-group-4 .card { background: linear-gradient(135deg, #e0e7ff, #c7d2fe); }
+        .slot.stream-group-5 .card { background: linear-gradient(135deg, #ddd6fe, #d8b4fe); }
+
+
+        /* Current Card Area (Solo Mode) */
+        .current-card-area {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            padding: 1rem;
+            z-index: 5;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .draw-card-slot {
+            width: 150px;
+            height: 60px;
+            border: 2px dashed #48BB78;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #48BB78;
+            cursor: pointer;
+            background: rgba(255,255,255,0.7);
+        }
+
+        .current-card.selected, .joker-card.selected, .palette-card.selected {
+            transform: scale(1.1);
+            box-shadow: 0 8px 25px rgba(159, 122, 234, 0.4);
+            border-color: #9F7AEA;
+        }
+        
+        /* Card Distribution Guide */
+        .info-panel {
+            position: absolute;
+            bottom: 2rem;
+            left: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 5;
+        }
+        .info-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: #4A5568;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+        #seed-value {
+            min-width: 80px;
+            text-align: center;
+        }
+        .guide-chip {
+            background: white;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-weight: 700;
+            border: 1px solid #E2E8F0;
+        }
+        .guide-chip.wild {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #8B4513;
+            border-color: transparent;
+        }
+        
+        /* Buttons */
+        .btn {
+            background: #48BB78;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        #shuffle-btn { background: #48BB78; }
+        #shuffle-btn:hover { background: #38A169; }
+        #rules-btn { background: #4299E1; }
+        #rules-btn:hover { background: #3182CE; }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            position: relative;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            max-width: 480px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+        
+        .modal-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2D3748;
+            margin-bottom: 0.5rem;
+        }
+        .modal-subtitle {
+            font-size: 1rem;
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+        
+        .mode-btn {
+            font-size: 1.2rem;
+            padding: 0.8rem 1rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .seed-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .seed-input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #CBD5E0;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+
+        .close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        .results-table th, .results-table td {
+            padding: 0.75rem;
+            text-align: center;
+            border: 1px solid #E2E8F0;
+        }
+        .results-table th { background: #F7FAFC; font-weight: 700; }
+        .final-score { font-size: 2rem; font-weight: 700; color: #48BB78; text-align: center; margin-bottom: 2rem; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #4A5568;
+            background: rgba(255, 255, 255, 0.8);
+            margin-top: 2rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 920px) {
+            .header { padding: 1rem; flex-direction: column; gap: 1rem; }
+            .logo { font-size: 1.5rem; }
+            .score { font-size: 1rem; }
+            .game-container { padding: 1rem; }
+            .main-area { padding: 1rem; }
+            .current-card-area { position: static; margin: 0 auto 1rem auto; flex-direction: row; }
+            .slot { width: 50px; height: 50px; }
+            .card { width: 45px; height: 45px; font-size: 1.2rem; }
+            .info-panel { flex-direction: column; align-items: flex-start; bottom: 1rem; left: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">🌊 Number Flow</div>
+        <div class="header-right">
+            <div class="score">점수: <span id="current-score">0</span></div>
+            <div class="score">카드: <span id="placed-count">0</span>/20</div>
+            <button class="btn" id="shuffle-btn">새 게임</button>
+            <button class="btn" id="rules-btn">규칙</button>
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="main-area" id="main-area">
+            
+            <div class="current-card-area" id="current-card-area" style="display: none;">
+                <div id="draw-card-slot" class="draw-card-slot">+</div>
+                <div id="joker-card" class="card wild joker-card" title="조커 카드">★</div>
+            </div>
+
+            <div class="tower-container" id="tower-container">
+                <!-- Tower levels will be generated by JavaScript -->
+            </div>
+            
+            <div class="info-panel" id="info-panel" style="display: none;">
+                <div class="info-box" id="seed-display" style="display: none;">
+                    <span>문제 시드:</span>
+                    <div class="guide-chip" id="seed-value"></div>
+                </div>
+                <div class="info-box card-guide">
+                    <span>카드 구성:</span>
+                    <div class="guide-chip">-15~-6 (x1)</div>
+                    <div class="guide-chip">-5~5 (x2)</div>
+                    <div class="guide-chip">6~15 (x1)</div>
+                </div>
+            </div>
+            
+            <!-- SVG layer for arrows -->
+            <svg id="arrow-svg" class="arrow-svg"></svg>
+        </div>
+    </div>
+    
+    <!-- Start Screen Modal -->
+     <div class="modal show" id="start-screen-modal">
+        <div class="modal-content">
+            <h2 class="modal-title">🌊 Number Flow</h2>
+            <p class="modal-subtitle">플레이할 모드를 선택하세요.</p>
+            <button class="btn mode-btn" id="solo-mode-btn" style="background-color: #14B8A6;">
+                🧑혼자하기
+            </button>
+            <button class="btn mode-btn" id="multi-mode-btn" style="background-color: #8B5CF6;">
+                👯‍♂️여럿이하기
+            </button>
+            <div class="modal-footer" style="margin-top: 2rem; font-size: 0.9rem; color: #718096; line-height: 1.5;">
+                <p>행복한 수학, 함께 만들어요! 😊</p>
+                <p>© 행복한윤쌤 | <a href="https://blog.naver.com/happy_yoonssam" target="_blank" style="color: #4299E1; text-decoration: none;">https://blog.naver.com/happy_yoonssam</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Seed Input Modal -->
+    <div class="modal" id="seed-input-modal">
+        <div class="modal-content">
+             <button class="close-btn" id="close-seed-modal-btn">&times;</button>
+             <h3 class="modal-title" style="font-size: 1.5rem; margin-bottom: 1rem;">👯‍♂️여럿이하기 모드</h3>
+             <div class="seed-input-group">
+                 <label for="seed-input" class="modal-subtitle">함께할 '문제 시드'를 입력하세요.<br>'혼자하기'를 택한 옆 친구의 게임화면을 확인하세요.</label>
+                 <input type="text" id="seed-input" class="seed-input" placeholder="예: 사과-18">
+                 <button class="btn" id="start-with-seed-btn" style="background-color: #8B5CF6;">시작하기</button>
+             </div>
+        </div>
+    </div>
+
+
+    <!-- Rules Modal -->
+    <div class="modal" id="rules-modal">
+        <div class="modal-content" style="text-align: left;">
+            <button class="close-btn" id="close-rules-btn">&times;</button>
+            <h3 style="margin-bottom: 1rem; color: #2D3748; text-align: center;">🌊 Number Flow 게임 규칙</h3>
+            <ul style="line-height: 1.6; color: #4A5568; padding-left: 20px;">
+                <li>카드를 한 장씩 받아서 타워의 빈 칸에 배치합니다.</li>
+                <li>게임 보드의 화살표를 따라 카드를 놓으며 오름차순으로 연속된 숫자를 만듭니다.</li>
+                <li>같은 숫자도 연속으로 인정됩니다. (예: 18, 18, 19)</li>
+                <li>★는 조커 카드로, 이전 숫자보다 크거나 같은 다음 숫자를 연결해주는 역할을 합니다.</li>
+                <li>조커를 사용하면 현재 숫자 카드를 사용하지 않고 다음 카드를 받습니다.</li>
+                <li>놓고 싶은 카드(현재 카드 또는 조커)를 먼저 클릭한 후, 타워의 빈 칸을 클릭하여 배치하세요.</li>
+                <li>여럿이 하기에서는 '혼자 하기'를 실행한 친구의 '문제 시드'를 입력합니다. 친구의 랜덤 카드의 순서를 따라 배치합니다.</li>
+            </ul>
+            <!-- Score Table Restored -->
+            <div style="margin-top: 1.5rem; padding: 1rem; background: #F7FAFC; border-radius: 8px;">
+                <h4 style="margin-bottom: 1rem; color: #2D3748; text-align: center;">점수표</h4>
+                <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                      <tr><th style="padding: 0.3rem; border: 1px solid #E2E8F0; background: #EDF2F7;">연속</th><th style="padding: 0.3rem; border: 1px solid #E2E8F0; background: #EDF2F7;">점수</th><th style="padding: 0.3rem; border: 1px solid #E2E8F0; background: #EDF2F7;">연속</th><th style="padding: 0.3rem; border: 1px solid #E2E8F0; background: #EDF2F7;">점수</th></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">2개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">1점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">12개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">35점</td></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">3개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">2점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">13개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">40점</td></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">4개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">5점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">14개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">50점</td></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">5개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">7점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">15개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">60점</td></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">6개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">9점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">16개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">70점</td></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">7개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">11점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">17개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">85점</td></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">8개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">15점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">18개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">100점</td></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">9개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">20점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">19개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">150점</td></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">10개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">25점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">20개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">300점</td></tr>
+                      <tr><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">11개</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;">30점</td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;"></td><td style="padding: 0.3rem; border: 1px solid #E2E8F0; text-align: center;"></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Results Modal -->
+    <div class="modal" id="results-modal">
+        <div class="modal-content">
+             <button class="close-btn" id="close-results-btn">&times;</button>
+             <h1 style="color: #2D3748; text-align: center; margin-bottom: 1rem;">🎉 게임 결과</h1>
+             <div id="final-score" class="final-score"></div>
+             <div id="seed-comparison-result" style="text-align: center; margin-bottom: 1.5rem; font-weight: bold;"></div>
+             <table id="results-table" class="results-table">
+                 <!-- Results table will be populated by JavaScript -->
+             </table>
+        </div>
+    </div>
+
+
+    <footer class="footer">
+        <p>행복한 수학, 함께 만들어요! 😊</p>
+        <p>© 행복한윤쌤 | <a href="https://blog.naver.com/happy_yoonssam" target="_blank" style="color: #4299E1; text-decoration: none;">https://blog.naver.com/happy_yoonssam</a></p>
+    </footer>
+
+    <script>
+        // Simple Seedable PRNG
+        class SeededRandom {
+            constructor(seedStr) {
+                this.seed = this.cyrb128(seedStr)[0];
+            }
+            cyrb128(str) {
+                let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+                for (let i = 0, k; i < str.length; i++) {
+                    k = str.charCodeAt(i);
+                    h1 = h2 ^ Math.imul(h1 ^ k, 597399067);
+                    h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+                    h3 = h4 ^ Math.imul(h3 ^ k, 951274213);
+                    h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+                }
+                h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067);
+                h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+                h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213);
+                h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+                return [(h1^h2^h3^h4)>>>0, (h2^h1)>>>0, (h3^h1)>>>0, (h4^h1)>>>0];
+            }
+            random() {
+                this.seed += 0x6D2B79F5;
+                let t = this.seed;
+                t = Math.imul(t ^ t >>> 15, t | 1);
+                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            }
+        }
+
+        class NumberTowerGame {
+            constructor() {
+                // DOM Elements
+                this.mainArea = document.getElementById('main-area');
+                this.towerContainer = document.getElementById('tower-container');
+                this.svgEl = document.getElementById('arrow-svg');
+                this.currentCardArea = document.getElementById('current-card-area');
+                this.drawCardSlot = document.getElementById('draw-card-slot');
+                this.jokerCardEl = document.getElementById('joker-card');
+                this.currentScoreEl = document.getElementById('current-score');
+                this.placedCountEl = document.getElementById('placed-count');
+                this.rulesModal = document.getElementById('rules-modal');
+                this.resultsModal = document.getElementById('results-modal');
+                this.startScreenModal = document.getElementById('start-screen-modal');
+                this.seedInputModal = document.getElementById('seed-input-modal');
+                this.infoPanel = document.getElementById('info-panel');
+                this.seedDisplay = document.getElementById('seed-display');
+                this.seedValue = document.getElementById('seed-value');
+
+                // Game State
+                this.gameMode = null; // 'solo' or 'multi'
+                this.currentSeed = null;
+                this.teacherSequence = [];
+                this.studentSequence = [];
+                this.deck = [];
+                this.cardQueue = [];
+                this.currentCardIndex = 0;
+                this.tower = {};
+                this.score = 0;
+                this.scoreTable = [0, 0, 1, 2, 5, 7, 9, 11, 15, 20, 25, 30, 35, 40, 50, 60, 70, 85, 100, 150, 300];
+                this.selectedCard = null;
+                this.jokerUsed = false;
+                
+                this.towerLevels = [
+                    { name: 'level1', count: 8 }, 
+                    { name: 'level2', count: 1 }, 
+                    { name: 'level3', count: 1 }, 
+                    { name: 'level4', count: 1 }, 
+                    { name: 'level5', count: 1 },
+                    { name: 'level6', count: 8 }
+                ];
+                
+                this.layoutConfig = [
+                    { level: 'level1', xOffset: 'calc(50% - 500px)', yMargin: 0 },
+                    { level: 'level2', xOffset: 'calc(50% + 20px)', yMargin: 8 },
+                    { level: 'level3', xOffset: 'calc(50% - 10px)', yMargin: 8 },
+                    { level: 'level4', xOffset: 'calc(50% - 40px)', yMargin: 8 },
+                    { level: 'level5', xOffset: 'calc(50% - 70px)', yMargin: 8 },
+                    { level: 'level6', xOffset: 'calc(50% - 100px)', yMargin: 8 }
+                ];
+                
+                this.seedWords = ['사과', '바나나', '딸기', '포도', '수박', '오렌지', '레몬', '복숭아', '자두', '체리'];
+                this.operators = ['+', '-', '×', '÷'];
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+            }
+
+            // --- Game Mode and Seed Logic ---
+            
+            generateSeed() {
+                const word = this.seedWords[Math.floor(Math.random() * this.seedWords.length)];
+                const number = Math.floor(Math.random() * 90) + 10; // 10-99
+                return `${word}-${number}`;
+            }
+            
+            // --- 카드 덱 및 식 생성 리팩토링 ---
+            createDeck() {
+                // 카드 값: -15 ~ -6(x1), -5 ~ 5(x2), 6~15(x1)
+                // 약수가 많은 수(6,8,10,12,15 등)는 가중치 2~3배로 추가
+                const deck = [];
+                const weightedNumbers = [6, 8, 10, 12, 15, -6, -8, -10, -12, -15];
+                for (let i = -15; i <= -6; i++) deck.push(i);
+                for (let i = -5; i <= 5; i++) { deck.push(i); deck.push(i); }
+                for (let i = 6; i <= 15; i++) deck.push(i);
+                // 약수가 많은 수는 추가로 더 넣음
+                weightedNumbers.forEach(n => {
+                    for (let k = 0; k < 2; k++) deck.push(n);
+                });
+                // 조커는 별도 관리
+                this.deck = deck;
+                return this.deck;
+            }
+
+            // --- 식 생성 함수 (연산자 고르게) ---
+            generateExpressionForValue(value, prng) {
+                // 연산자별 후보 분리
+                const opCandidates = { '+': [], '-': [], '×': [], '÷': [] };
+                // +
+                for (let a = -20; a <= 20; a++) {
+                    let b = value - a;
+                    if (b < -20 || b > 20) continue;
+                    let weight = (a < 0 || b < 0) ? 2 : 1;
+                    let aStr = a < 0 ? `(${a})` : `${a}`;
+                    let bStr = b < 0 ? `(${b})` : `${b}`;
+                    for (let i = 0; i < weight; i++) opCandidates['+'].push({expr: `${aStr} + ${bStr}`, a, b});
+                }
+                // -
+                for (let a = -20; a <= 20; a++) {
+                    let b = a - value;
+                    if (b < -20 || b > 20) continue;
+                    let weight = (a < 0 || b < 0) ? 2 : 1;
+                    let aStr = a < 0 ? `(${a})` : `${a}`;
+                    let bStr = b < 0 ? `(${b})` : `${b}`;
+                    for (let i = 0; i < weight; i++) opCandidates['-'].push({expr: `${aStr} - ${bStr}`, a, b});
+                }
+                // ×
+                for (let a = -15; a <= 15; a++) {
+                    if (a === 0) continue;
+                    if (value % a !== 0) continue;
+                    let b = value / a;
+                    if (!Number.isInteger(b) || b < -15 || b > 15 || b === 0) continue;
+                    if (Math.abs(a) === 1 || Math.abs(b) === 1) continue; // 1, -1 곱셈은 제외
+                    let weight = (a < 0 && b < 0) ? 5 : (a < 0 || b < 0) ? 2 : 1;
+                    let aStr = a < 0 ? `(${a})` : `${a}`;
+                    let bStr = b < 0 ? `(${b})` : `${b}`;
+                    for (let i = 0; i < weight; i++) opCandidates['×'].push({expr: `${aStr} × ${bStr}`, a, b});
+                }
+                // ÷
+                for (let b = -15; b <= 15; b++) {
+                    if (b === 0) continue;
+                    if (Math.abs(b) === 1) continue; // 1, -1로 나누는 식은 제외
+                    let a = value * b;
+                    if (a < -15 || a > 15) continue;
+                    let weight = (a < 0 && b < 0) ? 5 : (a < 0 || b < 0) ? 2 : 1;
+                    let aStr = a < 0 ? `(${a})` : `${a}`;
+                    let bStr = b < 0 ? `(${b})` : `${b}`;
+                    for (let i = 0; i < weight; i++) opCandidates['÷'].push({expr: `${aStr} ÷ ${bStr}`, a, b});
+                }
+                // 곱셈/나눗셈 후보를 2배로 늘려서 연산자 등장 확률 증가
+                opCandidates['×'] = [...opCandidates['×'], ...opCandidates['×']];
+                opCandidates['÷'] = [...opCandidates['÷'], ...opCandidates['÷']];
+                // 연산자 고르게 선택
+                const ops = ['+', '-', '×', '÷'];
+                let opOrder = [];
+                // 연산자 순서 섞기(시드 기반)
+                let opsCopy = [...ops];
+                while (opsCopy.length) {
+                    const idx = Math.floor(prng.random() * opsCopy.length);
+                    opOrder.push(opsCopy.splice(idx, 1)[0]);
+                }
+                // 순서대로 후보가 있으면 그 중에서 랜덤 선택
+                for (let op of opOrder) {
+                    const arr = opCandidates[op];
+                    if (arr.length > 0) {
+                        const idx = Math.floor(prng.random() * arr.length);
+                        return arr[idx].expr;
+                    }
+                }
+                // 혹시라도 후보가 없으면 그냥 값 반환
+                return `${value}`;
+            }
+
+            // --- 덱 셔플 및 식 할당 ---
+            shuffleDeckWithSeed(seed) {
+                const random = new SeededRandom(seed);
+                this.createDeck(); // 카드 값 배열 생성
+                // 각 카드 값에 대해 식 생성
+                this.deck = this.deck.map(value => {
+                    return {
+                        value,
+                        expr: this.generateExpressionForValue(value, random)
+                    };
+                });
+                // 시드 기반 셔플
+                for (let i = this.deck.length - 1; i > 0; i--) {
+                    const j = Math.floor(random.random() * (i + 1));
+                    [this.deck[i], this.deck[j]] = [this.deck[j], this.deck[i]];
+                }
+                this.cardQueue = this.deck.slice(0, 20);
+                this.teacherSequence = [...this.cardQueue];
+            }
+            
+            startGame(mode, seed = null) {
+                this.gameMode = mode;
+                this.startScreenModal.classList.remove('show');
+                this.infoPanel.style.display = 'flex';
+                
+                this.resetGameState();
+                this.createTowerUI();
+                
+                if (this.gameMode === 'solo') {
+                    this.currentSeed = this.generateSeed();
+                    this.seedValue.textContent = this.currentSeed;
+                    this.seedDisplay.style.display = 'flex';
+                    this.shuffleDeckWithSeed(this.currentSeed);
+                    this.currentCardArea.style.display = 'flex';
+                    this.drawCardSlot.innerHTML = '+';
+                } else { // multi mode
+                    if (!seed) {
+                        this.startNewGame(); // Go back to start screen if no seed
+                        return;
+                    }
+                    this.currentSeed = seed;
+                    this.shuffleDeckWithSeed(this.currentSeed);
+                    this.currentCardArea.style.display = 'flex';
+                    this.drawCardSlot.innerHTML = '+';
+                }
+                
+                setTimeout(() => this.drawConnectionArrows(), 100);
+            }
+
+            // --- SVG Arrow Drawing Logic ---
+            drawConnectionArrows() {
+                this.svgEl.innerHTML = '';
+                const mainRect = this.mainArea.getBoundingClientRect();
+
+                const createArrow = (fromEl, toEl) => {
+                    if (!fromEl || !toEl) return;
+                    const fromRect = fromEl.getBoundingClientRect();
+                    const toRect = toEl.getBoundingClientRect();
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('fill', 'none');
+                    path.setAttribute('stroke', '#A0AEC0');
+                    path.setAttribute('stroke-width', '3.5');
+                    path.setAttribute('stroke-opacity', '0.7');
+                    
+                    const startX = fromRect.left - mainRect.left + fromRect.width / 2;
+                    const startY = fromRect.top - mainRect.top + fromRect.height / 2;
+                    const endX = toRect.left - mainRect.left + toRect.width / 2;
+                    const endY = toRect.top - mainRect.top + toRect.height / 2;
+
+                    const d = `M ${startX} ${startY} L ${endX} ${endY}`;
+                    path.setAttribute('d', d);
+                    
+                    const midX = (startX + endX) / 2;
+                    const midY = (startY + endY) / 2;
+                    const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
+                    
+                    this.svgEl.appendChild(path);
+
+                    const arrowhead = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    arrowhead.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+                    arrowhead.setAttribute('fill', '#A0AEC0');
+                    arrowhead.setAttribute('fill-opacity', '0.7');
+                    arrowhead.setAttribute('transform', `translate(${midX}, ${midY}) rotate(${angle}) translate(-5, -5)`);
+                    this.svgEl.appendChild(arrowhead);
+                };
+
+                const connections = [
+                    ...Array.from({length: 7}, (_, i) => ({ from: {level: 'level1', index: i}, to: {level: 'level1', index: i+1} })),
+                    { from: {level: 'level1', index: 7}, to: {level: 'level2', index: 0} },
+                    { from: {level: 'level2', index: 0}, to: {level: 'level3', index: 0} },
+                    { from: {level: 'level3', index: 0}, to: {level: 'level4', index: 0} },
+                    { from: {level: 'level4', index: 0}, to: {level: 'level5', index: 0} },
+                    { from: {level: 'level5', index: 0}, to: {level: 'level6', index: 0} },
+                    ...Array.from({length: 7}, (_, i) => ({ from: {level: 'level6', index: i}, to: {level: 'level6', index: i+1} })),
+                ];
+
+                connections.forEach(conn => {
+                    const fromEl = document.querySelector(`.slot[data-level="${conn.from.level}"][data-index="${conn.from.index}"]`);
+                    const toEl = document.querySelector(`.slot[data-level="${conn.to.level}"][data-index="${conn.to.index}"]`);
+                    createArrow(fromEl, toEl);
+                });
+            }
+
+            // --- Core Game Logic ---
+            resetGameState() {
+                this.resetTowerState();
+                this.score = 0;
+                this.currentScoreEl.textContent = this.score;
+                this.selectedCard = null;
+                this.jokerUsed = false;
+                this.currentCardIndex = 0;
+                this.teacherSequence = [];
+                this.studentSequence = [];
+                this.cardQueue = [];
+                
+                this.jokerCardEl.classList.remove('used');
+                this.currentCardArea.style.display = 'none';
+                this.seedDisplay.style.display = 'none';
+
+                this.resultsModal.classList.remove('show');
+                this.updateUI();
+                this.updateStreamHighlights();
+            }
+
+            resetTowerState() {
+                this.tower = {};
+                this.towerLevels.forEach(level => {
+                    this.tower[level.name] = Array(level.count).fill(null);
+                });
+            }
+
+            createTowerUI() {
+                this.towerContainer.innerHTML = '';
+                this.towerLevels.forEach((level, i) => {
+                    const levelDiv = document.createElement('div');
+                    levelDiv.className = 'tower-level';
+                    const config = this.layoutConfig[i];
+                    
+                    levelDiv.style.transform = `translateX(${config.xOffset})`;
+                    levelDiv.style.marginTop = `${config.yMargin}px`;
+
+                    for (let j = 0; j < level.count; j++) {
+                        const slot = document.createElement('div');
+                        slot.className = 'slot';
+                        slot.dataset.level = level.name;
+                        slot.dataset.index = j;
+                        levelDiv.appendChild(slot);
+                    }
+                    this.towerContainer.appendChild(levelDiv);
+                });
+            }
+
+            startNewGame() {
+                this.startScreenModal.classList.add('show');
+                this.infoPanel.style.display = 'none';
+                this.towerContainer.innerHTML = '';
+                this.svgEl.innerHTML = '';
+                this.currentCardArea.style.display = 'none';
+            }
+
+            drawNextTeacherCard() {
+                if (this.currentCardIndex >= this.cardQueue.length) return;
+                
+                const cardObj = this.cardQueue[this.currentCardIndex];
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card current-card';
+                cardEl.textContent = cardObj.expr;
+                
+                this.drawCardSlot.innerHTML = '';
+                this.drawCardSlot.appendChild(cardEl);
+                this.drawCardSlot.classList.remove('selected');
+                
+                this.selectCard('current', cardObj.value);
+            }
+
+            selectCard(type, value = null) {
+                // Deselect previous card
+                const previouslySelected = document.querySelector('.card.selected, .draw-card-slot.selected');
+                if(previouslySelected) previouslySelected.classList.remove('selected');
+
+                // If re-selecting the same card, deselect it and return
+                if (this.selectedCard && this.selectedCard.element === value?.element) {
+                    this.selectedCard = null;
+                    return;
+                }
+                
+                this.selectedCard = null; // Clear selection
+
+                if (type === 'current') {
+                    this.selectedCard = { type: 'current', value: value };
+                    this.drawCardSlot.classList.add('selected');
+                } else if (type === 'joker') {
+                    if (this.jokerUsed) return;
+                    this.selectedCard = { type: 'joker', value: '★' };
+                    this.jokerCardEl.classList.add('selected');
+                }
+            }
+
+            placeCard(level, index) {
+                if (this.tower[level][index] !== null || !this.selectedCard) return;
+
+                let cardObj = this.selectedCard;
+                // 현재 카드(식)라면, 카드 객체를 찾아서 저장
+                if (this.gameMode === 'solo' || this.gameMode === 'multi') {
+                    if (this.selectedCard.type === 'current') {
+                        cardObj = this.cardQueue[this.currentCardIndex];
+                    } else if (this.selectedCard.type === 'joker') {
+                        cardObj = { value: '★', expr: '★' };
+                    }
+                }
+                // value가 숫자 문자열이면 Number로 변환 (조커는 예외)
+                if (cardObj.value !== '★') {
+                    cardObj = { ...cardObj, value: Number(cardObj.value) };
+                }
+                this.tower[level][index] = cardObj;
+
+                if (this.gameMode === 'solo') {
+                    if (this.selectedCard.type === 'current') {
+                        this.currentCardIndex++;
+                        this.drawCardSlot.innerHTML = '+';
+                    } else if (this.selectedCard.type === 'joker') {
+                        this.jokerUsed = true;
+                        this.jokerCardEl.classList.add('used');
+                        this.currentCardIndex++;
+                        this.drawCardSlot.innerHTML = '+';
+                    }
+                } else { // multi
+                    this.currentCardIndex++;
+                    this.drawCardSlot.innerHTML = '+';
+                    this.studentSequence.push(cardObj.value);
+                }
+
+                this.selectedCard = null;
+                document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+
+                this.renderTower();
+                this.updateUI();
+                this.calculateScore();
+                this.updateStreamHighlights();
+
+                const placedCount = Object.values(this.tower).flat().filter(c => c !== null).length;
+                if (placedCount >= 20) {
+                    this.completeGame();
+                }
+            }
+
+            renderTower() {
+                document.querySelectorAll('.slot').forEach(slot => {
+                    const { level, index } = slot.dataset;
+                    const cardValue = this.tower[level][index];
+                    if (cardValue !== null) {
+                        let value = cardValue;
+                        let expr = null;
+                        if (typeof cardValue === 'object' && cardValue !== null) {
+                            value = cardValue.value;
+                            expr = cardValue.expr;
+                        }
+                        slot.innerHTML = `<div class="card ${value === '★' ? 'wild' : ''}">${value}</div>`;
+                        slot.classList.add('filled');
+                    } else {
+                        slot.innerHTML = '';
+                        slot.classList.remove('filled');
+                    }
+                });
+            }
+
+            calculateScore() {
+                const sequenceWithPositions = this.getSequenceWithPositions();
+                const streams = this.findStreams(sequenceWithPositions);
+                this.score = streams.reduce((total, stream) => total + (this.scoreTable[stream.length] || 0), 0);
+                this.currentScoreEl.textContent = this.score;
+                return streams;
+            }
+
+            getSequenceWithPositions() {
+                const path = [
+                    ...Array.from({length: 8}, (_, i) => ({level: 'level1', index: i})),
+                    {level: 'level2', index: 0},
+                    {level: 'level3', index: 0},
+                    {level: 'level4', index: 0},
+                    {level: 'level5', index: 0},
+                    ...Array.from({length: 8}, (_, i) => ({level: 'level6', index: i}))
+                ];
+                return path.map(pos => {
+                    const cardValue = this.tower[pos.level][pos.index];
+                    if (cardValue !== null) {
+                        // cardValue가 객체면 value, 아니면 값 자체
+                        return { value: (typeof cardValue === 'object' && cardValue !== null) ? cardValue.value : cardValue, level: pos.level, index: pos.index };
+                    } else {
+                        return null;
+                    }
+                });
+            }
+
+            findStreams(sequence) {
+                const streams = [];
+                let currentStream = [];
+
+                for (const currentCard of sequence) {
+                    if (currentCard === null) {
+                        if (currentStream.length > 1) streams.push([...currentStream]);
+                        currentStream = [];
+                        continue;
+                    }
+                    if (currentStream.length === 0) {
+                        currentStream.push(currentCard);
+                        continue;
+                    }
+                    const lastNumberCard = [...currentStream].reverse().find(c => c.value !== '★');
+                    let isConnected = false;
+                    if (currentCard.value === '★') {
+                         isConnected = true;
+                    } else if (lastNumberCard) {
+                        if (Number(currentCard.value) >= Number(lastNumberCard.value)) isConnected = true;
+                    } else {
+                        isConnected = true;
+                    }
+                    if (isConnected) {
+                        currentStream.push(currentCard);
+                    } else {
+                        if (currentStream.length > 1) streams.push([...currentStream]);
+                        currentStream = [currentCard];
+                    }
+                }
+                if (currentStream.length > 1) streams.push([...currentStream]);
+                return streams;
+            }
+            
+            updateStreamHighlights() {
+                document.querySelectorAll('.slot').forEach(slot => {
+                    slot.className = slot.className.split(' ').filter(c => !c.startsWith('stream')).join(' ');
+                });
+                const sequenceWithPositions = this.getSequenceWithPositions();
+                const streams = this.findStreams(sequenceWithPositions);
+                const numColors = 6;
+                streams.forEach((stream, streamIndex) => {
+                    if (stream.length < 2) return;
+                    
+                    const groupIndex = streamIndex % numColors;
+                    const highlightClass = `stream-group-${groupIndex}`;
+
+                    stream.forEach(cardInfo => {
+                        const slotEl = document.querySelector(`.slot[data-level="${cardInfo.level}"][data-index="${cardInfo.index}"]`);
+                        if (slotEl) slotEl.classList.add('stream', highlightClass);
+                    });
+                });
+            }
+
+            updateUI() {
+                const placedCount = Object.values(this.tower).flat().filter(card => card !== null).length;
+                this.placedCountEl.textContent = placedCount;
+            }
+
+            completeGame() {
+                const streams = this.calculateScore();
+                this.showResults(streams);
+                this.svgEl.innerHTML = '';
+            }
+
+            showResults(streamsWithPositions) {
+                let streamRows = streamsWithPositions.map((stream, index) => {
+                    const streamText = stream.map(s => s.value).join(', ');
+                    const points = this.scoreTable[stream.length] || 0;
+                    return `<tr><td>${index + 1}</td><td>${streamText}</td><td>${stream.length}개</td><td>${points}점</td></tr>`;
+                }).join('');
+
+                if (streamsWithPositions.length === 0) streamRows = `<tr><td colspan="4">연속 점수가 없습니다.</td></tr>`;
+
+                document.getElementById('results-table').innerHTML = `
+                    <thead><tr><th>번호</th><th>연속 카드</th><th>길이</th><th>점수</th></tr></thead>
+                    <tbody>${streamRows}</tbody>`;
+                document.getElementById('final-score').textContent = `최종 점수: ${this.score}점`;
+
+                if(this.gameMode === 'multi') {
+                    this.compareSeeds();
+                }
+
+                this.resultsModal.classList.add('show');
+            }
+            
+            compareSeeds() {
+                let correctCount = 0;
+                let isPerfect = true;
+                const comparisonResultEl = document.getElementById('seed-comparison-result');
+                
+                for(let i=0; i < this.teacherSequence.length; i++) {
+                    const teacherCard = this.teacherSequence[i];
+                    const studentCard = this.studentSequence[i];
+
+                    if(studentCard === '★' || studentCard === teacherCard.value) {
+                        correctCount++;
+                    } else {
+                        isPerfect = false;
+                    }
+                }
+                if(isPerfect && this.studentSequence.length === this.teacherSequence.length) {
+                    comparisonResultEl.textContent = "완벽해요! 모든 카드를 정확히 놓았어요.";
+                    comparisonResultEl.style.color = 'green';
+                } else {
+                    comparisonResultEl.textContent = `아쉬워요! ${correctCount} / ${this.teacherSequence.length} 개를 맞췄어요.`;
+                    comparisonResultEl.style.color = 'red';
+                }
+            }
+
+            bindEvents() {
+                document.getElementById('shuffle-btn').addEventListener('click', () => this.startNewGame());
+                document.getElementById('solo-mode-btn').addEventListener('click', () => this.startGame('solo'));
+                document.getElementById('multi-mode-btn').addEventListener('click', () => {
+                    this.startScreenModal.classList.remove('show');
+                    this.seedInputModal.classList.add('show');
+                });
+                document.getElementById('start-with-seed-btn').addEventListener('click', () => {
+                    const seedInput = document.getElementById('seed-input');
+                    if (seedInput.value) {
+                        this.seedInputModal.classList.remove('show');
+                        this.startGame('multi', seedInput.value);
+                    } else {
+                        alert('시드를 입력해주세요.'); 
+                    }
+                });
+                
+                this.drawCardSlot.addEventListener('click', () => {
+                    if (this.gameMode === 'solo' && this.drawCardSlot.textContent === '+') {
+                        this.drawNextTeacherCard();
+                    } else if (this.gameMode === 'solo' && this.drawCardSlot.querySelector('.card')) {
+                        this.selectCard('current', this.cardQueue[this.currentCardIndex].value);
+                    }
+                    if (this.gameMode === 'multi' && this.drawCardSlot.textContent === '+') {
+                        this.drawNextTeacherCard();
+                    } else if (this.gameMode === 'multi' && this.drawCardSlot.querySelector('.card')) {
+                        this.selectCard('current', this.cardQueue[this.currentCardIndex].value);
+                    }
+                });
+                this.jokerCardEl.addEventListener('click', () => {
+                    const isCardDrawn = this.drawCardSlot.querySelector('.card');
+                    if (this.gameMode === 'solo' && isCardDrawn) {
+                        this.selectCard('joker');
+                    }
+                    if (this.gameMode === 'multi' && isCardDrawn) {
+                        this.selectCard('joker');
+                    }
+                });
+                
+                const setupModal = (btnId, modalId, closeBtnId) => {
+                    const modal = document.getElementById(modalId);
+                    document.getElementById(btnId).addEventListener('click', () => modal.classList.add('show'));
+                    document.getElementById(closeBtnId).addEventListener('click', () => modal.classList.remove('show'));
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) modal.classList.remove('show');
+                    });
+                };
+                setupModal('rules-btn', 'rules-modal', 'close-rules-btn');
+                document.getElementById('close-results-btn').addEventListener('click', () => this.resultsModal.classList.remove('show'));
+                document.getElementById('close-seed-modal-btn').addEventListener('click', () => {
+                    this.seedInputModal.classList.remove('show');
+                    this.startScreenModal.classList.add('show');
+                });
+
+
+                this.towerContainer.addEventListener('click', (e) => {
+                    const slot = e.target.closest('.slot');
+                    if (slot && !slot.classList.contains('filled')) {
+                        const { level, index } = slot.dataset;
+                        this.placeCard(level, parseInt(index));
+                    }
+                });
+
+                window.addEventListener('resize', () => {
+                    if (this.gameMode) this.drawConnectionArrows();
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new NumberTowerGame();
+        });
+    </script>
+</body>
+</html>

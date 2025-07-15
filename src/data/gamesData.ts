@@ -77,6 +77,31 @@ export const gamesData: Record<string, GameData[]> = {
       standard: '7수02-01',
       type: '매칭 게임',
       summary: '같은 값을 가진 식을 찾아 매칭하는 연산 게임입니다.'
+    },
+    {
+      id: 'number_flow_integer',
+      title: '넘버 플로우: 정수',
+      description: `🎮게임명 : 넘버 플로우: 정수
+📘 교과명 : 중학교 1학년/수와 연산
+📂 내용범주 : 정수의 혼합계산
+📌 내용요소 : 정수의 덧셈, 뺄셈, 곱셈, 나눗셈, 혼합계산
+✏️ 학습 가능 용어 : 양수, 음수, 절댓값, 사칙연산, 혼합계산
+🎯 성취기준 :
+[7수01-01-01] 정수를 이해하고, 정수의 덧셈과 뺄셈을 할 수 있다.
+[7수01-01-02] 정수의 곱셈과 나눗셈을 할 수 있다.
+[7수01-01-03] 정수의 사칙연산의 혼합계산을 할 수 있다.
+📚 학습 유형 : 연산 게임
+🔥 난이도 : ★★☆☆☆`,
+      icon: '💧',
+      status: 'development',
+      difficulty: '초급',
+      estimatedTime: '10분',
+      category: '수와 연산',
+      content: '정수의 혼합계산',
+      terms: '양수, 음수, 절댓값, 혼합계산',
+      standard: '7수01-01',
+      type: '연산 게임',
+      summary: '정수의 사칙연산과 혼합계산을 게임처럼 연습하며 연산 감각을 키울 수 있습니다.'
     }
   ],
   'middle2': [
@@ -291,6 +316,26 @@ export const gamesData: Record<string, GameData[]> = {
       url: '/coordinate_chess.html',
       type: '체스 게임',
       summary: '좌표평면에서 체스 전략을 익히는 수학 게임입니다.'
+    },
+    {
+      id: 'number_of_cases_challenge',
+      title: '경우의 수 챌린지',
+      description: `🎮게임명 : 경우의 수 챌린지
+📘 교과명 : 공통수학/확률과 통계
+📂 내용범주 : 경우의 수
+📌 내용요소 : 곱의 법칙, 합의 법칙, 순열, 조합
+✏️ 학습 가능 용어 : 경우의 수, 곱의 법칙, 합의 법칙, 순열, 조합
+🎯 성취기준 :
+[10확통1-02-01] 경우의 수의 기본 원리를 이해하고, 다양한 상황에서 경우의 수를 구할 수 있다.
+[10확통1-02-02] 순열과 조합의 의미를 이해하고, 실제 문제에 적용할 수 있다.
+📚 학습 유형 : 경우의 수 게임
+🔥 난이도 : ★★★☆☆`,
+      icon: '🧮',
+      status: 'development',
+      difficulty: '중급',
+      estimatedTime: '15분',
+      type: '경우의 수 게임',
+      summary: '경우의 수의 원리를 다양한 문제로 익히는 게임입니다.'
     }
   ],
   'algebra': [
@@ -298,7 +343,7 @@ export const gamesData: Record<string, GameData[]> = {
       id: 'polynomial-puzzle',
       title: '다항식 퍼즐',
       description: `🎮게임명 : 다항식 퍼즐
-�� 교과명 : 수학1/다항식
+📘 교과명 : 수학1/다항식
 📂 내용범주 : 다항식의 연산
 📌 내용요소 : 다항식의 인수분해, 나머지정리
 ✏️ 학습 가능 용어 : 인수분해, 나머지정리, 인수정리, 조립제법
@@ -379,6 +424,26 @@ export const gamesData: Record<string, GameData[]> = {
       difficulty: '중급',
       estimatedTime: '15분',
       summary: '주사위를 굴리며 확률의 기본 개념을 익힙니다.'
+    },
+    {
+      id: 'number_of_cases_challenge',
+      title: '경우의 수 챌린지',
+      description: `🎮게임명 : 경우의 수 챌린지
+📘 교과명 : 공통수학/확률과 통계
+📂 내용범주 : 경우의 수
+📌 내용요소 : 곱의 법칙, 합의 법칙, 순열, 조합
+✏️ 학습 가능 용어 : 경우의 수, 곱의 법칙, 합의 법칙, 순열, 조합
+🎯 성취기준 :
+[10확통1-02-01] 경우의 수의 기본 원리를 이해하고, 다양한 상황에서 경우의 수를 구할 수 있다.
+[10확통1-02-02] 순열과 조합의 의미를 이해하고, 실제 문제에 적용할 수 있다.
+📚 학습 유형 : 경우의 수 게임
+🔥 난이도 : ★★★☆☆`,
+      icon: '🧮',
+      status: 'development',
+      difficulty: '중급',
+      estimatedTime: '15분',
+      type: '경우의 수 게임',
+      summary: '경우의 수의 원리를 다양한 문제로 익히는 게임입니다.'
     }
   ],
   'geometry': [

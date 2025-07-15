@@ -93,7 +93,7 @@ export const gamesData: Record<string, GameData[]> = {
 📚 학습 유형 : 연산 게임
 🔥 난이도 : ★★☆☆☆`,
       icon: '💧',
-      status: 'development',
+      status: 'playable',
       difficulty: '초급',
       estimatedTime: '10분',
       category: '수와 연산',
@@ -101,7 +101,8 @@ export const gamesData: Record<string, GameData[]> = {
       terms: '양수, 음수, 절댓값, 혼합계산',
       standard: '7수01-01',
       type: '연산 게임',
-      summary: '정수의 사칙연산과 혼합계산을 게임처럼 연습하며 연산 감각을 키울 수 있습니다.'
+      summary: '정수의 사칙연산과 혼합계산을 게임처럼 연습하며 연산 감각을 키울 수 있습니다.',
+      url: '/number_flow_integer.html'
     }
   ],
   'middle2': [
@@ -331,11 +332,12 @@ export const gamesData: Record<string, GameData[]> = {
 📚 학습 유형 : 경우의 수 게임
 🔥 난이도 : ★★★☆☆`,
       icon: '🧮',
-      status: 'development',
+      status: 'playable',
       difficulty: '중급',
       estimatedTime: '15분',
       type: '경우의 수 게임',
-      summary: '경우의 수의 원리를 다양한 문제로 익히는 게임입니다.'
+      summary: '경우의 수의 원리를 다양한 문제로 익히는 게임입니다.',
+      url: '/number_of_cases_challenge.html'
     }
   ],
   'algebra': [
@@ -439,11 +441,12 @@ export const gamesData: Record<string, GameData[]> = {
 📚 학습 유형 : 경우의 수 게임
 🔥 난이도 : ★★★☆☆`,
       icon: '🧮',
-      status: 'development',
+      status: 'playable',
       difficulty: '중급',
       estimatedTime: '15분',
       type: '경우의 수 게임',
-      summary: '경우의 수의 원리를 다양한 문제로 익히는 게임입니다.'
+      summary: '경우의 수의 원리를 다양한 문제로 익히는 게임입니다.',
+      url: '/number_of_cases_challenge.html'
     }
   ],
   'geometry': [

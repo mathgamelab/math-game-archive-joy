@@ -193,7 +193,7 @@ Error generating stack: `+i.message+`
 [7수01-01-02] 정수의 곱셈과 나눗셈을 할 수 있다.
 [7수01-01-03] 정수의 사칙연산의 혼합계산을 할 수 있다.
 📚 학습 유형 : 연산 게임
-🔥 난이도 : ★★☆☆☆`,icon:"💧",status:"development",difficulty:"초급",estimatedTime:"10분",category:"수와 연산",content:"정수의 혼합계산",terms:"양수, 음수, 절댓값, 혼합계산",standard:"7수01-01",type:"연산 게임",summary:"정수의 사칙연산과 혼합계산을 게임처럼 연습하며 연산 감각을 키울 수 있습니다."}],middle2:[{id:"rational-numbers",title:"유리수 어드벤처",description:`🎮게임명 : 유리수 어드벤처
+🔥 난이도 : ★★☆☆☆`,icon:"💧",status:"playable",difficulty:"초급",estimatedTime:"10분",category:"수와 연산",content:"정수의 혼합계산",terms:"양수, 음수, 절댓값, 혼합계산",standard:"7수01-01",type:"연산 게임",summary:"정수의 사칙연산과 혼합계산을 게임처럼 연습하며 연산 감각을 키울 수 있습니다.",url:"/number_flow_integer.html"}],middle2:[{id:"rational-numbers",title:"유리수 어드벤처",description:`🎮게임명 : 유리수 어드벤처
 📘 교과명 : 중학교 2학년/수와 연산
 📂 내용범주 : 유리수와 순환소수
 📌 내용요소 : 유리수의 덧셈, 뺄셈, 곱셈, 나눗셈
@@ -297,7 +297,7 @@ Error generating stack: `+i.message+`
 [10확통1-02-01] 경우의 수의 기본 원리를 이해하고, 다양한 상황에서 경우의 수를 구할 수 있다.
 [10확통1-02-02] 순열과 조합의 의미를 이해하고, 실제 문제에 적용할 수 있다.
 📚 학습 유형 : 경우의 수 게임
-🔥 난이도 : ★★★☆☆`,icon:"🧮",status:"development",difficulty:"중급",estimatedTime:"15분",type:"경우의 수 게임",summary:"경우의 수의 원리를 다양한 문제로 익히는 게임입니다."}],algebra:[{id:"polynomial-puzzle",title:"다항식 퍼즐",description:`🎮게임명 : 다항식 퍼즐
+🔥 난이도 : ★★★☆☆`,icon:"🧮",status:"playable",difficulty:"중급",estimatedTime:"15분",type:"경우의 수 게임",summary:"경우의 수의 원리를 다양한 문제로 익히는 게임입니다.",url:"/number_of_cases_challenge.html"}],algebra:[{id:"polynomial-puzzle",title:"다항식 퍼즐",description:`🎮게임명 : 다항식 퍼즐
 📘 교과명 : 수학1/다항식
 📂 내용범주 : 다항식의 연산
 📌 내용요소 : 다항식의 인수분해, 나머지정리
@@ -346,7 +346,7 @@ Error generating stack: `+i.message+`
 [10확통1-02-01] 경우의 수의 기본 원리를 이해하고, 다양한 상황에서 경우의 수를 구할 수 있다.
 [10확통1-02-02] 순열과 조합의 의미를 이해하고, 실제 문제에 적용할 수 있다.
 📚 학습 유형 : 경우의 수 게임
-🔥 난이도 : ★★★☆☆`,icon:"🧮",status:"development",difficulty:"중급",estimatedTime:"15분",type:"경우의 수 게임",summary:"경우의 수의 원리를 다양한 문제로 익히는 게임입니다."}],geometry:[{id:"shape-constructor",title:"도형 건설자",description:`🎮게임명 : 도형 건설자
+🔥 난이도 : ★★★☆☆`,icon:"🧮",status:"playable",difficulty:"중급",estimatedTime:"15분",type:"경우의 수 게임",summary:"경우의 수의 원리를 다양한 문제로 익히는 게임입니다.",url:"/number_of_cases_challenge.html"}],geometry:[{id:"shape-constructor",title:"도형 건설자",description:`🎮게임명 : 도형 건설자
 📘 교과명 : 기하/평면도형
 📂 내용범주 : 평면도형의 성질
 📌 내용요소 : 삼각형, 사각형, 원의 성질

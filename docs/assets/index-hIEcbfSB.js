@@ -230,14 +230,14 @@ Error generating stack: `+i.message+`
 ✏️ 학습 가능 용어 : 덧셈, 뺄셈, 곱셈, 나눗셈
 🎯 성취기준 : 연산 감각을 기르고 순발력을 향상시킨다.
 📚 학습 유형 : 몸 풀기 게임
-🔥 난이도 : ★☆☆☆☆`,icon:"🍎",status:"playable",difficulty:"초급",estimatedTime:"5분",url:"/docs/apple_game.html",type:"몸 풀기 게임",summary:"사과를 모으며 빠른 연산과 순발력을 기르는 몸풀기 게임입니다."},{id:"number-flow",title:"넘버 플로우",description:`🎮게임명 : 넘버 플로우
+🔥 난이도 : ★☆☆☆☆`,icon:"🍎",status:"playable",difficulty:"초급",estimatedTime:"5분",url:"/apple_game.html",type:"몸 풀기 게임",summary:"사과를 모으며 빠른 연산과 순발력을 기르는 몸풀기 게임입니다."},{id:"number-flow",title:"넘버 플로우",description:`🎮게임명 : 넘버 플로우
 📘 교과명 : 몸 풀기 게임
 📂 내용범주 : 숫자 인식
 📌 내용요소 : 숫자 순서, 패턴 인식
 ✏️ 학습 가능 용어 : 순서, 패턴, 규칙성
 🎯 성취기준 : 숫자의 순서와 패턴을 빠르게 인식한다.
 📚 학습 유형 : 몸 풀기 게임
-🔥 난이도 : ★☆☆☆☆`,icon:"💧",status:"playable",difficulty:"초급",estimatedTime:"7분",url:"/docs/number_flow.html",type:"몸 풀기 게임",summary:"숫자의 흐름과 패턴을 빠르게 인식하는 몸풀기 게임입니다."}],"class-management":[],"common-math":[{id:"math-basics",title:"수학 기초 다지기",description:`🎮게임명 : 수학 기초 다지기
+🔥 난이도 : ★☆☆☆☆`,icon:"💧",status:"playable",difficulty:"초급",estimatedTime:"7분",url:"/number_flow.html",type:"몸 풀기 게임",summary:"숫자의 흐름과 패턴을 빠르게 인식하는 몸풀기 게임입니다."}],"class-management":[],"common-math":[{id:"math-basics",title:"수학 기초 다지기",description:`🎮게임명 : 수학 기초 다지기
 📘 교과명 : 공통수학1
 📂 내용범주 : 수와 연산
 📌 내용요소 : 기본 연산, 수의 성질
@@ -256,7 +256,7 @@ Error generating stack: `+i.message+`
 [10공수1-02-02] 다항식의 곱셈을 할 수 있다.
 [10공수1-02-03] 다항식을 활용하여 문제를 해결할 수 있다.
 📚 학습 유형 : 카드 배틀 게임
-🔥 난이도 : ★★★☆☆`,icon:"🃏",status:"playable",difficulty:"중급",estimatedTime:"15분",url:"/docs/polynomial_duel.html",type:"카드 게임",summary:"카드를 활용해 다항식 연산을 대결하는 전략 게임입니다."},{id:"math-city",title:"매쓰 시티",description:`🎮게임명 : 매쓰 시티
+🔥 난이도 : ★★★☆☆`,icon:"🃏",status:"playable",difficulty:"중급",estimatedTime:"15분",url:"/polynomial_duel.html",type:"카드 게임",summary:"카드를 활용해 다항식 연산을 대결하는 전략 게임입니다."},{id:"math-city",title:"매쓰 시티",description:`🎮게임명 : 매쓰 시티
 📘 교과명 : 공통수학1/확률과 통계
 📂 내용범주 : 도형의 방정식
 📌 내용요소 : 평면좌표, 직선의 방정식, 원의 방정식, 도형의 이동
@@ -268,7 +268,7 @@ Error generating stack: `+i.message+`
 [10공수2-01-06] 평행이동을 탐구하고, 실생활과 연결하여 문제를 해결할 수 있다.
 [10공수2-01-07] 원점, x축, y축, 직선 y=x에 대한 대칭이동을 탐구하고, 실생활과 연결하여 문제를 해결할 수 있다.
 📚 학습 유형 : 핵심 개념 문제 풀이
-🔥 난이도 : ★★★★☆`,icon:"🏙️",status:"playable",difficulty:"중급",estimatedTime:"20분",url:"/docs/math_city.html",type:"도시 게임",summary:"수학 도시에서 다양한 미션을 해결하며 개념을 익힙니다."},{id:"coordinate-chess",title:"좌표 체스",description:`🎮게임명 : 좌표 체스
+🔥 난이도 : ★★★★☆`,icon:"🏙️",status:"playable",difficulty:"중급",estimatedTime:"20분",url:"/math_city.html",type:"도시 게임",summary:"수학 도시에서 다양한 미션을 해결하며 개념을 익힙니다."},{id:"coordinate-chess",title:"좌표 체스",description:`🎮게임명 : 좌표 체스
 📘 교과명 : 공통수학1/기하
 📂 내용범주 : 평면좌표
 📌 내용요소 : 좌표평면, 점의 좌표, 거리
@@ -278,7 +278,7 @@ Error generating stack: `+i.message+`
 [10공수2-01-02] 두 점 사이의 거리를 구할 수 있다.
 [10공수2-01-03] 좌표를 활용하여 문제를 해결할 수 있다.
 📚 학습 유형 : 체스 게임
-🔥 난이도 : ★★★☆☆`,icon:"♟️",status:"playable",difficulty:"중급",estimatedTime:"15분",url:"/docs/coordinate_chess.html",type:"체스 게임",summary:"좌표평면에서 체스 전략을 익히는 수학 게임입니다."}],algebra:[{id:"polynomial-puzzle",title:"다항식 퍼즐",description:`🎮게임명 : 다항식 퍼즐
+🔥 난이도 : ★★★☆☆`,icon:"♟️",status:"playable",difficulty:"중급",estimatedTime:"15분",url:"/coordinate_chess.html",type:"체스 게임",summary:"좌표평면에서 체스 전략을 익히는 수학 게임입니다."}],algebra:[{id:"polynomial-puzzle",title:"다항식 퍼즐",description:`🎮게임명 : 다항식 퍼즐
 �� 교과명 : 수학1/다항식
 📂 내용범주 : 다항식의 연산
 📌 내용요소 : 다항식의 인수분해, 나머지정리

@@ -65,6 +65,13 @@ const recommendedGames = [
   'number-flow'
 ];
 
+const gradeTabs = [
+  { id: 'middle', label: '중학교' },
+  { id: 'high', label: '고등학교' },
+  { id: 'break-game', label: '몸 풀기 게임' },
+  { id: 'class-management', label: '학급운영' },
+];
+
 const Index = () => {
   const [activeSection, setActiveSection] = useState('middle');
   const [activeTab, setActiveTab] = useState('middle1');
@@ -137,6 +144,15 @@ const Index = () => {
     } else if (sectionId === 'class-management') {
       setActiveTab('class-management');
     }
+  };
+
+  // 학년별 탭 클릭 핸들러
+  const handleGradeTabChange = (gradeId: string) => {
+    setActiveSection(gradeId);
+    if (gradeId === 'middle') setActiveTab('middle1');
+    else if (gradeId === 'high') setActiveTab('common-math');
+    else if (gradeId === 'break-game') setActiveTab('break-game');
+    else if (gradeId === 'class-management') setActiveTab('class-management');
   };
 
   let currentTabs: TabData[] = [];
@@ -316,14 +332,14 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Section Navigation */}
+      {/* 학년별 탭 */}
       <section className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-6">
           <div className="flex space-x-1 py-4">
-            {mainTabs.map(tab => (
+            {gradeTabs.map(tab => (
               <button
                 key={tab.id}
-                onClick={() => handleSectionChange(tab.id)}
+                onClick={() => handleGradeTabChange(tab.id)}
                 className={`flex items-center space-x-2 px-6 py-3 rounded-xl transition-all duration-200 font-medium ${
                   activeSection === tab.id
                     ? 'bg-blue-600 text-white shadow-md'

@@ -99,33 +99,25 @@ const Main = () => {
           muted
           playsInline
         />
-        {/* 오버레이 */}
-        <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+        {/* 오버레이 더 어둡게 */}
+        <div className="absolute inset-0 bg-black bg-opacity-45 z-10"></div>
         <div className="container mx-auto px-6 py-20 relative z-20">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="flex justify-center mb-8">
-              <div className="text-8xl animate-bounce">🎮</div>
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+            {/* 타이틀/설명에 drop-shadow 추가 */}
+            <h1 className="text-10xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg">
               Math Game Archive
             </h1>
-            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90">
-              현직 교사들이 직접 만든 <span className="font-semibold text-yellow-300">진짜 교육용 수학 게임</span>을 
+            <p className="text-xl md:text-4xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90 drop-shadow-lg">
+              현직 교사들이 직접 만든<br/> <span className="font-semibold text-yellow-300">진짜 교육용 수학 게임</span>을 
               즐겨보세요!
             </p>
-            
-            <div className="flex flex-wrap justify-center gap-6 mb-12">
+            {/* 버튼을 단독 중앙 배치 */}
+            <div className="flex justify-center">
               <Button 
                 onClick={() => navigate('/games')}
-                className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium shadow-lg"
+                className="bg-transparent border border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full text-xl font-bold shadow-lg transition-colors"
               >
                 게임 시작하기
-              </Button>
-              <Button 
-                variant="outline"
-                className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full text-lg font-medium"
-              >
-                더 알아보기
               </Button>
             </div>
           </div>
@@ -294,7 +286,7 @@ const Main = () => {
               </h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
                 하나, 교육과정에 충실한 게임을 만듭니다.<br/>
-                모든 게임은 22개정교육과정에 명시된 핵심 개념을 바탕으로 제작합니다.
+                모든 게임은 22개정교육과정에 명시된 핵심 개념을 바탕으로 제작합니다.<br/>
                 각 게임이 어떤 성취수준을 목표로 하는지 명확히 제시하여 의미 있는 학습을 돕습니다.
               </p>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
@@ -342,7 +334,7 @@ const Main = () => {
             onClick={() => navigate('/games')}
             className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium shadow-lg"
           >
-            게임 둘러보기
+            게임 시작하기
           </Button>
         </div>
       </section>

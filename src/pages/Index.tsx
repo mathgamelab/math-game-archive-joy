@@ -45,7 +45,7 @@ const highSchoolTabs: TabData[] = [
 ];
 
 const breakGameTabs: TabData[] = [
-  { id: 'break-game', label: '몸 풀기 게임', description: '간단한 몸풀기 수학 게임' }
+  { id: 'break-game', label: '뇌풀기 게임', description: '두뇌를 말랑말랑하게 만드는 게임' }
 ];
 
 const classManagementTabs: TabData[] = [
@@ -55,7 +55,7 @@ const classManagementTabs: TabData[] = [
 const mainTabs = [
   { id: 'middle', label: '중학수학' },
   { id: 'high', label: '고등수학' },
-  { id: 'break-game', label: '몸 풀기 게임' },
+  { id: 'break-game', label: '뇌풀기 게임' },
   { id: 'class-management', label: '학급운영' },
 ];
 
@@ -69,7 +69,7 @@ const recommendedGames = [
 const gradeTabs = [
   { id: 'middle', label: '중학교' },
   { id: 'high', label: '고등학교' },
-  { id: 'break-game', label: '몸 풀기 게임' },
+  { id: 'break-game', label: '뇌풀기 게임' },
   { id: 'class-management', label: '학급운영' },
 ];
 

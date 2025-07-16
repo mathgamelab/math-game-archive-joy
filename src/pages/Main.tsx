@@ -89,7 +89,7 @@ const Main = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section - EBSMath 스타일 */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
+      <section className="relative overflow-hidden text-white">
         {/* 배경 동영상 */}
         <video
           className="absolute inset-0 w-full h-full object-cover z-0"

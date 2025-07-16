@@ -9,7 +9,11 @@ import {
   Heart,
   Award,
   Lightbulb,
-  Globe
+  Globe,
+  Play,
+  Star,
+  Clock,
+  TrendingUp
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
@@ -40,39 +44,40 @@ const About = () => {
   ];
 
   const stats = [
-    { number: "50+", label: "수학 게임" },
-    { number: "1000+", label: "학습자" },
-    { number: "10+", label: "제작 교사" },
-    { number: "24/7", label: "학습 가능" }
+    { number: "50+", label: "수학 게임", icon: <Play className="h-6 w-6" /> },
+    { number: "1000+", label: "학습자", icon: <Users className="h-6 w-6" /> },
+    { number: "10+", label: "제작 교사", icon: <Heart className="h-6 w-6" /> },
+    { number: "24/7", label: "학습 가능", icon: <Clock className="h-6 w-6" /> }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="relative bg-white border-b border-gray-200">
-        <div className="container mx-auto px-6 py-20">
+      {/* Hero Section - EBSMath 스타일 */}
+      <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
+        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+        <div className="container mx-auto px-6 py-20 relative">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-8">
-              <div className="text-6xl">🧩</div>
+              <div className="text-8xl animate-bounce">🧩</div>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
               Math Game Archive
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-              현직 교사들이 만든 <span className="font-semibold text-blue-600">디지털 수학 콘텐츠</span>를 
+            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90">
+              현직 교사들이 만든 <span className="font-semibold text-yellow-300">디지털 수학 콘텐츠</span>를 
               게임으로 즐겨보세요
             </p>
             
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
+            <div className="flex flex-wrap justify-center gap-6 mb-12">
               <Button 
                 onClick={() => navigate('/games')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full text-lg font-medium"
+                className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium shadow-lg"
               >
                 게임 시작하기
               </Button>
               <Button 
                 variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 rounded-full text-lg font-medium"
+                className="border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full text-lg font-medium"
               >
                 더 알아보기
               </Button>
@@ -81,12 +86,43 @@ const About = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* 간단한 소개글 섹션 */}
       <section className="py-16 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
+              수학을 재미있게, 쉽게, 체계적으로
+            </h2>
+            <div className="prose prose-lg mx-auto text-gray-600 leading-relaxed">
+              <p className="text-xl mb-6">
+                Math Game Archive는 현직 수학 교사들이 직접 제작한 디지털 수학 콘텐츠를 
+                게임 형태로 제공하는 플랫폼입니다.
+              </p>
+              <p className="text-lg mb-6">
+                기존의 지루하고 어려운 수학 학습을 벗어나, 
+                <span className="font-semibold text-blue-600"> 게임을 통해 재미있게 수학을 배울 수 있도록</span> 
+                만들었습니다.
+              </p>
+              <p className="text-lg">
+                교과서 순서에 맞춘 체계적인 구성과 단계별 난이도 설정으로 
+                모든 학생들이 자신의 수준에 맞는 학습을 할 수 있습니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16 bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="container mx-auto px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg text-blue-600">
+                    {stat.icon}
+                  </div>
+                </div>
                 <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-2">
                   {stat.number}
                 </div>
@@ -100,7 +136,7 @@ const About = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -113,7 +149,7 @@ const About = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-lg bg-white rounded-2xl hover:shadow-xl transition-all duration-300">
+              <Card key={index} className="border-0 shadow-lg bg-white rounded-2xl hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
                 <CardHeader className="text-center pb-4">
                   <div className="flex justify-center mb-4">
                     {feature.icon}
@@ -134,7 +170,7 @@ const About = () => {
       </section>
 
       {/* About Content */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -200,7 +236,7 @@ const About = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-blue-600">
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             지금 바로 시작해보세요!
@@ -211,7 +247,7 @@ const About = () => {
           </p>
           <Button 
             onClick={() => navigate('/games')}
-            className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium"
+            className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium shadow-lg"
           >
             게임 둘러보기
           </Button>

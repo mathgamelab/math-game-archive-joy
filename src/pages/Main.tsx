@@ -42,31 +42,31 @@ const Main = () => {
   const features = [
     {
       icon: <BookOpen className="h-8 w-8 text-blue-600" />,
-      title: "체계적 학습",
-      description: "교과서 순서에 맞춘 체계적인 수학 학습을 제공합니다."
+      title: "교육과정 기반",
+      description: "교육과정에서 제시하는 핵심 개념에 기반하여 게임을 제작합니다."
     },
     {
       icon: <Target className="h-8 w-8 text-purple-600" />,
-      title: "단계별 난이도",
-      description: "초급부터 고급까지 단계별로 구성된 난이도를 제공합니다."
+      title: "성취수준 반영",
+      description: "모든 게임은 '성취수준'의 도달을 기본 목표로 합니다."
     },
     {
       icon: <Sparkles className="h-8 w-8 text-green-600" />,
-      title: "게임형 학습",
-      description: "지루한 문제 풀이가 아닌 재미있는 게임으로 수학을 학습합니다."
+      title: "게이미피케이션",
+      description: "게임의 몰입감을 수학으로 옮겨갈 수 있게 합니다."
     },
     {
       icon: <Users className="h-8 w-8 text-orange-600" />,
       title: "교사 제작",
-      description: "현직 교사들이 직접 제작한 신뢰할 수 있는 콘텐츠입니다."
+      description: "선생님이 직접 제작한 신뢰할 수 있는 콘텐츠입니다."
     }
   ];
 
   const stats = [
-    { number: "50+", label: "수학 게임", icon: <Play className="h-6 w-6" /> },
-    { number: "1000+", label: "학습자", icon: <Users className="h-6 w-6" /> },
-    { number: "10+", label: "제작 교사", icon: <Heart className="h-6 w-6" /> },
-    { number: "24/7", label: "학습 가능", icon: <Clock className="h-6 w-6" /> }
+    { number: "20+", label: "등록된 게임", icon: <Play className="h-6 w-6" /> },
+    { number: "100+", label: "플레이 횟수", icon: <Users className="h-6 w-6" /> },
+    { number: "20+", label: "플레이 시간", icon: <Clock className="h-6 w-6" /> },
+    { number: "10+", label: "참여 교사", icon: <Heart className="h-6 w-6" /> },
   ];
 
   return (
@@ -77,14 +77,14 @@ const Main = () => {
         <div className="container mx-auto px-6 py-20 relative">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-8">
-              <div className="text-8xl animate-bounce">🧩</div>
+              <div className="text-8xl animate-bounce">🎮</div>
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
               Math Game Archive
             </h1>
             <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90">
-              현직 교사들이 만든 <span className="font-semibold text-yellow-300">디지털 수학 콘텐츠</span>를 
-              게임으로 즐겨보세요
+              현직 교사들이 직접 만든 <span className="font-semibold text-yellow-300">진짜 교육용 수학 게임</span>을 
+              즐겨보세요!
             </p>
             
             <div className="flex flex-wrap justify-center gap-6 mb-12">
@@ -110,21 +110,21 @@ const Main = () => {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
-              수학을 재미있게, 쉽게, 체계적으로
+              수학을 친숙하게, 재미있게, 몰입해서!
             </h2>
             <div className="prose prose-lg mx-auto text-gray-600 leading-relaxed">
               <p className="text-xl mb-6">
-                Math Game Archive는 현직 수학 교사들이 직접 제작한 디지털 수학 콘텐츠를 
-                게임 형태로 제공하는 플랫폼입니다.
+                Math Game Archive는 수학 교사들이 직접 제작한
+                교육용 수학 게임을 즐길 수 있는 플랫폼입니다.
               </p>
               <p className="text-lg mb-6">
-                기존의 지루하고 어려운 수학 학습을 벗어나, 
-                <span className="font-semibold text-blue-600"> 게임을 통해 재미있게 수학을 배울 수 있도록</span> 
-                만들었습니다.
+                교육과정과 단원별 성취수준에 기반한 구성으로
+                진정한 의미의 '학습'이 일어나도록 게임을 설계했습니다.
               </p>
-              <p className="text-lg">
-                교과서 순서에 맞춘 체계적인 구성과 단계별 난이도 설정으로 
-                모든 학생들이 자신의 수준에 맞는 학습을 할 수 있습니다.
+              <p className="text-lg mb-6">
+                기존의 지루하고 어려운 수학 학습에서 잠시 벗어나, 
+                <span className="font-semibold text-blue-600"> 수학의 진짜 재미를</span> 
+                느낄 수 있습니다.
               </p>
             </div>
           </div>
@@ -219,11 +219,8 @@ const Main = () => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              왜 Math Game Archive인가요?
+              기존의 교육용 게임들과 무엇이 다른가요?
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              기존의 지루한 수학 학습을 벗어나, 게임을 통해 재미있게 수학을 배워보세요.
-            </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -256,17 +253,25 @@ const Main = () => {
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-6">
                   현직 교사들이 만드는<br />
-                  <span className="text-blue-600">신뢰할 수 있는 콘텐츠</span>
+                  <span className="text-blue-600">'진짜' 교육용 수학 게임</span>
                 </h2>
                 <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                  Math Game Archive는 현직 수학 교사들이 직접 제작한 디지털 수학 콘텐츠를 
-                  게임 형태로 제공하는 플랫폼입니다.
+                  하나, 교육과정에 충실합니다.<br/>
+                  모든 게임은 22개정교육과정에 명시된 핵심 개념을 바탕으로 제작합니다.<br/>
+                  각 게임이 어떤 성취수준을 목표로 하는지 명확히 제시하여 의미 있는 학습을 돕습니다.
                 </p>
                 <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  교과서 순서에 맞춘 체계적인 구성과 단계별 난이도 설정으로 
-                  모든 학생들이 자신의 수준에 맞는 학습을 할 수 있습니다.
+                  둘, 학습 동기로 이어지는 게이미피케이션을 추구합니다.<br/>
+                  저희가 추구하는 게이피케이션은 '게임을 이기려는 마음'이 '수학을 배우려는 마음'으로<br/>
+                  전환되는 경험입니다. 단순한 보상과 경쟁이 아닌, 게임의 전략과 규칙에 따라 즐기는<br/>
+                  과정에서 자연스럽게 수학을 이해하기 됩니다.
                 </p>
-                
+                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                  셋, 수학과 친해지는 경험을 선물합니다.<br/>
+                  물론 게임만으로는 성적을 올릴 수 없습니다. 하지만 교과서를 펼치기 싫어하는 학생도
+                  수학 게임에는 즐겁게 참여할 수 있습니다. 게임이라는 공통의 관심사를 두고 수학을
+                  함께 즐기는 시간, 그 자체로 가장 중요한 학습 동기가 형성될 수 있음을 믿습니다.
+                </p>
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2 text-blue-600">
                     <Heart className="h-5 w-5" />
@@ -278,7 +283,7 @@ const Main = () => {
                   </div>
                   <div className="flex items-center space-x-2 text-purple-600">
                     <Lightbulb className="h-5 w-5" />
-                    <span className="font-medium">창의적 학습</span>
+                    <span className="font-medium">학습 동기 강화</span>
                   </div>
                 </div>
               </div>
@@ -287,24 +292,24 @@ const Main = () => {
                 <div className="text-center">
                   <div className="text-6xl mb-4">🎯</div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                    학습 목표
+                    Math Game의 목표
                   </h3>
                   <ul className="text-left space-y-3 text-gray-600">
                     <li className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span>수학에 대한 흥미와 자신감 향상</span>
+                      <span>수학이 즐거워지는 경험을 선물</span>
                     </li>
                     <li className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                      <span>개념 이해와 문제 해결 능력 증진</span>
+                      <span>교육과정에 기반한 핵심 개념 다지기</span>
                     </li>
                     <li className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                      <span>수학적 사고력과 논리력 개발</span>
+                      <span>기본기를 다지는 연산 훈련</span>
                     </li>
                     <li className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                      <span>실생활과 연결된 수학 학습</span>
+                      <span>게임의 동기를 수학 학습의 동기로!</span>
                     </li>
                   </ul>
                 </div>

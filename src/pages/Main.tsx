@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -18,20 +18,37 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { gamesData } from '@/data/gamesData';
 import { useGameStats } from '@/hooks/useGameStats';
-import { GameCard } from '@/components/GameCard';
-
-const recommendedGames = [
-  'number_flow_integer',
-  'apple-game',
-  'number-flow'
-];
+import { GameCard, GameData } from '@/components/GameCard';
+import { GameModal } from '@/components/GameModal';
+import recommendedGames from '@/data/recommendedGames.json';
 
 const Main = () => {
   const navigate = useNavigate();
-  const { getPopularGames } = useGameStats();
+  const { getPopularGames, incrementPlayCount } = useGameStats();
   const allGames = Object.values(gamesData).flat();
 
-  // 추천 게임 필터링
+  // 모달 상태 및 핸들러 추가
+  const [selectedGame, setSelectedGame] = useState<GameData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleGameClick = (game: GameData) => {
+    setSelectedGame(game);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedGame(null);
+  };
+
+  const handlePlayClick = (game: GameData) => {
+    incrementPlayCount(game.id);
+    if (game.url) {
+      window.open(game.url, '_blank');
+    }
+  };
+
+  // 추천 게임 필터링 (JSON에서 불러옴)
   const getRecommendedGames = () => {
     return allGames.filter(game => recommendedGames.includes(game.id));
   };
@@ -177,7 +194,8 @@ const Main = () => {
               <GameCard 
                 key={game.id} 
                 game={game}
-                onClick={() => {}}
+                onClick={handleGameClick}
+                onPlayClick={handlePlayClick}
               />
             ))}
           </div>
@@ -207,7 +225,8 @@ const Main = () => {
               <GameCard 
                 key={game.id} 
                 game={game}
-                onClick={() => {}}
+                onClick={handleGameClick}
+                onPlayClick={handlePlayClick}
               />
             ))}
           </div>
@@ -253,25 +272,17 @@ const Main = () => {
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-6">
                   현직 교사들이 만드는<br />
-                  <span className="text-blue-600">'진짜' 교육용 수학 게임</span>
+                  <span className="text-blue-600">신뢰할 수 있는 콘텐츠</span>
                 </h2>
                 <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                  하나, 교육과정에 충실합니다.<br/>
-                  모든 게임은 22개정교육과정에 명시된 핵심 개념을 바탕으로 제작합니다.<br/>
-                  각 게임이 어떤 성취수준을 목표로 하는지 명확히 제시하여 의미 있는 학습을 돕습니다.
+                  Math Game Archive는 현직 수학 교사들이 직접 제작한 디지털 수학 콘텐츠를 
+                  게임 형태로 제공하는 플랫폼입니다.
                 </p>
                 <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  둘, 학습 동기로 이어지는 게이미피케이션을 추구합니다.<br/>
-                  저희가 추구하는 게이피케이션은 '게임을 이기려는 마음'이 '수학을 배우려는 마음'으로<br/>
-                  전환되는 경험입니다. 단순한 보상과 경쟁이 아닌, 게임의 전략과 규칙에 따라 즐기는<br/>
-                  과정에서 자연스럽게 수학을 이해하기 됩니다.
+                  교과서 순서에 맞춘 체계적인 구성과 단계별 난이도 설정으로 
+                  모든 학생들이 자신의 수준에 맞는 학습을 할 수 있습니다.
                 </p>
-                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  셋, 수학과 친해지는 경험을 선물합니다.<br/>
-                  물론 게임만으로는 성적을 올릴 수 없습니다. 하지만 교과서를 펼치기 싫어하는 학생도
-                  수학 게임에는 즐겁게 참여할 수 있습니다. 게임이라는 공통의 관심사를 두고 수학을
-                  함께 즐기는 시간, 그 자체로 가장 중요한 학습 동기가 형성될 수 있음을 믿습니다.
-                </p>
+                
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2 text-blue-600">
                     <Heart className="h-5 w-5" />
@@ -283,37 +294,11 @@ const Main = () => {
                   </div>
                   <div className="flex items-center space-x-2 text-purple-600">
                     <Lightbulb className="h-5 w-5" />
-                    <span className="font-medium">학습 동기 강화</span>
+                    <span className="font-medium">창의적 학습</span>
                   </div>
                 </div>
               </div>
-              
-              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-8">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🎯</div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                    Math Game의 목표
-                  </h3>
-                  <ul className="text-left space-y-3 text-gray-600">
-                    <li className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      <span>수학이 즐거워지는 경험을 선물</span>
-                    </li>
-                    <li className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                      <span>교육과정에 기반한 핵심 개념 다지기</span>
-                    </li>
-                    <li className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                      <span>기본기를 다지는 연산 훈련</span>
-                    </li>
-                    <li className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                      <span>게임의 동기를 수학 학습의 동기로!</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+              {/* 학습 목표(🎯) 섹션 완전 삭제 */}
             </div>
           </div>
         </div>
@@ -323,10 +308,10 @@ const Main = () => {
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="container mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            지금 바로 시작해보세요!
+            지금 바로 플레이해보세요!
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            무료로 제공되는 다양한 수학 게임을 통해 
+            무료로 제공되는 다양한 수학 게임을 통해 <br/>
             재미있고 효과적인 학습을 경험해보세요.
           </p>
           <Button 
@@ -361,6 +346,19 @@ const Main = () => {
           </p>
         </div>
       </footer>
+
+      {/* Game Modal */}
+      {selectedGame && (
+        <GameModal
+          game={selectedGame}
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          onPlay={() => {
+            handlePlayClick(selectedGame);
+            handleModalClose();
+          }}
+        />
+      )}
     </div>
   );
 };

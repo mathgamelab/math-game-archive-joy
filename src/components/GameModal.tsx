@@ -91,58 +91,12 @@ export const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose, onP
             </div>
           </div>
 
-          {/* Description */}
+          {/* Description (게임명, 교과명 등 포함)만 남기고, 게임 정보 박스는 완전히 삭제 */}
           <div className="bg-gray-50 rounded-xl p-4">
             <p className="text-gray-700 leading-relaxed whitespace-pre-line text-sm" style={{wordBreak: 'keep-all'}}>
               {game.description}
             </p>
           </div>
-
-          {/* Game Details */}
-          {hasDetailedInfo ? (
-            <div className="space-y-4 bg-blue-50 rounded-xl p-4">
-              <h3 className="font-semibold text-gray-900 text-lg mb-3">게임 정보</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {game.category && (
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-700 text-sm">카테고리:</span>
-                    <span className="text-gray-600 text-sm">{game.category}</span>
-                  </div>
-                )}
-                {game.content && (
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-700 text-sm">내용:</span>
-                    <span className="text-gray-600 text-sm">{game.content}</span>
-                  </div>
-                )}
-                {game.terms && (
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-700 text-sm">용어:</span>
-                    <span className="text-gray-600 text-sm">{game.terms}</span>
-                  </div>
-                )}
-                {game.standard && (
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-700 text-sm">기준:</span>
-                    <span className="text-gray-600 text-sm">{game.standard}</span>
-                  </div>
-                )}
-                {game.type && (
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-700 text-sm">유형:</span>
-                    <span className="text-gray-600 text-sm">{game.type}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="bg-amber-50 rounded-xl p-4 text-center">
-              <div className="text-2xl mb-2">🚧</div>
-              <p className="text-amber-700 font-medium">
-                이 게임은 준비 중입니다. 곧 만나요!
-              </p>
-            </div>
-          )}
 
           {/* 통계 정보 */}
           {game.stats && (
@@ -151,13 +105,7 @@ export const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose, onP
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-bold text-sm">{game.stats.clickCount}</span>
-                  </div>
-                  <span className="text-gray-600 text-sm">조회수</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 font-bold text-sm">{game.stats.playCount}</span>
+                    <span className="text-blue-600 font-bold text-sm">{game.stats.playCount}</span>
                   </div>
                   <span className="text-gray-600 text-sm">플레이 수</span>
                 </div>

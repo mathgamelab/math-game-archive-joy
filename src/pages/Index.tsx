@@ -205,8 +205,8 @@ const Index = () => {
               Math Game Archive
             </h1>
             <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90">
-              현직 교사들이 직접 만든 <span className="font-semibold text-yellow-300">수학 콘텐츠</span>를 
-              게임으로 즐겨보세요
+              현직 교사들이 직접 만든 <span className="font-semibold text-yellow-300">진짜 교육용 수학 게임</span>을 
+              즐겨보세요!
             </p>
             <div className="flex flex-wrap justify-center gap-6 mb-12">
               <Button 

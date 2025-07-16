@@ -93,7 +93,7 @@ const Main = () => {
         {/* 배경 동영상 */}
         <video
           className="absolute inset-0 w-full h-full object-cover z-0"
-          src="/videos/banner.mp4" // 파일명/경로에 맞게 수정
+          src="/videos/high_school_math.mp4" // 파일명/경로에 맞게 수정
           autoPlay
           loop
           muted

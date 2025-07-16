@@ -191,147 +191,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section - EBSMath 스타일 */}
-      <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
-        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-        <div className="container mx-auto px-6 py-20 relative">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="flex justify-center mb-8">
-              <div className="text-8xl animate-bounce">🎮</div>
-            </div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              수학 게임 아카이브
-            </h1>
-            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90">
-              현직 교사들이 만든 <span className="font-semibold text-yellow-300">디지털 수학 콘텐츠</span>를 
-              게임으로 즐겨보세요
-            </p>
-            
-            <div className="flex flex-wrap justify-center gap-6 mb-12">
-              <div className="flex items-center space-x-3 bg-white bg-opacity-20 rounded-full px-8 py-4 backdrop-blur-sm">
-                <BookOpen className="h-6 w-6 text-yellow-300" />
-                <span className="font-medium">체계적 학습</span>
-              </div>
-              <div className="flex items-center space-x-3 bg-white bg-opacity-20 rounded-full px-8 py-4 backdrop-blur-sm">
-                <Target className="h-6 w-6 text-yellow-300" />
-                <span className="font-medium">단계별 난이도</span>
-              </div>
-              <div className="flex items-center space-x-3 bg-white bg-opacity-20 rounded-full px-8 py-4 backdrop-blur-sm">
-                <Calculator className="h-6 w-6 text-yellow-300" />
-                <span className="font-medium">실습 중심</span>
-              </div>
-            </div>
-
-            {/* 검색바 */}
-            <div className="max-w-md mx-auto">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="게임을 검색해보세요..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 rounded-full bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-blue-300"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 추천 콘텐츠 섹션 */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                추천 콘텐츠
-              </h2>
-              <p className="text-lg text-gray-600">
-                선생님이 추천하는 인기 수학 게임을 만나보세요
-              </p>
-            </div>
-            <Button variant="outline" className="flex items-center space-x-2">
-              <span>더보기</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {getRecommendedGames().map((game) => (
-              <GameCard 
-                key={game.id} 
-                game={game}
-                onClick={handleGameClick}
-                onPlayClick={handlePlayClick}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 인기 콘텐츠 섹션 */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                인기 콘텐츠
-              </h2>
-              <p className="text-lg text-gray-600">
-                많은 학생들이 즐기고 있는 인기 게임입니다
-              </p>
-            </div>
-            <div className="flex items-center space-x-2 text-blue-600">
-              <TrendingUp className="h-5 w-5" />
-              <span className="font-medium">실시간 인기</span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {popularGames.map((game) => (
-              <GameCard 
-                key={game.id} 
-                game={game}
-                onClick={handleGameClick}
-                onPlayClick={handlePlayClick}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 최신 콘텐츠 섹션 */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
-                최신 콘텐츠
-              </h2>
-              <p className="text-lg text-gray-600">
-                최근에 플레이된 게임들을 확인해보세요
-              </p>
-            </div>
-            <div className="flex items-center space-x-2 text-green-600">
-              <Calendar className="h-5 w-5" />
-              <span className="font-medium">최근 플레이</span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {recentGames.map((game) => (
-              <GameCard 
-                key={game.id} 
-                game={game}
-                onClick={handleGameClick}
-                onPlayClick={handlePlayClick}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* 학년별 탭 */}
       <section className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-6">
@@ -375,7 +234,6 @@ const Index = () => {
             </div>
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-2 bg-white rounded-full px-4 py-2 border border-gray-200">
-                <Sparkles className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-medium text-gray-700">
                   총 {filteredGames.length}개 게임
                 </span>
@@ -386,7 +244,6 @@ const Index = () => {
           {/* 필터 */}
           <div className="flex items-center space-x-4 mb-8">
             <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-500" />
               <span className="text-sm font-medium text-gray-700">난이도:</span>
             </div>
             <div className="flex space-x-2">

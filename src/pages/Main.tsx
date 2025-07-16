@@ -104,7 +104,7 @@ const Main = () => {
         <div className="container mx-auto px-6 py-20 relative z-20">
           <div className="max-w-4xl mx-auto text-center">
             {/* 타이틀/설명에 drop-shadow 추가 */}
-            <h1 className="text-10xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg">
+            <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg">
               Math Game Archive
             </h1>
             <p className="text-xl md:text-4xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90 drop-shadow-lg">
@@ -129,7 +129,7 @@ const Main = () => {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
-              수학을 친숙하게, 재미있게, 몰입해서!
+              수학을 친숙하게, 재미있게, 푹 빠져들게!
             </h2>
             <div className="prose prose-lg mx-auto text-gray-600 leading-relaxed">
               <p className="text-xl mb-6">
@@ -285,21 +285,22 @@ const Main = () => {
                 <span className="text-blue-600">진짜 교육용 수학 게임</span>을 제작합니다.
               </h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                하나, 교육과정에 충실한 게임을 만듭니다.<br/>
-                모든 게임은 22개정교육과정에 명시된 핵심 개념을 바탕으로 제작합니다.<br/>
+                첫째, 교육과정에 충실한 게임을 만듭니다.<br/>
+                모든 게임은 2022개정교육과정에 명시된 핵심 개념을 바탕으로 제작합니다.<br/>
                 각 게임이 어떤 성취수준을 목표로 하는지 명확히 제시하여 의미 있는 학습을 돕습니다.
               </p>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                둘, 학습 동기로 이어지는 게이미피케이션을 추구합니다.<br/>
-                저희가 추구하는 게이피케이션은 '게임을 이기려는 마음'이 '수학을 배우려는 마음'으로<br/>
-                전환되는 경험입니다. 단순한 보상과 경쟁이 아닌, 게임의 전략과 규칙에 따라 즐기는<br/>
-                과정에서 자연스럽게 수학을 이해하기 됩니다.
+                둘째, 학습 동기로 이어지는 게이미피케이션을 추구합니다.<br/>
+                저희가 추구하는 게이피케이션은 '게임을 잘하고자 하는 동기'가<br/>
+                '수학을 배우려는 동기'로 전환되는 경험을 제공하는 것 입니다.<br/>
+                학생들은 게임의 전략과 규칙에 따라 즐기는 과정에서 자연스럽게 수학을 이해하기 됩니다.
               </p>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                셋, 수학과 친해지는 경험을 선물합니다.<br/>
-                물론 게임만으로는 성적을 올릴 수 없습니다. 하지만 교과서를 펼치기 싫어하는 학생도<br/>
-                수학 게임에는 즐겁게 참여할 수 있습니다. 게임이라는 공통의 관심사를 두고 수학을<br/>
-                함께 즐기는 시간, 그 자체로 가장 중요한 학습 동기가 형성될 수 있음을 믿습니다.
+                셋째, 수학과 친해지는 경험을 선물합니다.<br/>
+                물론 게임만으로는 성적을 올릴 수 없습니다.<br/>
+                하지만 교과서를 펼치기 싫어하는 학생도 수학 게임에는 즐겁게 참여할 수 있습니다.<br/>
+                게임이라는 공통의 관심사를 두고 수학을 함께 즐기는 시간,<br/>
+                그 자체로 가장 중요한 학습 동기가 형성될 수 있음을 믿습니다.
               </p>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2 text-blue-600">
@@ -312,7 +313,7 @@ const Main = () => {
                 </div>
                 <div className="flex items-center space-x-2 text-purple-600">
                   <Lightbulb className="h-5 w-5" />
-                  <span className="font-medium">창의적 학습</span>
+                  <span className="font-medium">몰입하는 학습</span>
                 </div>
               </div>
             </div>
@@ -340,16 +341,16 @@ const Main = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
+      <footer className="bg-gray-900 text-white py-6">
         <div className="container mx-auto px-6 text-center">
-          <div className="flex justify-center items-center space-x-3 mb-6">
+          <div className="flex justify-center items-center space-x-3 mb-2">
             <div className="text-3xl">🎮</div>
-            <h3 className="text-2xl font-bold">Math Game Archive</h3>
+            <h3 className="text-2xl font-bold leading-none">Math Game Archive</h3>
           </div>
-          <p className="text-gray-300 mb-6 text-lg">
+          <p className="text-gray-300 mb-2 text-lg leading-none">
             행복한 수학, 함께 만들어요 😊
           </p>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-400 leading-none">
             © 행복한윤쌤 |{' '}
             <a 
               href="https://blog.naver.com/happy_yoonssam" 

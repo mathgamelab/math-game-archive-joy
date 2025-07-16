@@ -201,25 +201,16 @@ const Index = () => {
             <div className="flex justify-center mb-8">
               <div className="text-8xl animate-bounce">🎮</div>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-              Math Game Archive
-            </h1>
-            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90">
-              현직 교사들이 직접 만든 <span className="font-semibold text-yellow-300">진짜 교육용 수학 게임</span>을 
-              즐겨보세요!
+            <h1 className="text-4xl md:text-7xl font-bold mb-6 leading-tight drop-shadow-lg">Math Game Archive</h1>
+            <p className="text-xl md:text-4xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90 drop-shadow-lg">
+              현직 교사들이 직접 만든<br/> <span className="font-semibold text-yellow-300">진짜 교육용 수학 게임</span>을 즐겨보세요!
             </p>
-            <div className="flex flex-wrap justify-center gap-6 mb-12">
+            <div className="flex justify-center">
               <Button 
                 onClick={() => navigate('/games')}
-                className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium shadow-lg"
+                className="bg-transparent border border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full text-xl font-bold shadow-lg transition-colors"
               >
                 게임 시작하기
-              </Button>
-              <Button 
-                variant="outline"
-                className="border-white text-blue-600 hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full text-lg font-medium"
-              >
-                더 알아보기
               </Button>
             </div>
           </div>
@@ -234,7 +225,7 @@ const Index = () => {
               <button
                 key={tab.id}
                 onClick={() => handleGradeTabChange(tab.id)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-xl transition-all duration-200 font-medium ${
+                className={`flex items-center space-x-2 px-6 py-3 rounded-xl transition-all duration-200 font-medium text-sm tracking-tighter sm:text-lg sm:tracking-normal ${
                   activeSection === tab.id
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -336,6 +327,28 @@ const Index = () => {
           }}
         />
       )}
+      <footer className="bg-gray-900 text-white py-6">
+        <div className="container mx-auto px-6 text-center">
+          <div className="flex justify-center items-center space-x-3 mb-2">
+            <div className="text-3xl">🎮</div>
+            <h3 className="text-2xl font-bold leading-none">Math Game Archive</h3>
+          </div>
+          <p className="text-gray-300 mb-2 text-lg leading-none">
+            행복한 수학, 함께 만들어요 😊
+          </p>
+          <p className="text-sm text-gray-400 leading-none">
+            © 행복한윤쌤 |{' '}
+            <a 
+              href="https://blog.naver.com/happy_yoonssam" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              https://blog.naver.com/happy_yoonssam
+            </a>
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };

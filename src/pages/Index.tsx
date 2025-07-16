@@ -3,6 +3,7 @@ import { GameCard, GameData } from '@/components/GameCard';
 import { GameModal } from '@/components/GameModal';
 import { NavigationTabs, TabData } from '@/components/NavigationTabs';
 import { gamesData } from '@/data/gamesData';
+import { useNavigate } from 'react-router-dom';
 import { useGameStats } from '@/hooks/useGameStats';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +80,7 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
+  const navigate = useNavigate();
 
   const { 
     incrementClickCount, 
@@ -191,6 +193,39 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Hero Section - 메인과 동일하게 상단에 노출 */}
+      <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
+        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+        <div className="container mx-auto px-6 py-20 relative">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="flex justify-center mb-8">
+              <div className="text-8xl animate-bounce">🎮</div>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+              Math Game Archive
+            </h1>
+            <p className="text-xl md:text-2xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90">
+              현직 교사들이 만든 <span className="font-semibold text-yellow-300">수학 콘텐츠</span>를 
+              게임으로 즐겨보세요
+            </p>
+            <div className="flex flex-wrap justify-center gap-6 mb-12">
+              <Button 
+                onClick={() => navigate('/games')}
+                className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-full text-lg font-medium shadow-lg"
+              >
+                게임 시작하기
+              </Button>
+              <Button 
+                variant="outline"
+                className="border-white text-blue-600 hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full text-lg font-medium"
+              >
+                더 알아보기
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 학년별 탭 */}
       <section className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
         <div className="container mx-auto px-6">

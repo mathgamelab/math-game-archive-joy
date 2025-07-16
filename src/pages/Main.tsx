@@ -266,48 +266,53 @@ const Main = () => {
 
       {/* About Content */}
       <section className="py-20 bg-gray-50">
+        {/* 웹폰트 CDN 적용 (예: Cafe24 단정해체) */}
+        <link href="https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2104@1.1/Cafe24Dangdanghae.woff" rel="stylesheet" as="style" type="text/css" crossOrigin="anonymous" />
+        <style>{`
+          .about-truefont {
+            font-family: 'Cafe24Dangdanghae', 'Nanum Myeongjo', 'serif';
+            letter-spacing: 0.01em;
+            font-weight: 400;
+          }
+        `}</style>
         <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                  현직 교사들이 교육과정에 기반하여<br />
-                  <span className="text-blue-600">진짜 교육용 수학 게임</span>을 제작합니다.
-                </h2>
-                <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                  하나, 교육과정에 충실한 게임을 만듭니다.<br/>
-                  모든 게임은 22개정교육과정에 명시된 핵심 개념을 바탕으로 제작합니다.
-                  각 게임이 어떤 성취수준을 목표로 하는지 명확히 제시하여 의미 있는 학습을 돕습니다.
-                </p>
-                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  둘, 학습 동기로 이어지는 게이미피케이션을 추구합니다.<br/>
-                  저희가 추구하는 게이피케이션은 '게임을 이기려는 마음'이 '수학을 배우려는 마음'으로<br/>
-                  전환되는 경험입니다. 단순한 보상과 경쟁이 아닌, 게임의 전략과 규칙에 따라 즐기는<br/>
-                  과정에서 자연스럽게 수학을 이해하기 됩니다.
-                </p>
-                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  셋, 수학과 친해지는 경험을 선물합니다.<br/>
-                  물론 게임만으로는 성적을 올릴 수 없습니다. 하지만 교과서를 펼치기 싫어하는 학생도<br/>
-                  수학 게임에는 즐겁게 참여할 수 있습니다. 게임이라는 공통의 관심사를 두고 수학을<br/>
-                  함께 즐기는 시간, 그 자체로 가장 중요한 학습 동기가 형성될 수 있음을 믿습니다.
-                </p>
-                
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 text-blue-600">
-                    <Heart className="h-5 w-5" />
-                    <span className="font-medium">교사 제작</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-green-600">
-                    <Award className="h-5 w-5" />
-                    <span className="font-medium">품질 보증</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-purple-600">
-                    <Lightbulb className="h-5 w-5" />
-                    <span className="font-medium">창의적 학습</span>
-                  </div>
+          <div className="max-w-3xl mx-auto">
+            <div className="about-truefont">
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                현직 교사들이 교육과정에 기반하여<br />
+                <span className="text-blue-600">진짜 교육용 수학 게임</span>을 제작합니다.
+              </h2>
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                하나, 교육과정에 충실한 게임을 만듭니다.<br/>
+                모든 게임은 22개정교육과정에 명시된 핵심 개념을 바탕으로 제작합니다.
+                각 게임이 어떤 성취수준을 목표로 하는지 명확히 제시하여 의미 있는 학습을 돕습니다.
+              </p>
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                둘, 학습 동기로 이어지는 게이미피케이션을 추구합니다.<br/>
+                저희가 추구하는 게이피케이션은 '게임을 이기려는 마음'이 '수학을 배우려는 마음'으로<br/>
+                전환되는 경험입니다. 단순한 보상과 경쟁이 아닌, 게임의 전략과 규칙에 따라 즐기는<br/>
+                과정에서 자연스럽게 수학을 이해하기 됩니다.
+              </p>
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                셋, 수학과 친해지는 경험을 선물합니다.<br/>
+                물론 게임만으로는 성적을 올릴 수 없습니다. 하지만 교과서를 펼치기 싫어하는 학생도<br/>
+                수학 게임에는 즐겁게 참여할 수 있습니다. 게임이라는 공통의 관심사를 두고 수학을<br/>
+                함께 즐기는 시간, 그 자체로 가장 중요한 학습 동기가 형성될 수 있음을 믿습니다.
+              </p>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 text-blue-600">
+                  <Heart className="h-5 w-5" />
+                  <span className="font-medium">교사 제작</span>
+                </div>
+                <div className="flex items-center space-x-2 text-green-600">
+                  <Award className="h-5 w-5" />
+                  <span className="font-medium">품질 보증</span>
+                </div>
+                <div className="flex items-center space-x-2 text-purple-600">
+                  <Lightbulb className="h-5 w-5" />
+                  <span className="font-medium">창의적 학습</span>
                 </div>
               </div>
-              {/* 학습 목표(🎯) 섹션 완전 삭제 */}
             </div>
           </div>
         </div>

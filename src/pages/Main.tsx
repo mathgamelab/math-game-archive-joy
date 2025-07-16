@@ -89,9 +89,19 @@ const Main = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section - EBSMath 스타일 */}
-      <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
-        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-        <div className="container mx-auto px-6 py-20 relative">
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
+        {/* 배경 동영상 */}
+        <video
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          src="/videos/banner.mp4" // 파일명/경로에 맞게 수정
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+        {/* 오버레이 */}
+        <div className="absolute inset-0 bg-black bg-opacity-40 z-10"></div>
+        <div className="container mx-auto px-6 py-20 relative z-20">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-8">
               <div className="text-8xl animate-bounce">🎮</div>

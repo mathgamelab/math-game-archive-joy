@@ -271,16 +271,25 @@ const Main = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                  현직 교사들이 만드는<br />
-                  <span className="text-blue-600">신뢰할 수 있는 콘텐츠</span>
+                  현직 교사들이 교육과정에 기반하여<br />
+                  <span className="text-blue-600">진짜 교육용 수학 게임</span>을 제작합니다.
                 </h2>
                 <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                  Math Game Archive는 현직 수학 교사들이 직접 제작한 디지털 수학 콘텐츠를 
-                  게임 형태로 제공하는 플랫폼입니다.
+                  하나, 교육과정에 충실한 게임을 만듭니다.<br/>
+                  모든 게임은 22개정교육과정에 명시된 핵심 개념을 바탕으로 제작합니다.
+                  각 게임이 어떤 성취수준을 목표로 하는지 명확히 제시하여 의미 있는 학습을 돕습니다.
                 </p>
                 <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  교과서 순서에 맞춘 체계적인 구성과 단계별 난이도 설정으로 
-                  모든 학생들이 자신의 수준에 맞는 학습을 할 수 있습니다.
+                  둘, 학습 동기로 이어지는 게이미피케이션을 추구합니다.<br/>
+                  저희가 추구하는 게이피케이션은 '게임을 이기려는 마음'이 '수학을 배우려는 마음'으로<br/>
+                  전환되는 경험입니다. 단순한 보상과 경쟁이 아닌, 게임의 전략과 규칙에 따라 즐기는<br/>
+                  과정에서 자연스럽게 수학을 이해하기 됩니다.
+                </p>
+                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                  셋, 수학과 친해지는 경험을 선물합니다.<br/>
+                  물론 게임만으로는 성적을 올릴 수 없습니다. 하지만 교과서를 펼치기 싫어하는 학생도<br/>
+                  수학 게임에는 즐겁게 참여할 수 있습니다. 게임이라는 공통의 관심사를 두고 수학을<br/>
+                  함께 즐기는 시간, 그 자체로 가장 중요한 학습 동기가 형성될 수 있음을 믿습니다.
                 </p>
                 
                 <div className="flex items-center space-x-4">
@@ -311,7 +320,7 @@ const Main = () => {
             지금 바로 플레이해보세요!
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            무료로 제공되는 다양한 수학 게임을 통해 <br/>
+            교육과정에 기반한 다양한 수학 게임을 즐기며 <br/>
             재미있고 효과적인 학습을 경험해보세요.
           </p>
           <Button 

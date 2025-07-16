@@ -11,21 +11,10 @@ import { useState, useEffect } from "react";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+function AppRoutes({ navigationItems }: { navigationItems: MainNavItem[] }) {
   const [activeSection, setActiveSection] = useState('main');
   const navigate = useNavigate();
   const location = useLocation();
-
-  const navigationItems: MainNavItem[] = [
-    {
-      id: 'main',
-      label: '메인',
-    },
-    {
-      id: 'games',
-      label: '게임하기',
-    }
-  ];
 
   useEffect(() => {
     if (location.pathname === '/' || location.pathname === '/main') {
@@ -45,25 +34,42 @@ const App = () => {
   };
 
   return (
+    <div className="min-h-screen">
+      <MainNavigation
+        items={navigationItems}
+        activeSection={activeSection}
+        onSectionChange={handleSectionChange}
+      />
+      <Routes>
+        <Route path="/" element={<Main />} />
+        <Route path="/main" element={<Main />} />
+        <Route path="/games" element={<Index />} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </div>
+  );
+}
+
+const App = () => {
+  const navigationItems: MainNavItem[] = [
+    {
+      id: 'main',
+      label: '메인',
+    },
+    {
+      id: 'games',
+      label: '게임하기',
+    }
+  ];
+
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen">
-            <MainNavigation
-              items={navigationItems}
-              activeSection={activeSection}
-              onSectionChange={handleSectionChange}
-            />
-            <Routes>
-              <Route path="/" element={<Main />} />
-              <Route path="/main" element={<Main />} />
-              <Route path="/games" element={<Index />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </div>
+          <AppRoutes navigationItems={navigationItems} />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -118,7 +117,7 @@
         let selectedCard = null, selectedCardElement = null; 
         let cardsUsedThisTurn = 0, currentTurn = 1, quizSolvedThisTurn = false; 
         let isDebugMode = false; let isEncoreActive = false; let isKnightMoveActive = false;
-        const MAX_CARDS_PER_TURN = 2; const MAX_HAND_SIZE = 6; const TURN_TIME_LIMIT = 120;
+        const MAX_CARDS_PER_TURN = 3; const MAX_HAND_SIZE = 6; const TURN_TIME_LIMIT = 120;
         
         // --- 게임 설정 변수 ---
         const GRID_MIN = -5, GRID_MAX = 5, GRID_SIZE = GRID_MAX - GRID_MIN;
@@ -143,7 +142,7 @@
         // --- 카드 덱 정의 (레어 카드 추가) ---
         const cardDeck = [ { type: 'move', value: { x: 1 }, text: 'X : +1', educationalDesc: 'x축 방향으로<br>1만큼 평행이동', color: 'blue' }, { type: 'move', value: { x: 2 }, text: 'X : +2', educationalDesc: 'x축 방향으로<br>2만큼 평행이동', color: 'blue' }, { type: 'move', value: { x: 3 }, text: 'X : +3', educationalDesc: 'x축 방향으로<br>3만큼 평행이동', color: 'blue' }, { type: 'move', value: { x: -1 }, text: 'X : -1', educationalDesc: 'x축 방향으로<br>-1만큼 평행이동', color: 'orange' }, { type: 'move', value: { x: -2 }, text: 'X : -2', educationalDesc: 'x축 방향으로<br>-2만큼 평행이동', color: 'orange' }, { type: 'move', value: { y: 1 }, text: 'Y : +1', educationalDesc: 'y축 방향으로<br>1만큼 평행이동', color: 'green' }, { type: 'move', value: { y: 2 }, text: 'Y : +2', educationalDesc: 'y축 방향으로<br>2만큼 평행이동', color: 'green' }, { type: 'move', value: { y: 3 }, text: 'Y : +3', educationalDesc: 'y축 방향으로<br>3만큼 평행이동', color: 'green' }, { type: 'move', value: { y: -1 }, text: 'Y : -1', educationalDesc: 'y축 방향으로<br>-1만큼 평행이동', color: 'teal' }, { type: 'move', value: { y: -2 }, text: 'Y : -2', educationalDesc: 'y축 방향으로<br>-2만큼 평행이동', color: 'teal' }, ];
         const specialCardDeck = [ { type: 'special', value: 'origin', text: '원점 대칭', educationalDesc: '원점에 대하여<br>대칭이동', color: 'purple' }, { type: 'special', value: 'x-axis', text: 'X축 대칭', educationalDesc: 'x축에 대하여<br>대칭이동', color: 'red' }, { type: 'special', value: 'y-axis', text: 'Y축 대칭', educationalDesc: 'y축에 대하여<br>대칭이동', color: 'indigo' }, ];
-        const rareCardDeck = [ { type: 'rare', value: 'sniper', text: '저격총', educationalDesc: '상대방과 같은 직선에<br>있다면 즉시 추격', color: 'slate' }, { type: 'rare', value: 'emergency_escape', text: '비상탈출', educationalDesc: '모든 플레이어의 위치를<br>무작위로 재설정', color: 'slate' }, { type: 'rare', value: 'magnet', text: '자석', educationalDesc: '상대방을 4칸<br>거리까지 끌어오기', color: 'slate' }, { type: 'rare', value: 'encore', text: '앵콜', educationalDesc: '자신의 턴을<br>한 번 더 진행', color: 'slate' }, { type: 'rare', value: 'knight', text: '나이트', educationalDesc: '체스 나이트처럼<br>한 칸 이동', color: 'slate' }, { type: 'rare', value: 'gigantify', text: '거대화', educationalDesc: '1턴간 2x2 크기로<br>영역을 확장', color: 'slate' }, { type: 'rare', value: 'rewind', text: '도르마무', educationalDesc: '이전 위치로<br>되돌아갑니다', color: 'slate' }, ];
+        const rareCardDeck = [ { type: 'rare', value: 'sniper', text: '저격총', educationalDesc: '상대방과 같은 직선에<br>있다면 즉시 추격', color: 'slate' }, { type: 'rare', value: 'emergency_escape', text: '비상탈출', educationalDesc: '모든 플레이어의 위치를<br>무작위로 재설정', color: 'slate' }, { type: 'rare', value: 'magnet', text: '자석', educationalDesc: '상대방을 4칸<br>거리까지 끌어오기', color: 'slate' }, { type: 'rare', value: 'encore', text: '앵콜', educationalDesc: '자신의 턴을<br>한 번 더 진행', color: 'slate' }, { type: 'rare', value: 'knight', text: '나이트', educationalDesc: '체스 나이트처럼<br>한 칸 이동', color: 'slate' }, { type: 'rare', value: 'gigantify', text: '거대화', educationalDesc: '1턴간 3x3 크기로<br>영역을 확장', color: 'slate' }, { type: 'rare', value: 'rewind', text: '도르마무', educationalDesc: '이전 위치로<br>되돌아갑니다', color: 'slate' }, ];
 
         let currentQuiz = null, quizTimerInterval = null; let debugClickSequence = []; let turnTimerInterval = null;
 
@@ -243,12 +242,23 @@
             } else if (selectedCard.type === 'rare') {
                 const me = targetPlayer; const opponent = players[currentPlayerId === 'p1' ? 'p2' : 'p1'];
                 switch(selectedCard.value) {
-                    case 'sniper': if (me.pos.x === opponent.pos.x || me.pos.y === opponent.pos.y) { showToast('사정거리 포착! 상대방을 추격합니다!', 'bg-red-700'); newPos = { ...opponent.pos }; } else { showToast('상대방이 사정거리에 없습니다.', 'bg-gray-500'); success = false; } break;
+                    case 'sniper':
+                        if (
+                            (me.pos.x === opponent.pos.x && Math.abs(me.pos.y - opponent.pos.y) <= 5) ||
+                            (me.pos.y === opponent.pos.y && Math.abs(me.pos.x - opponent.pos.x) <= 5)
+                        ) {
+                            showToast('사정거리 포착! 상대방을 추격합니다!', 'bg-red-700');
+                            newPos = { ...opponent.pos };
+                        } else {
+                            showToast('상대방이 사정거리에 없습니다.', 'bg-gray-500');
+                            success = false;
+                        }
+                        break;
                     case 'emergency_escape': showToast('비상탈출! 위치를 재설정합니다!', 'bg-yellow-500'); let p1Pos, p2Pos; do { p1Pos = { x: getRandomInt(GRID_MIN, GRID_MAX), y: getRandomInt(GRID_MIN, GRID_MAX) }; p2Pos = { x: getRandomInt(GRID_MIN, GRID_MAX), y: getRandomInt(GRID_MIN, GRID_MAX) }; } while ((p1Pos.x === p2Pos.x && p1Pos.y === p2Pos.y) || (p1Pos.x === p2Pos.x && p1Pos.y === -p2Pos.y) || (p1Pos.x === -p2Pos.x && p1Pos.y === p2Pos.y) || (p1Pos.x === -p2Pos.x && p1Pos.y === -p2Pos.y) || (Math.abs(p1Pos.x - p2Pos.x) + Math.abs(p1Pos.y - p2Pos.y) < 4)); players.p1.pos = p1Pos; players.p2.pos = p2Pos; newPos = players[currentPlayerId].pos; break;
                     case 'magnet': const dist = Math.abs(me.pos.x - opponent.pos.x) + Math.abs(me.pos.y - opponent.pos.y); if (dist <= 4) { showToast('상대방이 너무 가깝습니다!', 'bg-gray-500'); success = false; } else { showToast('자석 발동! 상대방을 끌어옵니다!', 'bg-blue-700'); let stepsToPull = dist - 4; let opponentNewPos = { ...opponent.pos }; while (stepsToPull > 0) { const dx = me.pos.x - opponentNewPos.x; const dy = me.pos.y - opponentNewPos.y; if (Math.abs(dx) > Math.abs(dy)) { opponentNewPos.x += Math.sign(dx); } else { opponentNewPos.y += Math.sign(dy); } stepsToPull--; } opponent.pos = opponentNewPos; } break;
                     case 'encore': showToast('앵콜! 턴을 한 번 더 진행합니다!', 'bg-pink-500'); isEncoreActive = true; break;
                     case 'knight': showToast('나이트 이동! 이동할 위치를 선택하세요.', 'bg-gray-700'); isKnightMoveActive = true; me.pieceEl.innerHTML = '♞'; success = false; const cardIdx = me.cards.indexOf(selectedCard); if (cardIdx > -1) me.cards.splice(cardIdx, 1); renderPlayerCards(); break;
-                    case 'gigantify': showToast('거대화! 1턴간 2x2 영역으로 확장됩니다.', 'bg-yellow-500'); me.isGigantified = true; break;
+                    case 'gigantify': showToast('거대화! 1턴간 3x3 영역으로 확장됩니다.', 'bg-yellow-500'); me.isGigantified = true; break;
                     case 'rewind': if(me.previousPos) { showToast('도르마무! 이전 위치로 돌아갑니다.', 'bg-orange-500'); newPos = { ...me.previousPos }; } else { showToast('되돌아갈 위치가 없습니다.', 'bg-gray-500'); success = false; } break;
                 }
             }
@@ -260,9 +270,9 @@
             if (!isDebugMode) cardsUsedThisTurn++;
             elementToRemove.classList.add('card-use-animation'); const pieceEl = (gameMode === 'practice') ? player1Piece : targetPlayer.pieceEl;
             pieceEl.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
-            pieceEl.style.transform = `scale(${targetPlayer.isGigantified ? 2.4 : 1.2}) rotate(-10deg)`;
+            pieceEl.style.transform = `scale(${targetPlayer.isGigantified ? 3.6 : 1.2}) rotate(-10deg)`;
             setTimeout(() => { 
-                pieceEl.style.transform = `scale(${targetPlayer.isGigantified ? 2 : 1}) ${targetPlayer.isGigantified ? 'translate(-25%, -25%)' : ''}`;
+                pieceEl.style.transform = `scale(${targetPlayer.isGigantified ? 3 : 1})`;
                 checkWinCondition(); 
             }, 600);
             selectedCard = null; selectedCardElement = null; updateUI();
@@ -301,14 +311,27 @@
         }
         
         function checkWinCondition() { 
-            if (gameMode === 'practice') { if (practicePlayer.pos.x === practicePlayer.targetPos.x && practicePlayer.pos.y === practicePlayer.targetPos.y) { showToast(`🎉 목표 달성! ${currentTurn}턴 만에 성공!`, 'bg-green-500', 3000); stopTurnTimer(); setTimeout(newGame, 3500); } } 
-            else { 
+            if (gameMode === 'practice') { 
+                if (practicePlayer.pos.x === practicePlayer.targetPos.x && practicePlayer.pos.y === practicePlayer.targetPos.y) { 
+                    showToast(`🎉 목표 달성! ${currentTurn}턴 만에 성공!`, 'bg-green-500', 3000); 
+                    stopTurnTimer(); 
+                    setTimeout(newGame, 3500); 
+                } 
+            } else { 
                 const p1 = players.p1; const p2 = players.p2; let winnerId = null;
-                const p1Hitbox = p1.isGigantified ? [{x:p1.pos.x, y:p1.pos.y}, {x:p1.pos.x-1, y:p1.pos.y}, {x:p1.pos.x, y:p1.pos.y+1}, {x:p1.pos.x-1, y:p1.pos.y+1}] : [p1.pos];
-                const p2Hitbox = p2.isGigantified ? [{x:p2.pos.x, y:p2.pos.y}, {x:p2.pos.x-1, y:p2.pos.y}, {x:p2.pos.x, y:p2.pos.y+1}, {x:p2.pos.x-1, y:p2.pos.y+1}] : [p2.pos];
-                
+                // 3x3 hitbox 계산
+                const get3x3Hitbox = (pos) => {
+                    const arr = [];
+                    for(let dx=-1;dx<=1;dx++){
+                        for(let dy=-1;dy<=1;dy++){
+                            arr.push({x:pos.x+dx, y:pos.y+dy});
+                        }
+                    }
+                    return arr;
+                };
+                const p1Hitbox = p1.isGigantified ? get3x3Hitbox(p1.pos) : [p1.pos];
+                const p2Hitbox = p2.isGigantified ? get3x3Hitbox(p2.pos) : [p2.pos];
                 for (const h1 of p1Hitbox) { for (const h2 of p2Hitbox) { if (h1.x === h2.x && h1.y === h2.y) { winnerId = currentPlayerId; break; } } if (winnerId) break; }
-
                 if (winnerId) { 
                     const winner = players[winnerId]; 
                     nextRoundStarterId = winnerId === 'p1' ? 'p2' : 'p1';
@@ -327,10 +350,71 @@
         const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min; const getRandomNonZeroInt = (min, max) => { let num; do { num = getRandomInt(min, max); } while (num === 0); return num; }; function formatLine(m, b) { let str = 'y = '; if (m === 1) str += 'x'; else if (m === -1) str += '-x'; else if (m !== 0) str += `${m}x`; if (b > 0) str += (m !== 0 ? ' + ' : '') + `${b}`; else if (b < 0) str += ` - ${-b}`; if (m === 0 && b === 0) return 'y = 0'; return str; } function formatCircle(h, k, r) { let str = ''; if (h === 0) str += 'x²'; else str += `(x ${h > 0 ? '-' : '+'} ${Math.abs(h)})²`; str += ' + '; if (k === 0) str += 'y²'; else str += `(y ${k > 0 ? '-' : '+'} ${Math.abs(k)})²`; str += ` = ${r*r}`; return str; } function generateQuizData() { const type = getRandomInt(0, 3); switch (type) { case 0: return generateTranslateLineQuiz(); case 1: return generateReflectLineQuiz(); case 2: return generateTranslateCircleQuiz(); case 3: return generateReflectCircleQuiz(); } } function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; } function generateTranslateLineQuiz() { const m = getRandomNonZeroInt(-2, 2), b = getRandomInt(-3, 3), dx = getRandomNonZeroInt(-3, 3), dy = getRandomNonZeroInt(-3, 3); const question = `직선 ${formatLine(m, b)}를\nx축 방향으로 ${dx}만큼, y축 방향으로 ${dy}만큼\n평행이동한 방정식은?`; const correct = formatLine(m, -m * dx + b + dy); const distractors = [ formatLine(m, m * dx + b - dy), formatLine(m, -m * dx + b - dy), formatLine(m, m * dx + b + dy) ]; const options = shuffle([correct, ...new Set(distractors.filter(d => d !== correct))].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; } function generateReflectLineQuiz() { const m = getRandomInt(0,1) === 0 ? 1 : -1, b = getRandomInt(-3, 3); const types = ['x축', 'y축', '원점', '직선 y=x'], type = types[getRandomInt(0, 3)]; const question = `직선 ${formatLine(m, b)}를\n${type}에 대칭이동한 방정식은?`; let correct, distractors; if (type === 'x축') { correct = formatLine(-m, -b); distractors = [formatLine(-m, b), formatLine(m, -b), formatLine(m, b), formatLine(1/m, b)]; } else if (type === 'y축') { correct = formatLine(-m, b); distractors = [formatLine(-m, -b), formatLine(m, -b), formatLine(m, b), formatLine(1/m, -b)]; } else if (type === '원점') { correct = formatLine(m, -b); distractors = [formatLine(-m, -b), formatLine(-m, b), formatLine(m, b), formatLine(-1/m, b)]; } else { correct = formatLine(1/m, -b/m); distractors = [formatLine(m, b), formatLine(-m, b), formatLine(m, -b), formatLine(-m, -b)]; } const options = shuffle([correct, ...new Set(distractors.filter(d => d !== correct))].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; } function generateTranslateCircleQuiz() { const h = getRandomInt(-3, 3), k = getRandomInt(-3, 3), r = getRandomInt(1, 4), dx = getRandomNonZeroInt(-3, 3), dy = getRandomNonZeroInt(-3, 3); const question = `원 ${formatCircle(h, k, r)}를\nx축 방향으로 ${dx}만큼, y축 방향으로 ${dy}만큼\n평행이동한 방정식은?`; const correct = formatCircle(h + dx, k + dy, r); const distractors = [ formatCircle(h - dx, k - dy, r), formatCircle(h + dx, k + dy, r + 1), formatCircle(h, k, r) ]; const options = shuffle([correct, ...new Set(distractors)].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; } function generateReflectCircleQuiz() { const h = getRandomInt(-3, 3), k = getRandomInt(-3, 3), r = getRandomInt(1, 4); const types = ['x축', 'y축', '원점', '직선 y=x'], type = types[getRandomInt(0, 3)]; const question = `원 ${formatCircle(h, k, r)}를\n${type}에 대칭이동한 방정식은?`; let correct, distractors; if (type === 'x축') { correct = formatCircle(h, -k, r); distractors = [formatCircle(-h, k, r), formatCircle(h, k, r), formatCircle(h, -k, r+1)]; } else if (type === 'y축') { correct = formatCircle(-h, k, r); distractors = [formatCircle(h, -k, r), formatCircle(h, k, r), formatCircle(-h, k, r+1)]; } else if (type === '원점') { correct = formatCircle(-h, -k, r); distractors = [formatLine(h, -k, r), formatCircle(-h, k, r), formatCircle(-h, -k, r+1)]; } else { correct = formatCircle(k, h, r); distractors = [formatCircle(-k, -h, r), formatCircle(h, k, r), formatCircle(k, h, r+1)]; } const options = shuffle([correct, ...new Set(distractors)].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; }
 
         function coordToPixel(pos) { const boardSize = gameBoard.clientWidth, unit = boardSize / (GRID_SIZE + 1); return { left: (pos.x - GRID_MIN) * unit + unit / 2 - 36 / 2, top: (GRID_MAX - pos.y) * unit + unit / 2 - 36 / 2 }; }
-        function updateAllPiecePositions() { if (gameMode === 'practice') { const practicePos = coordToPixel(practicePlayer.pos); player1Piece.style.left = `${practicePos.left}px`; player1Piece.style.top = `${practicePos.top}px`; const targetPos = coordToPixel(practicePlayer.targetPos); targetGoal.style.left = `${targetPos.left + 4}px`; targetGoal.style.top = `${targetPos.top + 4}px`; } else { const p1Pos = coordToPixel(players.p1.pos); player1Piece.style.left = `${p1Pos.left}px`; player1Piece.style.top = `${p1Pos.top}px`; const p2Pos = coordToPixel(players.p2.pos); player2Piece.style.left = `${p2Pos.left}px`; player2Piece.style.top = `${p2Pos.top}px`; } }
-        function updateUI() { updateAllPiecePositions(); renderPlayerCards(); if(gameMode === 'pvp') { renderOpponentCards(); players.p1.gigantifiedEl.classList.toggle('hidden', !players.p1.isGigantified); players.p2.gigantifiedEl.classList.toggle('hidden', !players.p2.isGigantified); if(players.p1.isGigantified) { const gPos = coordToPixel({x: players.p1.pos.x - 1, y: players.p1.pos.y + 1}); const gSize = (gameBoard.clientWidth / (GRID_SIZE + 1)) * 2; players.p1.gigantifiedEl.style.left = `${gPos.left}px`; players.p1.gigantifiedEl.style.top = `${gPos.top}px`; players.p1.gigantifiedEl.style.width = `${gSize}px`; players.p1.gigantifiedEl.style.height = `${gSize}px`; players.p1.pieceEl.style.transform = `scale(2) translate(-25%, -25%)`; } else { players.p1.pieceEl.style.transform = 'scale(1)'; } if(players.p2.isGigantified) { const gPos = coordToPixel({x: players.p2.pos.x - 1, y: players.p2.pos.y + 1}); const gSize = (gameBoard.clientWidth / (GRID_SIZE + 1)) * 2; players.p2.gigantifiedEl.style.left = `${gPos.left}px`; players.p2.gigantifiedEl.style.top = `${gPos.top}px`; players.p2.gigantifiedEl.style.width = `${gSize}px`; players.p2.gigantifiedEl.style.height = `${gSize}px`; players.p2.pieceEl.style.transform = `scale(2) translate(-25%, -25%)`; } else { players.p2.pieceEl.style.transform = 'scale(1)'; } } turnDisplayEl.textContent = `턴 ${currentTurn}`; if (gameMode === 'practice') { infoPanelTitle.textContent = '게임 정보'; turnIndicator.textContent = '연습 모드'; infoPanelContent.innerHTML = `<div class="flex justify-between items-center"><span class="text-gray-600">현재 위치:</span><span class="font-semibold text-blue-600 text-lg">(${practicePlayer.pos.x}, ${practicePlayer.pos.y})</span></div><div class="flex justify-between items-center"><span class="text-gray-600">목표 지점:</span><span class="font-semibold text-green-600 text-lg">(${practicePlayer.targetPos.x}, ${practicePlayer.targetPos.y})</span></div><div class="flex justify-between items-center"><span class="text-gray-600">남은 거리:</span><span class="font-semibold text-red-500 text-lg">${Math.abs(practicePlayer.pos.x - practicePlayer.targetPos.x) + Math.abs(practicePlayer.pos.y - practicePlayer.targetPos.y)} 칸</span></div>`; } else { const currentPlayer = players[currentPlayerId]; const opponentPlayer = players[currentPlayerId === 'p1' ? 'p2' : 'p1']; infoPanelTitle.textContent = `${currentPlayer.character} ${currentPlayer.name}`; infoPanelTitle.className = `text-xl font-bold mb-4 ${currentPlayerId === 'p1' ? 'text-cyan-600' : 'text-purple-600'}`; turnIndicator.textContent = `PvP 모드`; infoPanelContent.innerHTML = `<div class="flex justify-between items-center"><span class="text-gray-600">나의 위치:</span><span class="font-semibold text-blue-600 text-lg">(${currentPlayer.pos.x}, ${currentPlayer.pos.y})</span></div><div class="flex justify-between items-center"><span class="text-gray-600">상대 위치:</span><span class="font-semibold text-red-500 text-lg">(${opponentPlayer.pos.x}, ${opponentPlayer.pos.y})</span></div>`; } updateButtons(); }
+        function updateAllPiecePositions() { 
+            if (gameMode === 'practice') { 
+                const practicePos = coordToPixel(practicePlayer.pos); 
+                player1Piece.style.left = `${practicePos.left}px`; 
+                player1Piece.style.top = `${practicePos.top}px`; 
+                const targetPos = coordToPixel(practicePlayer.targetPos); 
+                targetGoal.style.left = `${targetPos.left + 4}px`; 
+                targetGoal.style.top = `${targetPos.top + 4}px`; 
+            } else { 
+                const p1Pos = coordToPixel(players.p1.pos); 
+                player1Piece.style.left = `${p1Pos.left}px`; 
+                player1Piece.style.top = `${p1Pos.top}px`; 
+                const p2Pos = coordToPixel(players.p2.pos); 
+                player2Piece.style.left = `${p2Pos.left}px`; 
+                player2Piece.style.top = `${p2Pos.top}px`; 
+            } 
+        }
+        function updateUI() { 
+            updateAllPiecePositions(); 
+            renderPlayerCards(); 
+            if(gameMode === 'pvp') { 
+                renderOpponentCards(); 
+                players.p1.gigantifiedEl.classList.toggle('hidden', !players.p1.isGigantified); 
+                players.p2.gigantifiedEl.classList.toggle('hidden', !players.p2.isGigantified); 
+                if(players.p1.isGigantified) { 
+                    players.p1.pieceEl.style.transform = `scale(3)`;
+                    // 정사각형 영역은 기존대로 중심 기준
+                    const centerPos = coordToPixel(players.p1.pos);
+                    const gSize = (gameBoard.clientWidth / (GRID_SIZE + 1)) * 3; 
+                    players.p1.gigantifiedEl.style.left = `${centerPos.left + 36/2 - gSize/2}px`; 
+                    players.p1.gigantifiedEl.style.top = `${centerPos.top + 36/2 - gSize/2}px`; 
+                    players.p1.gigantifiedEl.style.width = `${gSize}px`; 
+                    players.p1.gigantifiedEl.style.height = `${gSize}px`; 
+                } else { 
+                    players.p1.pieceEl.style.transform = 'scale(1)'; 
+                }
+                if(players.p2.isGigantified) { 
+                    players.p2.pieceEl.style.transform = `scale(3)`;
+                    const centerPos = coordToPixel(players.p2.pos);
+                    const gSize = (gameBoard.clientWidth / (GRID_SIZE + 1)) * 3; 
+                    players.p2.gigantifiedEl.style.left = `${centerPos.left + 36/2 - gSize/2}px`; 
+                    players.p2.gigantifiedEl.style.top = `${centerPos.top + 36/2 - gSize/2}px`; 
+                    players.p2.gigantifiedEl.style.width = `${gSize}px`; 
+                    players.p2.gigantifiedEl.style.height = `${gSize}px`; 
+                } else { 
+                    players.p2.pieceEl.style.transform = 'scale(1)'; 
+                } 
+            } 
+            turnDisplayEl.textContent = `턴 ${currentTurn}`; 
+            if (gameMode === 'practice') { 
+                infoPanelTitle.textContent = '게임 정보'; 
+                turnIndicator.textContent = '연습 모드'; 
+                infoPanelContent.innerHTML = `<div class=\"flex justify-between items-center\"><span class=\"text-gray-600\">현재 위치:</span><span class=\"font-semibold text-blue-600 text-lg\">(${practicePlayer.pos.x}, ${practicePlayer.pos.y})</span></div><div class=\"flex justify-between items-center\"><span class=\"text-gray-600\">목표 지점:</span><span class=\"font-semibold text-green-600 text-lg\">(${practicePlayer.targetPos.x}, ${practicePlayer.targetPos.y})</span></div><div class=\"flex justify-between items-center\"><span class=\"text-gray-600\">남은 거리:</span><span class=\"font-semibold text-red-500 text-lg\">${Math.abs(practicePlayer.pos.x - practicePlayer.targetPos.x) + Math.abs(practicePlayer.pos.y - practicePlayer.targetPos.y)} 칸</span></div>`; 
+            } else { 
+                const currentPlayer = players[currentPlayerId]; 
+                const opponentPlayer = players[currentPlayerId === 'p1' ? 'p2' : 'p1']; 
+                infoPanelTitle.textContent = `${currentPlayer.character} ${currentPlayer.name}`; 
+                infoPanelTitle.className = `text-xl font-bold mb-4 ${currentPlayerId === 'p1' ? 'text-cyan-600' : 'text-purple-600'}`; 
+                turnIndicator.textContent = `PvP 모드`; 
+                infoPanelContent.innerHTML = `<div class=\"flex justify-between items-center\"><span class=\"text-gray-600\">나의 위치:</span><span class=\"font-semibold text-blue-600 text-lg\">(${currentPlayer.pos.x}, ${currentPlayer.pos.y})</span></div><div class=\"flex justify-between items-center\"><span class=\"text-gray-600\">상대 위치:</span><span class=\"font-semibold text-red-500 text-lg\">(${opponentPlayer.pos.x}, ${opponentPlayer.pos.y})</span></div>`; 
+            } 
+            updateButtons(); 
+        }
         function updateScoreboard() { p1ScoreEl.textContent = pvpScores.p1; p2ScoreEl.textContent = pvpScores.p2; }
-        function updateButtons() { useCardBtn.textContent = `카드 사용 (${isDebugMode ? '∞' : cardsUsedThisTurn + '/' + MAX_CARDS_PER_TURN})`; useCardBtn.disabled = !selectedCard || (!isDebugMode && cardsUsedThisTurn >= MAX_CARDS_PER_TURN); discardCardBtn.disabled = !selectedCard; quizBtn.disabled = quizSolvedThisTurn; }
+        function updateButtons() { useCardBtn.innerHTML = `카드 사용<br>(${isDebugMode ? '∞' : cardsUsedThisTurn + '/' + MAX_CARDS_PER_TURN})`; useCardBtn.disabled = !selectedCard || (!isDebugMode && cardsUsedThisTurn >= MAX_CARDS_PER_TURN); discardCardBtn.disabled = !selectedCard; quizBtn.disabled = quizSolvedThisTurn; }
         function showToast(message, bgColor, duration = 3000) { const toast = document.createElement('div'); toast.textContent = message; toast.className = `toast-notification ${bgColor}`; document.getElementById('toastContainer').appendChild(toast); setTimeout(() => { toast.style.opacity = '1'; toast.style.top = '40px'; }, 10); setTimeout(() => { toast.style.opacity = '0'; toast.style.top = '20px'; setTimeout(() => toast.remove(), 500); }, duration); }
 
         // --- 턴 타이머 기능 ---
@@ -395,7 +479,7 @@
 
                 <h3 class="text-xl font-bold mb-2">게임 진행</h3>
                 <ul class="list-disc list-inside mb-4">
-                    <li>자신의 턴에 최대 2장의 카드를 사용할 수 있습니다.</li>
+                    <li>자신의 턴에 최대 3장의 카드를 사용할 수 있습니다.</li>
                     <li>'퀴즈 도전' 버튼을 눌러 수학 퀴즈를 풀 수 있습니다. (턴 당 1회)</li>
                     <li>퀴즈를 맞히면 '특수 카드'(70%) 또는 '레어 카드'(30%)를 보상으로 얻습니다.</li>
                     <li>손에 들 수 있는 카드는 최대 6장입니다. 턴 종료 시 6장을 초과하면 가장 오래된 카드부터 자동으로 버려집니다.</li>
@@ -412,12 +496,12 @@
 
                 <h4 class="text-lg font-bold mt-4 mb-2">레어 카드 상세 설명</h4>
                 <ul class="list-disc list-inside space-y-2">
-                    <li><b>저격총:</b> 자신의 말과 상대방의 말이 같은 가로줄이나 세로줄에 있을 때, 즉시 상대방을 잡아 승리합니다.</li>
+                    <li><b>저격총:</b> 자신의 말과 상대방의 말이 같은 가로줄이나 세로줄에 <b>있으면서, 5칸 이내</b>일 때만 즉시 상대방을 잡아 승리합니다.</li>
                     <li><b>비상탈출:</b> 두 플레이어의 위치를 맵 위의 무작위 위치로 즉시 재설정합니다.</li>
                     <li><b>자석:</b> 상대방을 자신의 말 쪽으로 끌어당겨, 둘 사이의 거리를 4칸으로 만듭니다. (4칸 이하일 경우 사용 불가)</li>
                     <li><b>앵콜:</b> 이번 턴을 마친 뒤, 상대방에게 턴을 넘기지 않고 자신의 턴을 한 번 더 진행합니다.</li>
                     <li><b>나이트:</b> 말을 체스 나이트(♞)처럼 한 칸 이동시킵니다.</li>
-                    <li><b>거대화:</b> 1턴간 자신의 말이 2x2 영역을 차지하게 됩니다. 이 영역에 상대방이 닿으면 승리합니다.</li>
+                    <li><b>거대화:</b> 1턴간 자신의 말이 <b>3x3 영역</b>을 차지하게 됩니다.<br>(x, y)에서 사용 시, (x-1, y+1)부터 (x+1, y-1)까지 3x3 영역이 영향을 미치며,<br>거대화된 아이콘의 중심과 노란색 정사각형 영역의 중심은 원래 위치와 동일합니다.<br>이 3x3 영역에 상대방이 닿으면 승리합니다.</li>
                     <li><b>도르마무:</b> 마지막으로 이동 카드를 사용하기 전의 위치로 되돌아갑니다.</li>
                 </ul>
             `;

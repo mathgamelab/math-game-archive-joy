@@ -627,25 +627,23 @@
             // --- 카드 덱 및 식 생성 리팩토링 ---
             createDeck() {
                 // 카드 값: -15 ~ -6(x1), -5 ~ 5(x2), 6~15(x1)
-                // 약수가 많은 수(6,8,10,12,15 등)는 가중치 2~3배로 추가
                 const deck = [];
-                const weightedNumbers = [6, 8, 10, 12, 15, -6, -8, -10, -12, -15];
                 for (let i = -15; i <= -6; i++) deck.push(i);
                 for (let i = -5; i <= 5; i++) { deck.push(i); deck.push(i); }
                 for (let i = 6; i <= 15; i++) deck.push(i);
-                // 약수가 많은 수는 추가로 더 넣음
-                weightedNumbers.forEach(n => {
-                    for (let k = 0; k < 2; k++) deck.push(n);
-                });
                 // 조커는 별도 관리
                 this.deck = deck;
                 return this.deck;
             }
 
-            // --- 식 생성 함수 (연산자 고르게) ---
+            // --- 식 생성 함수 (연산자 고르게, 약수 많은 수 가중치 적용) ---
             generateExpressionForValue(value, prng) {
                 // 연산자별 후보 분리
                 const opCandidates = { '+': [], '-': [], '×': [], '÷': [] };
+                // 약수가 많은 수에 가중치 적용
+                const weightedNumbers = [6, 8, 10, 12, 15, -6, -8, -10, -12, -15];
+                // 소수에 대한 가중치 적용
+                const primeNumbers = [2, 3, 5, 7, 11, 13, -2, -3, -5, -7, -11, -13];
                 // +
                 for (let a = -20; a <= 20; a++) {
                     let b = value - a;
@@ -653,7 +651,10 @@
                     let weight = (a < 0 || b < 0) ? 2 : 1;
                     let aStr = a < 0 ? `(${a})` : `${a}`;
                     let bStr = b < 0 ? `(${b})` : `${b}`;
-                    for (let i = 0; i < weight; i++) opCandidates['+'].push({expr: `${aStr} + ${bStr}`, a, b});
+                    let extra = 0;
+                    if (weightedNumbers.includes(value)) extra += 2;
+                    if (primeNumbers.includes(value)) extra += 3; // 소수면 +, - 가중치 증가
+                    for (let i = 0; i < weight + extra; i++) opCandidates['+'].push({expr: `${aStr} + ${bStr}`, a, b});
                 }
                 // -
                 for (let a = -20; a <= 20; a++) {
@@ -662,7 +663,10 @@
                     let weight = (a < 0 || b < 0) ? 2 : 1;
                     let aStr = a < 0 ? `(${a})` : `${a}`;
                     let bStr = b < 0 ? `(${b})` : `${b}`;
-                    for (let i = 0; i < weight; i++) opCandidates['-'].push({expr: `${aStr} - ${bStr}`, a, b});
+                    let extra = 0;
+                    if (weightedNumbers.includes(value)) extra += 2;
+                    if (primeNumbers.includes(value)) extra += 3; // 소수면 +, - 가중치 증가
+                    for (let i = 0; i < weight + extra; i++) opCandidates['-'].push({expr: `${aStr} - ${bStr}`, a, b});
                 }
                 // ×
                 for (let a = -15; a <= 15; a++) {
@@ -674,7 +678,12 @@
                     let weight = (a < 0 && b < 0) ? 5 : (a < 0 || b < 0) ? 2 : 1;
                     let aStr = a < 0 ? `(${a})` : `${a}`;
                     let bStr = b < 0 ? `(${b})` : `${b}`;
-                    for (let i = 0; i < weight; i++) opCandidates['×'].push({expr: `${aStr} × ${bStr}`, a, b});
+                    let extra = 0;
+                    if (weightedNumbers.includes(value)) extra += 2;
+                    if (primeNumbers.includes(value)) extra -= 100; // 소수면 곱셈/나눗셈 거의 등장하지 않게
+                    if (weight + extra > 0) {
+                        for (let i = 0; i < weight + extra; i++) opCandidates['×'].push({expr: `${aStr} × ${bStr}`, a, b});
+                    }
                 }
                 // ÷
                 for (let b = -15; b <= 15; b++) {
@@ -685,7 +694,12 @@
                     let weight = (a < 0 && b < 0) ? 5 : (a < 0 || b < 0) ? 2 : 1;
                     let aStr = a < 0 ? `(${a})` : `${a}`;
                     let bStr = b < 0 ? `(${b})` : `${b}`;
-                    for (let i = 0; i < weight; i++) opCandidates['÷'].push({expr: `${aStr} ÷ ${bStr}`, a, b});
+                    let extra = 0;
+                    if (weightedNumbers.includes(value)) extra += 2;
+                    if (primeNumbers.includes(value)) extra -= 100; // 소수면 곱셈/나눗셈 거의 등장하지 않게
+                    if (weight + extra > 0) {
+                        for (let i = 0; i < weight + extra; i++) opCandidates['÷'].push({expr: `${aStr} ÷ ${bStr}`, a, b});
+                    }
                 }
                 // 곱셈/나눗셈 후보를 2배로 늘려서 연산자 등장 확률 증가
                 opCandidates['×'] = [...opCandidates['×'], ...opCandidates['×']];

@@ -65,8 +65,8 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
     >
       <div className="relative">
         {/* 게임 아이콘 배경 */}
-        <div className="h-48 bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center relative overflow-hidden">
-          <div className="text-6xl mb-2 group-hover:scale-110 transition-transform duration-300">
+        <div className="h-32 sm:h-40 md:h-48 bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center relative overflow-hidden">
+          <div className="text-4xl sm:text-5xl md:text-6xl mb-1 sm:mb-2 group-hover:scale-110 transition-transform duration-300">
             {game.icon}
           </div>
           
@@ -83,27 +83,20 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
                   <span className="text-sm font-medium">{game.stats?.playCount || 0}</span>
                 </div>
               </div>
-              {game.status === 'playable' && onPlayClick && (
-                <Button
-                  size="sm"
-                  className="bg-white text-blue-600 hover:bg-gray-100"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPlayClick(game);
-                  }}
-                >
-                  플레이하기
-                </Button>
-              )}
             </div>
           </div>
         </div>
 
         {/* 상태 배지 */}
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 flex flex-col items-start space-y-1">
           <Badge className={`${getStatusColor(game.status)} text-xs font-medium`}>
             {game.status === 'playable' ? '플레이 가능' : '개발 중'}
           </Badge>
+          {/* 모바일 제한 마크 - 상태 배지 바로 아래 */}
+          <span className="flex items-center mt-1 px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[11px] font-normal gap-1 shadow-none">
+            <span role="img" aria-label="mobile">📱</span>
+            모바일 제한
+          </span>
         </div>
 
         {/* 난이도 배지 */}
@@ -116,34 +109,34 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
 
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <CardTitle className="text-base sm:text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
             {game.title}
           </CardTitle>
         </div>
         
         {/* 난이도 별점 */}
         <div className="flex items-center space-x-2">
-          <Star className="h-4 w-4 text-yellow-400 fill-current" />
-          <span className="text-sm text-gray-600 font-medium">
+          <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-current" />
+          <span className="text-xs sm:text-sm text-gray-600 font-medium">
             {getDifficultyStars(game.difficulty)}
           </span>
         </div>
       </CardHeader>
 
       <CardContent className="pt-0">
-        <CardDescription className="text-gray-600 text-sm line-clamp-3 mb-4">
+        <CardDescription className="text-gray-600 text-xs sm:text-sm line-clamp-3 mb-3 sm:mb-4">
           {game.summary || game.description.split('\n')[0]}
         </CardDescription>
 
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 text-gray-500">
-            <Clock className="h-4 w-4" />
-            <span className="text-sm">{game.estimatedTime}</span>
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="text-xs sm:text-sm">{game.estimatedTime}</span>
           </div>
 
           <div className="flex items-center space-x-2">
             {game.category && (
-              <Badge variant="outline" className="text-xs border-gray-200 text-gray-600">
+              <Badge variant="outline" className="text-[10px] sm:text-xs border-gray-200 text-gray-600">
                 {game.category}
               </Badge>
             )}
@@ -152,17 +145,19 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
 
         {/* 통계 정보 */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-          <div className="flex items-center space-x-4 text-xs text-gray-500">
+          <div className="flex items-center space-x-4 text-[10px] sm:text-xs text-gray-500">
             <div className="flex items-center space-x-1">
-              <Eye className="h-3 w-3" />
+              <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>{game.stats?.clickCount || 0}</span>
             </div>
             <div className="flex items-center space-x-1">
-              <Play className="h-3 w-3" />
+              <Play className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>{game.stats?.playCount || 0}</span>
             </div>
           </div>
         </div>
+
+        {/* 기존 모바일 제한 마크 삭제 */}
       </CardContent>
     </Card>
   );

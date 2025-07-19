@@ -227,6 +227,25 @@ export const gamesData: Record<string, GameData[]> = {
       url: '/number_flow.html',
       type: '몸 풀기 게임',
       summary: '숫자의 흐름과 패턴을 빠르게 인식하는 몸풀기 게임입니다.'
+    },
+    {
+      id: 'domineering',
+      title: '도미니어링',
+      description: `🎮게임명 : 도미니어링
+📘 교과명 : 뇌풀기 게임
+📂 내용범주 : 전략 게임
+📌 내용요소 : 도미노 배치, 공간 전략, 순서 결정
+✏️ 학습 가능 용어 : 도미노, 전략, 공간, 순서
+🎯 성취기준 : 공간적 사고와 전략적 사고를 기른다.
+📚 학습 유형 : 전략 게임
+🔥 난이도 : ★★☆☆☆`,
+      icon: '🟦',
+      status: 'playable',
+      difficulty: '중급',
+      estimatedTime: '10분',
+      url: '/domineering.html',
+      type: '전략 게임',
+      summary: '도미노를 번갈아 배치하며 공간 전략을 겨루는 뇌풀기 게임입니다.'
     }
   ],
   'class-management': [],

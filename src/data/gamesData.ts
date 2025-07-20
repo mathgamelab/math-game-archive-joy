@@ -249,10 +249,10 @@ export const gamesData: Record<string, GameData[]> = {
 🎯 성취기준 : 공간적 사고와 전략적 사고를 기른다.
 📚 학습 유형 : 전략 게임
 🔥 난이도 : ★★☆☆☆`,
-      icon: '🟦',
+      icon: '🟥🟦',
       status: 'playable',
-      difficulty: '중급',
-      estimatedTime: '10분',
+      difficulty: '초급',
+      estimatedTime: '5분',
       url: '/domineering.html',
       type: '전략 게임',
       summary: '도미노를 번갈아 배치하며 공간 전략을 겨루는 뇌풀기 게임입니다.',

@@ -46,7 +46,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_click_count: {
+        Args: { game_id: string }
+        Returns: undefined
+      }
+      increment_play_count: {
+        Args: { game_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

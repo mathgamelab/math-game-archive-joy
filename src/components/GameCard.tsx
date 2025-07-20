@@ -23,6 +23,7 @@ export interface GameData {
     clickCount: number;
     playCount: number;
   };
+  mobile?: '지원' | '제한';
 }
 
 interface GameCardProps {
@@ -92,10 +93,16 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
           <Badge className={`${getStatusColor(game.status)} text-xs font-medium`}>
             {game.status === 'playable' ? '플레이 가능' : '개발 중'}
           </Badge>
-          {/* 모바일 제한 마크 - 상태 배지 바로 아래 */}
-          <span className="flex items-center mt-1 px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[11px] font-normal gap-1 shadow-none">
+          {/* 모바일 지원/제한 마크 - 상태 배지 바로 아래 */}
+          <span
+            className={`flex items-center mt-1 px-1.5 py-0.5 rounded text-[11px] font-normal gap-1 shadow-none
+              ${game.mobile === '지원'
+                ? 'bg-emerald-100 text-emerald-600'
+                : 'bg-gray-100 text-gray-500'}
+            `}
+          >
             <span role="img" aria-label="mobile">📱</span>
-            모바일 제한
+            {game.mobile === '지원' ? '모바일 가능' : '모바일 제한'}
           </span>
         </div>
 
@@ -157,7 +164,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
           </div>
         </div>
 
-        {/* 기존 모바일 제한 마크 삭제 */}
+        {/* 기존  제한 마크 삭제 */}
       </CardContent>
     </Card>
   );

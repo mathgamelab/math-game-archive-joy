@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -11,11 +9,18 @@
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            overflow-x: hidden;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
         }
 
         .game-header {
@@ -31,12 +36,29 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
 
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+        }
+
         .score-board {
             display: flex;
             gap: 30px;
             font-size: 1.2rem;
             font-weight: bold;
             margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .score-board {
+                gap: 15px;
+                font-size: 1rem;
+                margin-bottom: 8px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
 
         .score-item.timer {
@@ -56,6 +78,14 @@
             box-shadow: 0 6px 12px rgba(0,0,0,0.2);
             transition: all 0.2s ease;
             margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .start-button {
+                padding: 15px 30px;
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+            }
         }
 
         .start-button:hover {
@@ -87,6 +117,18 @@
             box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             position: relative;
             user-select: none;
+            max-width: 100vw;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            .game-grid {
+                grid-template-columns: repeat(10, 25px);
+                grid-template-rows: repeat(20, 25px);
+                gap: 1px;
+                padding: 8px;
+                border-radius: 10px;
+            }
         }
 
         .apple-cell {
@@ -104,6 +146,14 @@
             transition: all 0.2s ease;
             position: relative;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 768px) {
+            .apple-cell {
+                width: 25px;
+                height: 25px;
+                font-size: 14px;
+            }
         }
 
         .apple-cell::before {
@@ -127,6 +177,22 @@
             background: #68d391;
             border-radius: 50%;
             transform: rotate(45deg);
+        }
+
+        @media (max-width: 768px) {
+            .apple-cell::before {
+                top: -1px;
+                right: 6px;
+                width: 6px;
+                height: 4px;
+            }
+
+            .apple-cell::after {
+                top: -1px;
+                right: 9px;
+                width: 4px;
+                height: 3px;
+            }
         }
 
         .apple-cell:hover {
@@ -235,6 +301,20 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
+        @media (max-width: 768px) {
+            .instructions {
+                padding: 10px;
+                margin-bottom: 15px;
+                max-width: 95vw;
+            }
+
+            .selection-guide {
+                padding: 10px 15px;
+                margin-bottom: 8px;
+                font-size: 0.9rem;
+            }
+        }
+
         .restart-button {
             position: fixed;
             top: 20px;
@@ -250,6 +330,16 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             transition: all 0.2s ease;
             z-index: 100;
+        }
+
+        @media (max-width: 768px) {
+            .restart-button {
+                top: 10px;
+                right: 10px;
+                padding: 8px 16px;
+                font-size: 0.9rem;
+                border-radius: 15px;
+            }
         }
 
         .restart-button:hover {
@@ -269,6 +359,15 @@
             padding: 8px 15px;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .creator-info {
+                bottom: 5px;
+                font-size: 0.8rem;
+                padding: 6px 12px;
+                max-width: 95vw;
+            }
         }
 
         .creator-info p {
@@ -330,6 +429,20 @@
         let clickSelectionMode = false;
         let firstClickCell = null;
 
+        // 새로운 점수 계산 시스템
+        const scoreTable = {
+            2: 1,   // 2개 사과 = 1점
+            3: 2,   // 3개 사과 = 2점
+            4: 5,   // 4개 사과 = 5점
+            5: 7,   // 5개 사과 = 7점
+            6: 10   // 6개 사과 = 10점
+        };
+
+        // 점수 계산 함수
+        function calculateScore(appleCount) {
+            return scoreTable[appleCount] || 0;
+        }
+
         function startGame() {
             gameStarted = true;
             timeLeft = 120;
@@ -368,10 +481,14 @@
             removedCount = 0;
             updateScore();
 
-            // 20x10 격자 생성
-            for (let row = 0; row < 10; row++) {
+            const isMobile = window.innerWidth <= 768;
+            const rows = isMobile ? 20 : 10;
+            const cols = isMobile ? 10 : 20;
+
+            // 격자 생성 (PC: 20x10, 모바일: 10x20)
+            for (let row = 0; row < rows; row++) {
                 grid[row] = [];
-                for (let col = 0; col < 20; col++) {
+                for (let col = 0; col < cols; col++) {
                     const cell = document.createElement('div');
                     cell.className = 'apple-cell';
                     const number = Math.floor(Math.random() * 9) + 1;
@@ -391,11 +508,17 @@
         function setupEventListeners() {
             const gameGrid = document.getElementById('gameGrid');
             
+            // 마우스 이벤트
             gameGrid.addEventListener('mousedown', startSelection);
             gameGrid.addEventListener('mousemove', updateSelection);
             gameGrid.addEventListener('mouseup', endSelection);
             gameGrid.addEventListener('mouseleave', endSelection);
             gameGrid.addEventListener('click', handleClick);
+            
+            // 터치 이벤트 (모바일 지원)
+            gameGrid.addEventListener('touchstart', handleTouchStart, { passive: false });
+            gameGrid.addEventListener('touchmove', handleTouchMove, { passive: false });
+            gameGrid.addEventListener('touchend', handleTouchEnd, { passive: false });
             
             // ESC 키로 선택 취소
             document.addEventListener('keydown', (e) => {
@@ -403,6 +526,37 @@
                     cancelSelection();
                 }
             });
+        }
+
+        // 터치 이벤트 핸들러
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            startSelection(mouseEvent);
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            updateSelection(mouseEvent);
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            const mouseEvent = new MouseEvent('mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            endSelection(mouseEvent);
         }
 
         function handleClick(e) {
@@ -460,7 +614,7 @@
                     }, 500);
                 });
 
-                const points = selectedCells.length - 1;
+                const points = calculateScore(selectedCells.length);
                 score += points;
                 removedCount += selectedCells.length;
                 updateScore();
@@ -561,16 +715,20 @@
         function highlightSelectedApples(minX, maxX, minY, maxY) {
             clearHighlights();
             
-            const cellSize = 37;
+            const isMobile = window.innerWidth <= 768;
+            const cellSize = isMobile ? 26 : 37;
+            const cellWidth = isMobile ? 25 : 35;
+            const rows = isMobile ? 20 : 10;
+            const cols = isMobile ? 10 : 20;
             
-            for (let row = 0; row < 10; row++) {
-                for (let col = 0; col < 20; col++) {
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
                     if (!grid[row][col].exists) continue;
                     
-                    const cellLeft = col * cellSize + 10;
-                    const cellRight = cellLeft + 35;
-                    const cellTop = row * cellSize + 10;
-                    const cellBottom = cellTop + 35;
+                    const cellLeft = col * cellSize + (isMobile ? 8 : 10);
+                    const cellRight = cellLeft + cellWidth;
+                    const cellTop = row * cellSize + (isMobile ? 8 : 10);
+                    const cellBottom = cellTop + cellWidth;
                     
                     // 셀이 선택 영역과 겹치는지 확인
                     if (cellRight > minX && cellLeft < maxX && cellBottom > minY && cellTop < maxY) {
@@ -581,8 +739,12 @@
         }
 
         function clearHighlights() {
-            for (let row = 0; row < 10; row++) {
-                for (let col = 0; col < 20; col++) {
+            const isMobile = window.innerWidth <= 768;
+            const rows = isMobile ? 20 : 10;
+            const cols = isMobile ? 10 : 20;
+            
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
                     if (grid[row][col] && grid[row][col].element) {
                         grid[row][col].element.classList.remove('highlighted');
                     }
@@ -596,18 +758,22 @@
             const minY = Math.min(startY, endY);
             const maxY = Math.max(startY, endY);
             
-            const cellSize = 37;
+            const isMobile = window.innerWidth <= 768;
+            const cellSize = isMobile ? 26 : 37;
+            const cellWidth = isMobile ? 25 : 35;
+            const rows = isMobile ? 20 : 10;
+            const cols = isMobile ? 10 : 20;
             let sum = 0;
             const selectedCells = [];
 
-            for (let row = 0; row < 10; row++) {
-                for (let col = 0; col < 20; col++) {
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
                     if (!grid[row][col].exists) continue;
                     
-                    const cellLeft = col * cellSize + 10;
-                    const cellRight = cellLeft + 35;
-                    const cellTop = row * cellSize + 10;
-                    const cellBottom = cellTop + 35;
+                    const cellLeft = col * cellSize + (isMobile ? 8 : 10);
+                    const cellRight = cellLeft + cellWidth;
+                    const cellTop = row * cellSize + (isMobile ? 8 : 10);
+                    const cellBottom = cellTop + cellWidth;
                     
                     // 셀이 선택 영역과 겹치는지 확인
                     if (cellRight > minX && cellLeft < maxX && cellBottom > minY && cellTop < maxY) {
@@ -627,8 +793,8 @@
                     }, 500);
                 });
 
-                // 점수 계산: 2개=1점, 3개=2점, 4개=3점...
-                const points = selectedCells.length - 1;
+                // 점수 계산: 2개=1점, 3개=2점, 4개=5점, 5개=7점, 6개=10점
+                const points = calculateScore(selectedCells.length);
                 score += points;
                 removedCount += selectedCells.length;
                 updateScore();
@@ -670,7 +836,7 @@
                     }, 500);
                 });
 
-                score += selectedCells.length * 10;
+                score += calculateScore(selectedCells.length);
                 removedCount += selectedCells.length;
                 updateScore();
 
@@ -684,11 +850,15 @@
         }
 
         function canMakeMoreMoves() {
+            const isMobile = window.innerWidth <= 768;
+            const rows = isMobile ? 20 : 10;
+            const cols = isMobile ? 10 : 20;
+            
             // 모든 가능한 직사각형 조합을 확인
-            for (let startRow = 0; startRow < 10; startRow++) {
-                for (let startCol = 0; startCol < 20; startCol++) {
-                    for (let endRow = startRow; endRow < 10; endRow++) {
-                        for (let endCol = startCol; endCol < 20; endCol++) {
+            for (let startRow = 0; startRow < rows; startRow++) {
+                for (let startCol = 0; startCol < cols; startCol++) {
+                    for (let endRow = startRow; endRow < rows; endRow++) {
+                        for (let endCol = startCol; endCol < cols; endCol++) {
                             let sum = 0;
                             let hasApples = false;
                             
@@ -738,6 +908,17 @@
             document.getElementById('gameGrid').style.display = 'none';
             document.getElementById('selectionGuide').style.display = 'none';
         }
+
+        // 화면 크기 변경 시 그리드 재초기화
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (gameStarted) {
+                    initGame();
+                }
+            }, 300);
+        });
 
         // 초기 설정
         updateScore();

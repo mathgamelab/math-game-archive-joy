@@ -63,6 +63,9 @@
             <button id="newGameBtn" class="bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold">
                 새 게임
             </button>
+            <button id="descBtn" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                설명
+            </button>
         </div>
         
         <!-- Error Modal Popup -->
@@ -96,6 +99,22 @@
             <button id="playAgainBtn" class="bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold">
                 다시 하기
             </button>
+        </div>
+    </div>
+
+    <!-- 설명 모달 -->
+    <div id="descModal" class="fixed inset-0 modal-overlay hidden items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-xl shadow-2xl text-center max-w-md mx-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">도미니어링 게임 설명</h2>
+            <div class="text-gray-700 text-base mb-6 text-left">
+                <ul class="list-disc pl-5 text-left">
+                    <li>도미니어링(Domineering)은 2인 전략 게임입니다.</li>
+                    <li>세로 플레이어는 도미노를 세로로, 가로 플레이어는 가로로 놓습니다.</li>
+                    <li>자신의 차례에 도미노를 놓을 수 없게 되는 사람이 패배합니다.</li>
+                    <li>번갈아가며 도미노를 배치하며, 공간 전략과 순서를 고민해보세요!</li>
+                </ul>
+            </div>
+            <button id="closeDescBtn" class="bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors font-semibold mt-2">닫기</button>
         </div>
     </div>
 
@@ -373,6 +392,19 @@
         document.addEventListener('DOMContentLoaded', () => {
             const game = new DomineeringGame();
             game.updateTurnDisplay();
+
+            // 설명 모달 이벤트
+            const descBtn = document.getElementById('descBtn');
+            const descModal = document.getElementById('descModal');
+            const closeDescBtn = document.getElementById('closeDescBtn');
+            descBtn.addEventListener('click', () => {
+                descModal.classList.remove('hidden');
+                descModal.classList.add('flex');
+            });
+            closeDescBtn.addEventListener('click', () => {
+                descModal.classList.add('hidden');
+                descModal.classList.remove('flex');
+            });
         });
     </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'961b408a60a9d1d6',t:'MTc1MjkzODk0My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>

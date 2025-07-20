@@ -1,64 +1,99 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface GameStats {
   clickCount: number;
   playCount: number;
-  lastPlayed?: Date;
 }
 
 export interface GameStatsData {
   [gameId: string]: GameStats;
 }
 
-const STORAGE_KEY = 'math-game-stats';
-
 export const useGameStats = () => {
   const [stats, setStats] = useState<GameStatsData>({});
+  const [loading, setLoading] = useState(true);
 
-  // 로컬 스토리지에서 데이터 로드
-  useEffect(() => {
-    const savedStats = localStorage.getItem(STORAGE_KEY);
-    if (savedStats) {
-      try {
-        setStats(JSON.parse(savedStats));
-      } catch (error) {
-        console.error('Failed to parse game stats:', error);
-        setStats({});
+  // Supabase에서 모든 게임 통계 로드
+  const loadStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('game_stats')
+        .select('game_id, play_count, click_count');
+
+      if (error) {
+        console.error('Failed to load game stats:', error);
+        return;
       }
-    }
-  }, []);
 
-  // 로컬 스토리지에 데이터 저장
-  const saveStats = (newStats: GameStatsData) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newStats));
-    setStats(newStats);
+      const statsData: GameStatsData = {};
+      data?.forEach(stat => {
+        statsData[stat.game_id] = {
+          playCount: stat.play_count,
+          clickCount: stat.click_count,
+        };
+      });
+      
+      setStats(statsData);
+    } catch (error) {
+      console.error('Failed to load game stats:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    loadStats();
+  }, []);
+
   // 게임 클릭 수 증가
-  const incrementClickCount = (gameId: string) => {
-    const currentStats = stats[gameId] || { clickCount: 0, playCount: 0 };
-    const newStats = {
-      ...stats,
-      [gameId]: {
-        ...currentStats,
-        clickCount: currentStats.clickCount + 1,
+  const incrementClickCount = async (gameId: string) => {
+    try {
+      const { error } = await supabase.rpc('increment_click_count', { 
+        game_id: gameId 
+      });
+
+      if (error) {
+        console.error('Failed to increment click count:', error);
+        return;
       }
-    };
-    saveStats(newStats);
+
+      // 로컬 상태 업데이트
+      setStats(prev => ({
+        ...prev,
+        [gameId]: {
+          ...prev[gameId],
+          clickCount: (prev[gameId]?.clickCount || 0) + 1,
+        }
+      }));
+    } catch (error) {
+      console.error('Failed to increment click count:', error);
+    }
   };
 
   // 게임 플레이 횟수 증가
-  const incrementPlayCount = (gameId: string) => {
-    const currentStats = stats[gameId] || { clickCount: 0, playCount: 0 };
-    const newStats = {
-      ...stats,
-      [gameId]: {
-        ...currentStats,
-        playCount: currentStats.playCount + 1,
-        lastPlayed: new Date(),
+  const incrementPlayCount = async (gameId: string) => {
+    try {
+      const { error } = await supabase.rpc('increment_play_count', { 
+        game_id: gameId 
+      });
+
+      if (error) {
+        console.error('Failed to increment play count:', error);
+        return;
       }
-    };
-    saveStats(newStats);
+
+      // 로컬 상태 업데이트
+      setStats(prev => ({
+        ...prev,
+        [gameId]: {
+          ...prev[gameId],
+          playCount: (prev[gameId]?.playCount || 0) + 1,
+        }
+      }));
+    } catch (error) {
+      console.error('Failed to increment play count:', error);
+    }
   };
 
   // 게임 통계 가져오기
@@ -77,24 +112,25 @@ export const useGameStats = () => {
       .slice(0, limit);
   };
 
-  // 최신 게임 (마지막 플레이 기준) 가져오기
+  // 최신 게임 (플레이 횟수 기준) 가져오기
   const getRecentGames = (allGames: any[], limit: number = 6) => {
     return allGames
       .map(game => ({
         ...game,
         stats: getGameStats(game.id)
       }))
-      .filter(game => game.stats.lastPlayed)
-      .sort((a, b) => new Date(b.stats.lastPlayed!).getTime() - new Date(a.stats.lastPlayed!).getTime())
+      .filter(game => game.stats.playCount > 0)
+      .sort((a, b) => b.stats.playCount - a.stats.playCount)
       .slice(0, limit);
   };
 
   return {
     stats,
+    loading,
     incrementClickCount,
     incrementPlayCount,
     getGameStats,
     getPopularGames,
     getRecentGames,
   };
-}; 
+};

@@ -14,13 +14,46 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      game_stats: {
+        Row: {
+          click_count: number
+          created_at: string
+          game_id: string
+          id: string
+          play_count: number
+          updated_at: string
+        }
+        Insert: {
+          click_count?: number
+          created_at?: string
+          game_id: string
+          id?: string
+          play_count?: number
+          updated_at?: string
+        }
+        Update: {
+          click_count?: number
+          created_at?: string
+          game_id?: string
+          id?: string
+          play_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_click_count: {
+        Args: { game_id: string }
+        Returns: undefined
+      }
+      increment_play_count: {
+        Args: { game_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

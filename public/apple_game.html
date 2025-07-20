@@ -15,6 +15,7 @@
             flex-direction: column;
             align-items: center;
             overflow-x: hidden;
+            position: relative;
         }
 
         @media (max-width: 768px) {
@@ -348,10 +349,8 @@
         }
 
         .creator-info {
-            position: fixed;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: relative;
+            margin-top: 20px;
             text-align: center;
             color: #4a5568;
             font-size: 0.9rem;
@@ -359,11 +358,14 @@
             padding: 8px 15px;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         @media (max-width: 768px) {
             .creator-info {
-                bottom: 5px;
+                margin-top: 15px;
                 font-size: 0.8rem;
                 padding: 6px 12px;
                 max-width: 95vw;
@@ -409,6 +411,8 @@
             <p>최종 점수: <span id="finalScore">0</span></p>
             <button class="restart-btn" onclick="restartGame()">다시 시작</button>
         </div>
+    </div>
+
     </div>
 
     <div class="creator-info">
@@ -909,9 +913,12 @@
             document.getElementById('selectionGuide').style.display = 'none';
         }
 
-        // 화면 크기 변경 시 그리드 재초기화
+        // 화면 크기 변경 시 그리드 재초기화 (모바일에서는 비활성화)
         let resizeTimeout;
         window.addEventListener('resize', () => {
+            // 모바일에서는 resize 이벤트로 인한 게임 초기화 방지
+            if (window.innerWidth <= 768) return;
+            
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
                 if (gameStarted) {

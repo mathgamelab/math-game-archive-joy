@@ -20,7 +20,6 @@ export interface GameData {
   summary?: string;
   url?: string;
   stats?: {
-    clickCount: number;
     playCount: number;
   };
   mobile?: '지원' | '제한';
@@ -83,7 +82,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
             className={`flex items-center mt-1 px-1.5 py-0.5 rounded text-[11px] font-normal gap-1 shadow-none
               ${game.mobile === '지원'
                 ? 'bg-emerald-100 text-emerald-600'
-                : 'bg-gray-100 text-gray-500'}
+                : 'bg-transparent text-gray-600'}
             `}
           >
             <span role="img" aria-label="mobile">📱</span>
@@ -97,6 +96,15 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
             {game.difficulty}
           </Badge>
         </div>
+
+        {/* 카테고리 태그 - 아이콘 오른쪽 하단 */}
+        {game.category && (
+          <div className="absolute bottom-3 right-3">
+            <Badge variant="outline" className="text-[10px] sm:text-xs border-gray-200 text-gray-600 bg-white/90 backdrop-blur-sm">
+              {game.category}
+            </Badge>
+          </div>
+        )}
       </div>
 
       <CardHeader className="pb-3">
@@ -125,23 +133,10 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
             <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="text-xs sm:text-sm">{game.estimatedTime}</span>
           </div>
-
-          <div className="flex items-center space-x-2">
-            {game.category && (
-              <Badge variant="outline" className="text-[10px] sm:text-xs border-gray-200 text-gray-600">
-                {game.category}
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        {/* 통계 정보 */}
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-          <div className="flex items-center space-x-4 text-[10px] sm:text-xs text-gray-500">
-            <div className="flex items-center space-x-1">
-              <Play className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>{game.stats?.playCount || 0}</span>
-            </div>
+          
+          <div className="flex items-center space-x-1 text-[10px] sm:text-xs text-gray-500">
+            <Play className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span>{game.stats?.playCount || 0}</span>
           </div>
         </div>
 

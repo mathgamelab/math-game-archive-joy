@@ -25,7 +25,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext
 
 const Main = () => {
   const navigate = useNavigate();
-  const { getPopularGames, incrementPlayCount } = useGameStats();
+  const { getPopularGames, incrementPlayCount, getGameStats } = useGameStats();
   const allGames = Object.values(gamesData).flat();
 
   // 모달 상태 및 핸들러 추가
@@ -51,7 +51,12 @@ const Main = () => {
 
   // 추천 게임 필터링 (JSON에서 불러옴)
   const getRecommendedGames = () => {
-    return allGames.filter(game => recommendedGames.includes(game.id));
+    return allGames
+      .filter(game => recommendedGames.includes(game.id))
+      .map(game => ({
+        ...game,
+        stats: getGameStats(game.id)
+      }));
   };
 
   // 인기 게임 (클릭 수 기준)

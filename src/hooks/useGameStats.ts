@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface GameStats {
-  clickCount: number;
   playCount: number;
 }
 
@@ -18,8 +17,8 @@ export const useGameStats = () => {
   const loadStats = async () => {
     try {
       const { data, error } = await supabase
-        .from('game_stats')
-        .select('game_id, play_count, click_count');
+        .from('play_counts')
+        .select('game_id, play_count');
 
       if (error) {
         console.error('Failed to load game stats:', error);
@@ -30,7 +29,6 @@ export const useGameStats = () => {
       data?.forEach(stat => {
         statsData[stat.game_id] = {
           playCount: stat.play_count,
-          clickCount: stat.click_count,
         };
       });
       
@@ -46,38 +44,13 @@ export const useGameStats = () => {
     loadStats();
   }, []);
 
-  // 게임 클릭 수 증가
-  const incrementClickCount = async (gameId: string) => {
-    try {
-      const { error } = await supabase.rpc('increment_click_count', { 
-        game_id: gameId 
-      });
 
-      if (error) {
-        console.error('Failed to increment click count:', error);
-        return;
-      }
-
-      // 로컬 상태 업데이트
-      setStats(prev => ({
-        ...prev,
-        [gameId]: {
-          ...prev[gameId],
-          clickCount: (prev[gameId]?.clickCount || 0) + 1,
-        }
-      }));
-    } catch (error) {
-      console.error('Failed to increment click count:', error);
-    }
-  };
 
   // 게임 플레이 횟수 증가
   const incrementPlayCount = async (gameId: string) => {
     try {
-      const { error } = await supabase.rpc('increment_play_count', { 
-        game_id: gameId 
-      });
-
+      const { data, error } = await supabase.rpc('increment_play_count', { gid: gameId });
+      
       if (error) {
         console.error('Failed to increment play count:', error);
         return;
@@ -88,7 +61,7 @@ export const useGameStats = () => {
         ...prev,
         [gameId]: {
           ...prev[gameId],
-          playCount: (prev[gameId]?.playCount || 0) + 1,
+          playCount: data || (prev[gameId]?.playCount || 0) + 1,
         }
       }));
     } catch (error) {
@@ -98,17 +71,17 @@ export const useGameStats = () => {
 
   // 게임 통계 가져오기
   const getGameStats = (gameId: string): GameStats => {
-    return stats[gameId] || { clickCount: 0, playCount: 0 };
+    return stats[gameId] || { playCount: 0 };
   };
 
-  // 인기 게임 (클릭 수 기준) 가져오기
+  // 인기 게임 (플레이 수 기준) 가져오기
   const getPopularGames = (allGames: any[], limit: number = 6) => {
     return allGames
       .map(game => ({
         ...game,
         stats: getGameStats(game.id)
       }))
-      .sort((a, b) => b.stats.clickCount - a.stats.clickCount)
+      .sort((a, b) => b.stats.playCount - a.stats.playCount)
       .slice(0, limit);
   };
 
@@ -127,7 +100,6 @@ export const useGameStats = () => {
   return {
     stats,
     loading,
-    incrementClickCount,
     incrementPlayCount,
     getGameStats,
     getPopularGames,

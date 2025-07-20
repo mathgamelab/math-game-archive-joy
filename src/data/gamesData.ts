@@ -104,7 +104,7 @@ export const gamesData: Record<string, GameData[]> = {
       terms: '양수, 음수, 절댓값, 혼합계산',
       standard: '7수01-01',
       type: '연산 게임',
-      summary: '정수의 사칙연산과 혼합계산을 게임처럼 연습하며 연산 감각을 키울 수 있습니다.',
+      summary: '넘버 플로우의 숫자 카드 대신 정수의 혼합계산이 등장합니다.',
       url: '/number_flow_integer.html',
       mobile: '제한'
     }
@@ -215,7 +215,7 @@ export const gamesData: Record<string, GameData[]> = {
       estimatedTime: '5분',
       url: '/apple_game.html',
       type: '몸 풀기 게임',
-      summary: '사과를 모으며 빠른 연산과 순발력을 기르는 몸풀기 게임입니다.',
+      summary: '사과를 직사각형 모양으로 모아 합 10을 만드는 뇌풀기 게임입니다.',
       mobile: '제한'
     },
     {
@@ -235,7 +235,7 @@ export const gamesData: Record<string, GameData[]> = {
       estimatedTime: '7분',
       url: '/number_flow.html',
       type: '몸 풀기 게임',
-      summary: '숫자의 흐름과 패턴을 빠르게 인식하는 몸풀기 게임입니다.',
+      summary: '숫자 카드를 오름차순으로 배열하는 뇌풀기 게임입니다.',
       mobile: '제한'
     },
     {
@@ -349,7 +349,7 @@ export const gamesData: Record<string, GameData[]> = {
       estimatedTime: '15분',
       url: '/coordinate_chess.html',
       type: '체스 게임',
-      summary: '좌표평면에서 체스 전략을 익히는 수학 게임입니다.',
+      summary: '도형의 평행이동과 대칭이동을 체스의 형태로 학습하는 게임.',
       mobile: '제한'
     },
     {

@@ -26,5 +26,5 @@ export async function incrementPlayCount(gameId: string): Promise<number> {
     console.error('플레이 카운트 증가 오류:', error);
     return 0;
   }
-  return data;
+  return data || 0;
 } 

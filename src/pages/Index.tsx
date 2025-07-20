@@ -85,7 +85,6 @@ const Index = () => {
   const [playCounts, setPlayCounts] = useState<Record<string, number>>({});
 
   const { 
-    incrementClickCount, 
     getPopularGames, 
     getRecentGames 
   } = useGameStats();
@@ -115,7 +114,6 @@ const Index = () => {
   }, []);
 
   const handleGameClick = (game: GameData) => {
-    incrementClickCount(game.id);
     setSelectedGame(game);
     setIsModalOpen(true);
   };
@@ -168,9 +166,14 @@ const Index = () => {
 
   // 플레이 후에는 해당 게임만 최신 값으로 갱신
   const handlePlayClick = async (game: GameData) => {
-    await incrementPlayCount(game.id);
-    const newCount = await getPlayCount(game.id);
-    setPlayCounts((prev) => ({ ...prev, [game.id]: newCount }));
+    try {
+      await incrementPlayCount(game.id);
+      const newCount = await getPlayCount(game.id);
+      setPlayCounts((prev) => ({ ...prev, [game.id]: newCount }));
+    } catch (error) {
+      console.error('플레이 카운트 업데이트 실패:', error);
+    }
+    
     if (game.url) {
       window.open(game.url, '_blank');
     }

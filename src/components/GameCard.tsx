@@ -61,31 +61,16 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
 
   return (
     <Card 
-      className="group hover:shadow-xl transition-all duration-300 cursor-pointer border-0 shadow-lg bg-white rounded-2xl overflow-hidden hover:scale-105"
+      className="cursor-pointer border-0 shadow-lg bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl"
       onClick={() => onClick(game)}
     >
       <div className="relative">
         {/* 게임 아이콘 배경 */}
         <div className="h-32 sm:h-40 md:h-48 bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center relative overflow-hidden">
-          <div className="text-4xl sm:text-5xl md:text-6xl mb-1 sm:mb-2 group-hover:scale-110 transition-transform duration-300">
+          <div className="text-4xl sm:text-5xl md:text-6xl mb-1 sm:mb-2">
             {game.icon}
           </div>
-          
-          {/* 오버레이 - 호버 시 표시 */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center">
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-white text-center">
-              <div className="flex items-center justify-center space-x-4 mb-2">
-                <div className="flex items-center space-x-1">
-                  <Eye className="h-4 w-4" />
-                  <span className="text-sm font-medium">{game.stats?.clickCount || 0}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Play className="h-4 w-4" />
-                  <span className="text-sm font-medium">{game.stats?.playCount || 0}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* 오버레이/호버 효과, 아이콘, 플레이/눈모양 모두 제거 */}
         </div>
 
         {/* 상태 배지 */}
@@ -153,10 +138,6 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
         {/* 통계 정보 */}
         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
           <div className="flex items-center space-x-4 text-[10px] sm:text-xs text-gray-500">
-            <div className="flex items-center space-x-1">
-              <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span>{game.stats?.clickCount || 0}</span>
-            </div>
             <div className="flex items-center space-x-1">
               <Play className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>{game.stats?.playCount || 0}</span>

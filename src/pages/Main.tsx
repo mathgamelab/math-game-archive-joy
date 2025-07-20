@@ -21,6 +21,7 @@ import { useGameStats } from '@/hooks/useGameStats';
 import { GameCard, GameData } from '@/components/GameCard';
 import { GameModal } from '@/components/GameModal';
 import recommendedGames from '@/data/recommendedGames.json';
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
 
 const Main = () => {
   const navigate = useNavigate();
@@ -174,9 +175,9 @@ const Main = () => {
       </section>
 
       {/* 추천 콘텐츠 섹션 */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between mb-12">
+      <section className="py-16 bg-white overflow-hidden">
+        <div className="container mx-auto px-6 mb-3">
+          <div className="flex items-center justify-between">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
                 추천 콘텐츠
@@ -190,24 +191,35 @@ const Main = () => {
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {getRecommendedGames().map((game) => (
-              <GameCard 
-                key={game.id} 
-                game={game}
-                onClick={handleGameClick}
-                onPlayClick={handlePlayClick}
-              />
-            ))}
+        </div>
+        
+        <div className="container mx-auto px-3">
+          <div className="relative py-1">
+            <Carousel className="overflow-visible">
+              <CarouselContent className="-ml-4 md:-ml-6 !overflow-visible">
+                {getRecommendedGames().map((game) => (
+                  <CarouselItem key={game.id} className="pl-4 md:pl-6 basis-2/3 sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <div className="p-2">
+                      <GameCard 
+                        game={game}
+                        onClick={handleGameClick}
+                        onPlayClick={handlePlayClick}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
           </div>
         </div>
       </section>
 
       {/* 인기 콘텐츠 섹션 */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <div className="flex items-center justify-between mb-12">
+      <section className="py-16 bg-gray-50 overflow-hidden">
+        <div className="container mx-auto px-6 mb-6">
+          <div className="flex items-center justify-between">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
                 인기 콘텐츠
@@ -221,16 +233,27 @@ const Main = () => {
               <span className="font-medium">실시간 인기</span>
             </div>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {popularGames.map((game) => (
-              <GameCard 
-                key={game.id} 
-                game={game}
-                onClick={handleGameClick}
-                onPlayClick={handlePlayClick}
-              />
-            ))}
+        </div>
+        
+        <div className="container mx-auto px-6">
+          <div className="relative py-2">
+            <Carousel className="overflow-visible">
+              <CarouselContent className="-ml-4 md:-ml-6 !overflow-visible">
+                {popularGames.map((game) => (
+                  <CarouselItem key={game.id} className="pl-4 md:pl-6 basis-2/3 sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <div className="p-2">
+                      <GameCard 
+                        game={game}
+                        onClick={handleGameClick}
+                        onPlayClick={handlePlayClick}
+                      />
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
           </div>
         </div>
       </section>
@@ -244,19 +267,19 @@ const Main = () => {
             </h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {features.map((feature, index) => (
               <Card key={index} className="border-0 shadow-lg bg-white rounded-2xl hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                <CardHeader className="text-center pb-4">
-                  <div className="flex justify-center mb-4">
+                <CardHeader className="text-center pb-2 md:pb-4">
+                  <div className="flex justify-center mb-2 md:mb-4">
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-xl font-bold text-gray-900">
+                  <CardTitle className="text-sm md:text-xl font-bold text-gray-900">
                     {feature.title}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-center pt-0">
-                  <CardDescription className="text-gray-600 leading-relaxed">
+                  <CardDescription className="text-xs md:text-base text-gray-600 leading-relaxed">
                     {feature.description}
                   </CardDescription>
                 </CardContent>

@@ -99,19 +99,6 @@ export const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose, onP
           </div>
 
           {/* 통계 정보 */}
-          {game.stats && (
-            <div className="bg-gray-50 rounded-xl p-4">
-              <h3 className="font-semibold text-gray-900 text-lg mb-3">게임 통계</h3>
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-bold text-sm">{game.stats.playCount}</span>
-                  </div>
-                  <span className="text-gray-600 text-sm">플레이 수</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { GameCard, GameData } from '@/components/GameCard';
 import { GameModal } from '@/components/GameModal';
 import { NavigationTabs, TabData } from '@/components/NavigationTabs';
@@ -25,6 +25,7 @@ import {
   Search,
   Filter
 } from "lucide-react";
+import { getPlayCount, incrementPlayCount } from '../lib/playCount';
 
 // 중학수학 탭 데이터
 const middleSchoolTabs: TabData[] = [
@@ -81,10 +82,10 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
   const navigate = useNavigate();
+  const [playCounts, setPlayCounts] = useState<Record<string, number>>({});
 
   const { 
     incrementClickCount, 
-    incrementPlayCount, 
     getPopularGames, 
     getRecentGames 
   } = useGameStats();
@@ -119,8 +120,57 @@ const Index = () => {
     setIsModalOpen(true);
   };
 
-  const handlePlayClick = (game: GameData) => {
-    incrementPlayCount(game.id);
+  let currentTabs: TabData[] = [];
+  if (activeSection === 'middle') currentTabs = middleSchoolTabs;
+  else if (activeSection === 'high') currentTabs = highSchoolTabs;
+  else if (activeSection === 'break-game') currentTabs = breakGameTabs;
+  else if (activeSection === 'class-management') currentTabs = classManagementTabs;
+
+  const currentGames = gamesData[activeTab] || [];
+  const currentTabData = currentTabs.find(tab => tab.id === activeTab);
+
+  // 검색 및 필터링
+  const filteredGames = useMemo(() => {
+    return currentGames.filter(game => {
+      const matchesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           game.summary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           game.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesDifficulty = selectedDifficulty === 'all' || game.difficulty === selectedDifficulty;
+      return matchesSearch && matchesDifficulty;
+    });
+  }, [currentGames, searchTerm, selectedDifficulty]);
+
+  // playCounts 캐싱 최적화: 이미 불러온 게임은 다시 요청하지 않음
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchCounts() {
+      // 모든 게임의 playCount를 병렬로 한 번에 불러옴
+      const results = await Promise.all(
+        filteredGames.map(async (game) => {
+          try {
+            const count = await getPlayCount(game.id);
+            return [game.id, count];
+          } catch (e) {
+            // 406 등 에러 발생 시 0으로 처리
+            return [game.id, 0];
+          }
+        })
+      );
+      if (isMounted) {
+        // 결과를 객체로 변환해서 한 번만 setState
+        setPlayCounts(Object.fromEntries(results));
+      }
+    }
+    fetchCounts();
+    return () => { isMounted = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredGames]);
+
+  // 플레이 후에는 해당 게임만 최신 값으로 갱신
+  const handlePlayClick = async (game: GameData) => {
+    await incrementPlayCount(game.id);
+    const newCount = await getPlayCount(game.id);
+    setPlayCounts((prev) => ({ ...prev, [game.id]: newCount }));
     if (game.url) {
       window.open(game.url, '_blank');
     }
@@ -157,15 +207,6 @@ const Index = () => {
     else if (gradeId === 'class-management') setActiveTab('class-management');
   };
 
-  let currentTabs: TabData[] = [];
-  if (activeSection === 'middle') currentTabs = middleSchoolTabs;
-  else if (activeSection === 'high') currentTabs = highSchoolTabs;
-  else if (activeSection === 'break-game') currentTabs = breakGameTabs;
-  else if (activeSection === 'class-management') currentTabs = classManagementTabs;
-
-  const currentGames = gamesData[activeTab] || [];
-  const currentTabData = currentTabs.find(tab => tab.id === activeTab);
-
   // 모든 게임 데이터 수집
   const allGames = Object.values(gamesData).flat();
 
@@ -180,23 +221,14 @@ const Index = () => {
   // 최신 게임 (최근 플레이 기준)
   const recentGames = getRecentGames(allGames, 6);
 
-  // 검색 및 필터링
-  const filteredGames = currentGames.filter(game => {
-    const matchesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         game.summary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         game.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDifficulty = selectedDifficulty === 'all' || game.difficulty === selectedDifficulty;
-    
-    return matchesSearch && matchesDifficulty;
-  });
+
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section - 메인과 동일하게 상단에 노출 */}
       <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white">
         <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-        <div className="container mx-auto px-6 py-20 relative">
+        <div className="container mx-auto px-6 pt-[50px] pb-[22px] relative">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex justify-center mb-8">
               <div className="text-8xl animate-bounce">🎮</div>
@@ -205,14 +237,6 @@ const Index = () => {
             <p className="text-xl md:text-4xl mb-12 max-w-3xl mx-auto leading-relaxed opacity-90 drop-shadow-lg">
               현직 교사들이 직접 만든<br/> <span className="font-semibold text-yellow-300">진짜 교육용 수학 게임</span>을 즐겨보세요!
             </p>
-            <div className="flex justify-center">
-              <Button 
-                onClick={() => navigate('/games')}
-                className="bg-transparent border border-white text-white hover:bg-white hover:text-blue-600 px-8 py-4 rounded-full text-xl font-bold shadow-lg transition-colors"
-              >
-                게임 시작하기
-              </Button>
-            </div>
           </div>
         </div>
       </section>
@@ -244,6 +268,8 @@ const Index = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
+
+
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-12">
@@ -296,7 +322,7 @@ const Index = () => {
             {filteredGames.map((game) => (
               <GameCard 
                 key={game.id} 
-                game={game}
+                game={{ ...game, stats: { ...game.stats, playCount: playCounts[game.id] ?? 0 } }}
                 onClick={handleGameClick}
                 onPlayClick={handlePlayClick}
               />

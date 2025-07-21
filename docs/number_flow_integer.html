@@ -398,6 +398,22 @@
             .card { width: 45px; height: 45px; font-size: 1.2rem; }
             .info-panel { flex-direction: column; align-items: flex-start; bottom: 1rem; left: 1rem; }
         }
+        @media (max-width: 600px) {
+            .header-right { gap: 0.3rem; }
+            .score { font-size: 0.85rem; padding: 0.3rem 0.7rem; }
+            .btn { font-size: 0.9rem; padding: 0.5rem 0.8rem; min-width: 0; }
+            .draw-card-slot { width: 100px; height: 32px; font-size: 1.2rem; padding: 0; margin: 0 2px 0 0; }
+            #joker-card { width: 32px; height: 32px; font-size: 1.2rem; margin: 0 0 0 2px; }
+            .slot { width: 36px; height: 36px; margin: 0 1px; padding: 0; }
+            .card { width: 32px; height: 32px; font-size: 1rem; }
+            .draw-card-slot .card.current-card { width: 100px; height: 28px; font-size: 1rem; }
+            .current-card-area { gap: 0.15rem; top: 2px; right: 8px; margin-bottom: 0.1rem; }
+            .tower-container { padding: 0 0 0.2rem 0; margin-bottom: 0.2rem; }
+            .tower-level { gap: 0.1rem; margin-top: 2px !important; }
+            .info-box, .card-guide { font-size: 0.7rem; padding: 0.2rem 0.3rem; }
+            .card-guide { gap: 0.2rem; }
+            .guide-chip { font-size: 0.7rem; padding: 0.1rem 0.25rem; }
+        }
     </style>
 </head>
 <body>
@@ -778,54 +794,38 @@
             drawConnectionArrows() {
                 this.svgEl.innerHTML = '';
                 const mainRect = this.mainArea.getBoundingClientRect();
-
-                const createArrow = (fromEl, toEl) => {
-                    if (!fromEl || !toEl) return;
+                const path = this.getResponsivePath();
+                for (let i = 0; i < path.length - 1; i++) {
+                    const from = path[i];
+                    const to = path[i + 1];
+                    const fromEl = document.querySelector(`.slot[data-level="${from.level}"][data-index="${from.index}"]`);
+                    const toEl = document.querySelector(`.slot[data-level="${to.level}"][data-index="${to.index}"]`);
+                    if (!fromEl || !toEl) continue;
                     const fromRect = fromEl.getBoundingClientRect();
                     const toRect = toEl.getBoundingClientRect();
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    path.setAttribute('fill', 'none');
-                    path.setAttribute('stroke', '#A0AEC0');
-                    path.setAttribute('stroke-width', '3.5');
-                    path.setAttribute('stroke-opacity', '0.7');
-                    
+                    const svgPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    svgPath.setAttribute('fill', 'none');
+                    svgPath.setAttribute('stroke', '#A0AEC0');
+                    svgPath.setAttribute('stroke-width', '3.5');
+                    svgPath.setAttribute('stroke-opacity', '0.7');
                     const startX = fromRect.left - mainRect.left + fromRect.width / 2;
                     const startY = fromRect.top - mainRect.top + fromRect.height / 2;
                     const endX = toRect.left - mainRect.left + toRect.width / 2;
                     const endY = toRect.top - mainRect.top + toRect.height / 2;
-
                     const d = `M ${startX} ${startY} L ${endX} ${endY}`;
-                    path.setAttribute('d', d);
-                    
+                    svgPath.setAttribute('d', d);
+                    this.svgEl.appendChild(svgPath);
+                    // 화살표 머리
                     const midX = (startX + endX) / 2;
                     const midY = (startY + endY) / 2;
                     const angle = Math.atan2(endY - startY, endX - startX) * (180 / Math.PI);
-                    
-                    this.svgEl.appendChild(path);
-
                     const arrowhead = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     arrowhead.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
                     arrowhead.setAttribute('fill', '#A0AEC0');
                     arrowhead.setAttribute('fill-opacity', '0.7');
                     arrowhead.setAttribute('transform', `translate(${midX}, ${midY}) rotate(${angle}) translate(-5, -5)`);
                     this.svgEl.appendChild(arrowhead);
-                };
-
-                const connections = [
-                    ...Array.from({length: 7}, (_, i) => ({ from: {level: 'level1', index: i}, to: {level: 'level1', index: i+1} })),
-                    { from: {level: 'level1', index: 7}, to: {level: 'level2', index: 0} },
-                    { from: {level: 'level2', index: 0}, to: {level: 'level3', index: 0} },
-                    { from: {level: 'level3', index: 0}, to: {level: 'level4', index: 0} },
-                    { from: {level: 'level4', index: 0}, to: {level: 'level5', index: 0} },
-                    { from: {level: 'level5', index: 0}, to: {level: 'level6', index: 0} },
-                    ...Array.from({length: 7}, (_, i) => ({ from: {level: 'level6', index: i}, to: {level: 'level6', index: i+1} })),
-                ];
-
-                connections.forEach(conn => {
-                    const fromEl = document.querySelector(`.slot[data-level="${conn.from.level}"][data-index="${conn.from.index}"]`);
-                    const toEl = document.querySelector(`.slot[data-level="${conn.to.level}"][data-index="${conn.to.index}"]`);
-                    createArrow(fromEl, toEl);
-                });
+                }
             }
 
             // --- Core Game Logic ---
@@ -856,16 +856,88 @@
                 });
             }
 
+            getResponsiveTowerLevels() {
+                if (window.innerWidth <= 600) {
+                    return [
+                        { name: 'level1', count: 7 },
+                        { name: 'level2', count: 1 },
+                        { name: 'level3', count: 1 },
+                        { name: 'level4', count: 1 },
+                        { name: 'level5', count: 1 },
+                        { name: 'level6', count: 1 },
+                        { name: 'level7', count: 1 },
+                        { name: 'level8', count: 7 }
+                    ];
+                } else {
+                    return [
+                        { name: 'level1', count: 8 },
+                        { name: 'level2', count: 1 },
+                        { name: 'level3', count: 1 },
+                        { name: 'level4', count: 1 },
+                        { name: 'level5', count: 1 },
+                        { name: 'level6', count: 8 }
+                    ];
+                }
+            }
+            getResponsiveLayoutConfig() {
+                if (window.innerWidth <= 600) {
+                    return [
+                        { level: 'level1', xOffset: 'calc(50% - 150px)', yMargin: 10 },
+                        { level: 'level2', xOffset: 'calc(50% + 60px)', yMargin: 12 },
+                        { level: 'level3', xOffset: 'calc(50% + 30px)', yMargin: 12 },
+                        { level: 'level4', xOffset: 'calc(50% + 0px)', yMargin: 12 },
+                        { level: 'level5', xOffset: 'calc(50% - 30px)', yMargin: 12 },
+                        { level: 'level6', xOffset: 'calc(50% - 60px)', yMargin: 12 },
+                        { level: 'level7', xOffset: 'calc(50% - 90px)', yMargin: 12 },
+                        { level: 'level8', xOffset: 'calc(50% - 120px)', yMargin: 10 }
+                    ];
+                } else {
+                    return [
+                        { level: 'level1', xOffset: 'calc(50% - 500px)', yMargin: 0 },
+                        { level: 'level2', xOffset: 'calc(50% + 20px)', yMargin: 8 },
+                        { level: 'level3', xOffset: 'calc(50% - 10px)', yMargin: 8 },
+                        { level: 'level4', xOffset: 'calc(50% - 40px)', yMargin: 8 },
+                        { level: 'level5', xOffset: 'calc(50% - 70px)', yMargin: 8 },
+                        { level: 'level6', xOffset: 'calc(50% - 100px)', yMargin: 8 }
+                    ];
+                }
+            }
+            getResponsivePath() {
+                if (window.innerWidth <= 600) {
+                    return [
+                        ...Array.from({length: 7}, (_, i) => ({level: 'level1', index: i})),
+                        {level: 'level2', index: 0},
+                        {level: 'level3', index: 0},
+                        {level: 'level4', index: 0},
+                        {level: 'level5', index: 0},
+                        {level: 'level6', index: 0},
+                        {level: 'level7', index: 0},
+                        ...Array.from({length: 7}, (_, i) => ({level: 'level8', index: i}))
+                    ];
+                } else {
+                    return [
+                        ...Array.from({length: 8}, (_, i) => ({level: 'level1', index: i})),
+                        {level: 'level2', index: 0},
+                        {level: 'level3', index: 0},
+                        {level: 'level4', index: 0},
+                        {level: 'level5', index: 0},
+                        ...Array.from({length: 8}, (_, i) => ({level: 'level6', index: i}))
+                    ];
+                }
+            }
             createTowerUI() {
+                this.towerLevels = this.getResponsiveTowerLevels();
+                this.layoutConfig = this.getResponsiveLayoutConfig();
                 this.towerContainer.innerHTML = '';
                 this.towerLevels.forEach((level, i) => {
                     const levelDiv = document.createElement('div');
                     levelDiv.className = 'tower-level';
                     const config = this.layoutConfig[i];
-                    
-                    levelDiv.style.transform = `translateX(${config.xOffset})`;
-                    levelDiv.style.marginTop = `${config.yMargin}px`;
-
+                    if (config) {
+                        levelDiv.style.marginTop = `${config.yMargin / 2}px`;
+                        levelDiv.style.marginBottom = `${config.yMargin / 2}px`;
+                        levelDiv.style.transform = `translateX(${config.xOffset})`;
+                    }
                     for (let j = 0; j < level.count; j++) {
                         const slot = document.createElement('div');
                         slot.className = 'slot';

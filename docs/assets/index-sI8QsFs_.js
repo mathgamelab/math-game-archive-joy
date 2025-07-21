@@ -195,7 +195,7 @@ Error generating stack: `+i.message+`
 [7수01-01-02] 정수의 곱셈과 나눗셈을 할 수 있다.
 [7수01-01-03] 정수의 사칙연산의 혼합계산을 할 수 있다.
 📚 학습 유형 : 연산 게임
-🔥 난이도 : ★★☆☆☆`,icon:"💧",status:"playable",difficulty:"초급",estimatedTime:"10분",category:"수와 연산",content:"정수의 혼합계산",terms:"양수, 음수, 절댓값, 혼합계산",standard:"7수01-01",type:"연산 게임",summary:"넘버 플로우의 숫자 카드 대신 정수의 혼합계산이 등장합니다.",url:"/number_flow_integer.html",mobile:"제한"}],middle2:[{id:"rational-numbers",title:"유리수 어드벤처",description:`🎮게임명 : 유리수 어드벤처
+🔥 난이도 : ★★☆☆☆`,icon:"💧",status:"playable",difficulty:"초급",estimatedTime:"10분",category:"수와 연산",content:"정수의 혼합계산",terms:"양수, 음수, 절댓값, 혼합계산",standard:"7수01-01",type:"연산 게임",summary:"넘버 플로우의 숫자 카드 대신 정수의 혼합계산이 등장합니다.",url:"/number_flow_integer.html",mobile:"지원"}],middle2:[{id:"rational-numbers",title:"유리수 어드벤처",description:`🎮게임명 : 유리수 어드벤처
 📘 교과명 : 중학교 2학년/수와 연산
 📂 내용범주 : 유리수와 순환소수
 📌 내용요소 : 유리수의 덧셈, 뺄셈, 곱셈, 나눗셈
@@ -242,14 +242,14 @@ Error generating stack: `+i.message+`
 ✏️ 학습 가능 용어 : 덧셈, 뺄셈, 곱셈, 나눗셈
 🎯 성취기준 : 연산 감각을 기르고 순발력을 향상시킨다.
 📚 학습 유형 : 몸 풀기 게임
-🔥 난이도 : ★☆☆☆☆`,icon:"🍎",status:"playable",difficulty:"초급",estimatedTime:"5분",url:"/apple_game.html",type:"몸 풀기 게임",summary:"사과를 직사각형 모양으로 모아 합 10을 만드는 뇌풀기 게임입니다.",mobile:"제한"},{id:"number-flow",title:"넘버 플로우",description:`🎮게임명 : 넘버 플로우
+🔥 난이도 : ★☆☆☆☆`,icon:"🍎",status:"playable",difficulty:"초급",estimatedTime:"5분",url:"/apple_game.html",type:"몸 풀기 게임",summary:"사과를 직사각형 모양으로 모아 합 10을 만드는 뇌풀기 게임입니다.",mobile:"지원"},{id:"number-flow",title:"넘버 플로우",description:`🎮게임명 : 넘버 플로우
 📘 교과명 : 몸 풀기 게임
 📂 내용범주 : 숫자 인식
 📌 내용요소 : 숫자 순서, 패턴 인식
 ✏️ 학습 가능 용어 : 순서, 패턴, 규칙성
 🎯 성취기준 : 숫자의 순서와 패턴을 빠르게 인식한다.
 📚 학습 유형 : 몸 풀기 게임
-🔥 난이도 : ★☆☆☆☆`,icon:"💧",status:"playable",difficulty:"초급",estimatedTime:"7분",url:"/number_flow.html",type:"몸 풀기 게임",summary:"숫자 카드를 오름차순으로 배열하는 뇌풀기 게임입니다.",mobile:"제한"},{id:"domineering",title:"도미니어링",description:`🎮게임명 : 도미니어링
+🔥 난이도 : ★☆☆☆☆`,icon:"💧",status:"playable",difficulty:"초급",estimatedTime:"7분",url:"/number_flow.html",type:"몸 풀기 게임",summary:"숫자 카드를 오름차순으로 배열하는 뇌풀기 게임입니다.",mobile:"지원"},{id:"domineering",title:"도미니어링",description:`🎮게임명 : 도미니어링
 📘 교과명 : 뇌풀기 게임
 📂 내용범주 : 전략 게임
 📌 내용요소 : 도미노 배치, 공간 전략, 순서 결정

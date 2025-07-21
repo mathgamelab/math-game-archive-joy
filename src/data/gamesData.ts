@@ -106,7 +106,7 @@ export const gamesData: Record<string, GameData[]> = {
       type: '연산 게임',
       summary: '넘버 플로우의 숫자 카드 대신 정수의 혼합계산이 등장합니다.',
       url: '/number_flow_integer.html',
-      mobile: '제한'
+      mobile: '지원'
     }
   ],
   'middle2': [
@@ -216,7 +216,7 @@ export const gamesData: Record<string, GameData[]> = {
       url: '/apple_game.html',
       type: '몸 풀기 게임',
       summary: '사과를 직사각형 모양으로 모아 합 10을 만드는 뇌풀기 게임입니다.',
-      mobile: '제한'
+      mobile: '지원'
     },
     {
       id: 'number-flow',
@@ -236,7 +236,7 @@ export const gamesData: Record<string, GameData[]> = {
       url: '/number_flow.html',
       type: '몸 풀기 게임',
       summary: '숫자 카드를 오름차순으로 배열하는 뇌풀기 게임입니다.',
-      mobile: '제한'
+      mobile: '지원'
     },
     {
       id: 'domineering',

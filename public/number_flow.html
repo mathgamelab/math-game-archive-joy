@@ -1034,31 +1034,77 @@
             findStreams(sequence) {
                 const streams = [];
                 let currentStream = [];
-
-                for (const currentCard of sequence) {
+                let i = 0;
+                while (i < sequence.length) {
+                    const currentCard = sequence[i];
                     if (currentCard === null) {
                         if (currentStream.length > 1) streams.push([...currentStream]);
                         currentStream = [];
+                        i++;
                         continue;
                     }
-                    if (currentStream.length === 0) {
-                        currentStream.push(currentCard);
+                    if (currentCard.value !== '★') {
+                        // 일반 카드
+                        if (currentStream.length === 0) {
+                            currentStream.push(currentCard);
+                        } else {
+                            const lastNumberCard = [...currentStream].reverse().find(c => c.value !== '★');
+                            if (!lastNumberCard || currentCard.value >= lastNumberCard.value) {
+                                currentStream.push(currentCard);
+                            } else {
+                                if (currentStream.length > 1) streams.push([...currentStream]);
+                                currentStream = [currentCard];
+                            }
+                        }
+                        i++;
                         continue;
                     }
-                    const lastNumberCard = [...currentStream].reverse().find(c => c.value !== '★');
-                    let isConnected = false;
-                    if (currentCard.value === '★') {
-                         isConnected = true; // Joker can always extend a stream
-                    } else if (lastNumberCard) {
-                        if (currentCard.value >= lastNumberCard.value) isConnected = true;
-                    } else { // Stream of only jokers
-                        isConnected = true;
+                    // 조커(★) 처리
+                    // 조커의 왼쪽 스트림 길이 계산
+                    let left = i - 1;
+                    let leftStream = [];
+                    while (left >= 0 && sequence[left] && sequence[left] !== null) {
+                        if (sequence[left].value === '★') break;
+                        leftStream.unshift(sequence[left]);
+                        // 오름차순 연속 확인
+                        if (leftStream.length > 1 && leftStream[0].value < leftStream[1].value) break;
+                        left--;
                     }
-                    if (isConnected) {
-                        currentStream.push(currentCard);
+                    // 조커의 오른쪽 스트림 길이 계산
+                    let right = i + 1;
+                    let rightStream = [];
+                    while (right < sequence.length && sequence[right] && sequence[right] !== null) {
+                        if (sequence[right].value === '★') break;
+                        if (rightStream.length === 0) {
+                            rightStream.push(sequence[right]);
+                        } else {
+                            // 오름차순 연속 확인
+                            if (sequence[right].value >= rightStream[rightStream.length - 1].value) {
+                                rightStream.push(sequence[right]);
+                            } else {
+                                break;
+                            }
+                        }
+                        right++;
+                    }
+                    // 더 긴 쪽에 조커를 붙임 (같으면 왼쪽)
+                    if (leftStream.length >= rightStream.length) {
+                        // 왼쪽 스트림에 조커 포함
+                        if (currentStream.length === 0) {
+                            currentStream.push(currentCard);
+                        } else {
+                            currentStream.push(currentCard);
+                        }
+                        i++;
                     } else {
+                        // 오른쪽 스트림에 조커 포함: 현재 스트림 종료, 조커+오른쪽 스트림 새로 시작
                         if (currentStream.length > 1) streams.push([...currentStream]);
                         currentStream = [currentCard];
+                        i++;
+                        // 오른쪽 스트림도 같이 붙임
+                        for (let j = 0; j < rightStream.length; j++, i++) {
+                            currentStream.push(sequence[i]);
+                        }
                     }
                 }
                 if (currentStream.length > 1) streams.push([...currentStream]);

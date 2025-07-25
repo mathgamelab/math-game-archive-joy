@@ -217,3 +217,14 @@
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* reCAPTCHA 팝업(iframe)과 부모의 z-index를 최상위로 */
+div[style*="z-index"] iframe[src*="recaptcha"] {
+  z-index: 99999 !important;
+  position: fixed !important;
+  pointer-events: auto !important;
+}
+div[style*="z-index"][style*="2147483647"] {
+  z-index: 99999 !important;
+  pointer-events: auto !important;
+}

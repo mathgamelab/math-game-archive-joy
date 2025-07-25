@@ -55,11 +55,10 @@ export const ContactFormModal: React.FC<ContactFormModalProps> = ({ isOpen, onCl
 
     try {
       // Google Apps Script 웹 앱 URL로 POST 요청 전송
-      const formData = new URLSearchParams({ ...data, recaptcha: recaptchaValue }).toString();
-      const response = await fetch('https://script.google.com/macros/s/AKfycbxKjipoZBwl6ItRzK6vrvHJPlP_btXIgrxMerRcQic3b9zMyUSBS2kQ7V8HMQ2UWeJh/exec', {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbyLNl4xyjNcZHod6vE97DAA0rda-q9ZhapkiPHq8crs2y4KOpt93ubTVR9yUROllOMS/exec', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, recaptcha: recaptchaValue })
       });
 
       const result = await response.json(); // 응답을 JSON으로 파싱

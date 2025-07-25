@@ -22,6 +22,8 @@ import { GameCard, GameData } from '@/components/GameCard';
 import { GameModal } from '@/components/GameModal';
 import recommendedGames from '@/data/recommendedGames.json';
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from '@/components/ui/carousel';
+import ContactModal from '@/components/ContactModal';
+import ContactFormModal from '@/components/ContactFormModal';
 
 const Main = () => {
   const navigate = useNavigate();
@@ -31,7 +33,6 @@ const Main = () => {
   // 모달 상태 및 핸들러 추가
   const [selectedGame, setSelectedGame] = useState<GameData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   const handleGameClick = (game: GameData) => {
     setSelectedGame(game);
     setIsModalOpen(true);

@@ -8,10 +8,12 @@ import Main from "./pages/Main";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect } from "react";
+import ContactModal from '@/components/ContactModal';
+import ContactFormModal from '@/components/ContactFormModal';
 
 const queryClient = new QueryClient();
 
-function AppRoutes({ navigationItems }: { navigationItems: MainNavItem[] }) {
+function AppRoutes({ navigationItems, onContactClick }: { navigationItems: MainNavItem[], onContactClick: () => void }) {
   const [activeSection, setActiveSection] = useState('main');
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,6 +41,7 @@ function AppRoutes({ navigationItems }: { navigationItems: MainNavItem[] }) {
         items={navigationItems}
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
+        onContactClick={onContactClick}
       />
       <Routes>
         <Route path="/" element={<Main />} />
@@ -63,13 +66,28 @@ const App = () => {
     }
   ];
 
+  const [isContactOpen, setIsContactOpen] = useState(false);
+  const [isContactFormOpen, setIsContactFormOpen] = useState(false);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AppRoutes navigationItems={navigationItems} />
+          <ContactModal
+            isOpen={isContactOpen}
+            onClose={() => setIsContactOpen(false)}
+            onEmailClick={() => {
+              setIsContactOpen(false);
+              setIsContactFormOpen(true);
+            }}
+          />
+          <ContactFormModal
+            isOpen={isContactFormOpen}
+            onClose={() => setIsContactFormOpen(false)}
+          />
+          <AppRoutes navigationItems={navigationItems} onContactClick={() => setIsContactOpen(true)} />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

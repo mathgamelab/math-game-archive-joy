@@ -26,6 +26,8 @@ import {
   Filter
 } from "lucide-react";
 import { getPlayCount, incrementPlayCount } from '../lib/playCount';
+import ContactModal from '@/components/ContactModal';
+import ContactFormModal from '@/components/ContactFormModal';
 
 // 중학수학 탭 데이터
 const middleSchoolTabs: TabData[] = [
@@ -83,6 +85,7 @@ const Index = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
   const navigate = useNavigate();
   const [playCounts, setPlayCounts] = useState<Record<string, number>>({});
+  // 문의하기 관련 import, 상태, 버튼, 모달 모두 제거
 
   const { 
     getPopularGames, 

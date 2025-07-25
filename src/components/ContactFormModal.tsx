@@ -55,7 +55,7 @@ export const ContactFormModal: React.FC<ContactFormModalProps> = ({ isOpen, onCl
 
     try {
       // Google Apps Script 웹 앱 URL로 POST 요청 전송
-      const response = await fetch('https://script.google.com/macros/s/AKfycby2Oj-Gv3L9HokNNZHWJP7jWK3cbgSLDnD4cuFPFSU2Rl8_H3_kMnBVgB9EQRE6pCKR/exec', {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbwPVF2WsRbzBHp7Ae9vfBIfiQCTl97giXYds2bretGS4DfBGG7j9jNAdIl2aNXb-cUs/exec', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // 폼 데이터와 reCAPTCHA 토큰을 JSON 형태로 전송

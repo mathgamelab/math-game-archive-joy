@@ -29,14 +29,14 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onE
         onClick={() => window.open(KAKAO_URL, '_blank')}
         style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
       >
-        카카오톡 오픈채팅으로 문의
+        카톡 오픈채팅으로 문의
       </Button>
       <Button
         className="w-full mb-3 bg-transparent border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white font-bold text-lg rounded-full py-3 shadow-lg"
         onClick={onEmailClick}
         style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
       >
-        이메일로 문의
+        직접 문의
       </Button>
       <button
         className="mt-2 text-gray-400 text-sm hover:text-gray-600"

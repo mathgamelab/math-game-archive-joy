@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포켓 동물장기 (Pocket Animal Shogi)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .board-cell {
+            transition: all 0.2s ease;
+        }
+        .board-cell:hover {
+            transform: scale(1.05);
+        }
+        .piece-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .piece {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .piece:hover {
+            transform: scale(1.1);
+        }
+        .move-dot {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            box-shadow: 0 0 2px rgba(0,0,0,0.5);
+        }
+        .highlight {
+            background-color: rgba(34, 197, 94, 0.3);
+            border: 2px solid #22c55e;
+        }
+        .selected-player1 {
+            background-color: rgba(59, 130, 246, 0.5) !important;
+            border: 3px solid #3b82f6 !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+        .selected-player2 {
+            background-color: rgba(239, 68, 68, 0.5) !important;
+            border: 3px solid #ef4444 !important;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+        .captured-selected {
+            background-color: rgba(34, 197, 94, 0.3);
+            border: 2px solid #22c55e;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+        }
+        .captured-piece {
+            opacity: 0.8;
+            transition: all 0.2s ease;
+        }
+        .captured-piece:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .promotion-animation {
+            animation: promotion 0.8s ease-in-out;
+        }
+        @keyframes promotion {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3) rotate(180deg); }
+            100% { transform: scale(1); }
+        }
+        .turn-indicator {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .modal-backdrop {
+            transition: opacity 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-100 to-blue-100 min-h-screen">
+    <!-- 메인 메뉴 -->
+    <div id="mainMenu" class="flex flex-col items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-2">🦁 포켓 동물장기</h1>
+            <p class="text-gray-600 mb-8">귀여운 동물들과</br> 함께하는 전략 게임</p>
+            <div class="space-y-4">
+                <button onclick="showHowToPlay()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+                    🎓 게임 방법
+                </button>
+                <button onclick="startGame()" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+                    🎮 둘이하기
+                </button>
+                <button onclick="showSettings()" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+                    ⚙️ 환경설정
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 게임 방법 -->
+    <div id="howToPlay" class="hidden flex flex-col items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-green-600 mb-6">🎓 게임 방법</h2>
+            <div id="rulebookContent" class="space-y-6 text-sm">
+                 <!-- Rule content will be injected here -->
+            </div>
+            <button onclick="showMainMenu()" class="w-full mt-6 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+                ← 메인으로
+            </button>
+        </div>
+    </div>
+
+    <!-- 환경설정 -->
+    <div id="settings" class="hidden flex flex-col items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-green-600 mb-6">⚙️ 환경설정</h2>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700">배경음악</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" checked onchange="toggleMusic(this.checked)">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                    </label>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-700">효과음</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" checked onchange="toggleSound(this.checked)">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                    </label>
+                </div>
+            </div>
+            <button onclick="showMainMenu()" class="w-full mt-6 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+                ← 메인으로
+            </button>
+        </div>
+    </div>
+
+    <!-- 게임 화면 -->
+    <div id="gameScreen" class="hidden flex flex-col items-center justify-center min-h-screen p-4">
+        <!-- 반응형 게임 레이아웃 -->
+        <div class="flex flex-col lg:flex-row items-center justify-center w-full">
+            
+            <!-- 플레이어 2 (상단 또는 왼쪽) -->
+            <div class="flex lg:flex-col items-center justify-between w-full lg:w-auto mb-4 lg:mb-0 lg:mr-8">
+                <div class="bg-white rounded-xl shadow-lg p-3 flex flex-row lg:flex-col items-center space-x-4 lg:space-x-0 lg:space-y-2">
+                    <div class="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">2</div>
+                    <div class="text-center"><p class="font-semibold text-gray-800">플레이어 2</p><p id="turnIndicator2" class="text-sm text-gray-600">대기 중</p></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-2 lg:p-4 lg:mt-4">
+                    <p class="text-sm text-gray-600 mb-2 text-center hidden lg:block">잡은 기물</p>
+                    <div id="player2Captured" class="flex flex-row lg:flex-col space-x-1 lg:space-x-0 lg:space-y-2 items-center min-h-10"></div>
+                </div>
+            </div>
+
+            <!-- 게임 보드 (중앙) -->
+            <div class="bg-amber-100 rounded-2xl shadow-2xl p-2 sm:p-4 my-4 lg:my-0">
+                <div id="gameBoard" class="grid grid-rows-3 grid-cols-4 gap-1 sm:gap-2">
+                    <!-- 보드 칸들이 여기에 생성됩니다 -->
+                </div>
+            </div>
+
+            <!-- 플레이어 1 (하단 또는 오른쪽) -->
+            <div class="flex lg:flex-col items-center justify-between w-full lg:w-auto mt-4 lg:mt-0 lg:ml-8 lg:order-last order-first">
+                 <div class="bg-white rounded-xl shadow-lg p-3 flex flex-row lg:flex-col items-center space-x-4 lg:space-x-0 lg:space-y-2">
+                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">1</div>
+                    <div class="text-center"><p class="font-semibold text-gray-800">플레이어 1</p><p id="turnIndicator1" class="text-sm text-green-600 font-semibold turn-indicator">내 턴</p></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-lg p-2 lg:p-4 lg:mt-4">
+                    <p class="text-sm text-gray-600 mb-2 text-center hidden lg:block">잡은 기물</p>
+                    <div id="player1Captured" class="flex flex-row lg:flex-col space-x-1 lg:space-x-0 lg:space-y-2 items-center min-h-10"></div>
+                </div>
+            </div>
+        </div>
+        <!-- 게임 컨트롤 -->
+        <div class="flex justify-center space-x-2 sm:space-x-4 mt-6">
+            <button onclick="showConfirmHomeModal()" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-3 sm:px-5 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"><i class="fa-solid fa-house"></i><span>홈</span></button>
+            <button onclick="showRulebookModal()" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 sm:px-5 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"><i class="fa-solid fa-book-open"></i><span>룰북</span></button>
+            <button onclick="resetGame()" class="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-3 sm:px-5 rounded-lg transition-colors flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"><i class="fa-solid fa-arrow-rotate-right"></i><span>다시하기</span></button>
+        </div>
+    </div>
+
+    <!-- 공통 모달 백드롭 -->
+    <div id="modalBackdrop" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 modal-backdrop"></div>
+
+    <!-- 승리 모달 -->
+    <div id="winModal" class="hidden fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+            <div id="winContent"></div>
+            <div class="flex space-x-4 mt-6">
+                <button onclick="resetGame()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors text-sm sm:text-base">다시하기</button>
+                <button onclick="exitToMenu()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors text-sm sm:text-base">메인으로</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 룰북 모달 -->
+    <div id="rulebookModal" class="hidden fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full mx-4">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-green-600 mb-6">🎓 게임 방법</h2>
+            <div id="rulebookModalContent" class="space-y-6 text-sm max-h-[60vh] overflow-y-auto pr-2">
+                <!-- 룰북 내용이 여기에 들어감 -->
+            </div>
+            <button onclick="hideRulebookModal()" class="w-full mt-6 bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors">닫기</button>
+        </div>
+    </div>
+
+    <!-- 홈으로 가기 확인 모달 -->
+    <div id="confirmHomeModal" class="hidden fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">메인으로 돌아가기</h2>
+            <p class="text-gray-600 mb-6">현재 게임을 종료하고 메인 화면으로 돌아가시겠습니까?</p>
+            <div class="flex space-x-4">
+                <button onclick="exitToMenu()" class="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors text-sm sm:text-base">돌아</br>가기</button>
+                <button onclick="hideConfirmHomeModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-colors text-sm sm:text-base">아니오</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 오디오 설정 ---
+        let audioContext;
+        let musicGainNode;
+        let soundEnabled = true;
+        let musicEnabled = true;
+        let isMusicPlaying = false;
+
+        const notes = { 'C4': 261.63, 'D4': 293.66, 'E4': 329.63, 'F4': 349.23, 'G4': 392.00, 'A4': 440.00, 'B4': 493.88, 'C5': 523.25 };
+        const melody = [
+            { note: 'C4', duration: 0.25 }, { note: 'E4', duration: 0.25 }, { note: 'G4', duration: 0.25 }, { note: 'C5', duration: 0.5 },
+            { note: 'A4', duration: 0.25 }, { note: 'G4', duration: 0.25 }, { note: 'E4', duration: 0.25 }, { note: 'F4', duration: 0.5 },
+            { note: 'D4', duration: 0.25 }, { note: 'F4', duration: 0.25 }, { note: 'A4', duration: 0.25 }, { note: 'G4', duration: 0.5 },
+            { note: 'E4', duration: 0.25 }, { note: 'D4', duration: 0.25 }, { note: 'C4', duration: 0.25 }, { note: null, duration: 0.5 },
+        ];
+        let melodyTimeout;
+
+        function initAudio() {
+            if (audioContext) return;
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('Web Audio API is not supported in this browser');
+            }
+        }
+
+        function playBackgroundMusic() {
+            if (!audioContext || !musicEnabled || isMusicPlaying) return;
+            isMusicPlaying = true;
+            let currentNote = 0;
+            
+            musicGainNode = audioContext.createGain();
+            musicGainNode.gain.setValueAtTime(0.05, audioContext.currentTime);
+            musicGainNode.connect(audioContext.destination);
+
+            const scheduler = () => {
+                const noteInfo = melody[currentNote];
+                if (noteInfo.note) {
+                    const oscillator = audioContext.createOscillator();
+                    oscillator.connect(musicGainNode);
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(notes[noteInfo.note], audioContext.currentTime);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + noteInfo.duration * 0.9);
+                }
+                
+                currentNote = (currentNote + 1) % melody.length;
+                melodyTimeout = setTimeout(scheduler, noteInfo.duration * 1000);
+            };
+            scheduler();
+        }
+
+        function stopBackgroundMusic() {
+            isMusicPlaying = false;
+            clearTimeout(melodyTimeout);
+            if (musicGainNode) {
+                musicGainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
+                setTimeout(() => musicGainNode.disconnect(), 500);
+            }
+        }
+
+        function playSound(frequency = 440, duration = 0.2, type = 'sine') {
+            if (!audioContext || !soundEnabled) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = type;
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playCaptureSound(pieceType) {
+            if (!audioContext || !soundEnabled) return;
+
+            switch (pieceType) {
+                case 'lion':
+                    const roarOsc = audioContext.createOscillator();
+                    const roarGain = audioContext.createGain();
+                    roarOsc.connect(roarGain);
+                    roarGain.connect(audioContext.destination);
+                    roarOsc.type = 'sawtooth';
+                    roarGain.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    roarOsc.frequency.setValueAtTime(150, audioContext.currentTime);
+                    roarOsc.frequency.exponentialRampToValueAtTime(80, audioContext.currentTime + 0.4);
+                    roarGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                    roarOsc.start();
+                    roarOsc.stop(audioContext.currentTime + 0.5);
+                    break;
+                case 'elephant':
+                    const trumpetOsc = audioContext.createOscillator();
+                    const trumpetGain = audioContext.createGain();
+                    trumpetOsc.connect(trumpetGain);
+                    trumpetGain.connect(audioContext.destination);
+                    trumpetOsc.type = 'square';
+                    trumpetGain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    trumpetOsc.frequency.setValueAtTime(300, audioContext.currentTime);
+                    trumpetOsc.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.3);
+                    trumpetGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                    trumpetOsc.start();
+                    trumpetOsc.stop(audioContext.currentTime + 0.4);
+                    break;
+                case 'giraffe':
+                    playSound(350, 0.3, 'sine');
+                    break;
+                case 'chick':
+                case 'hen':
+                    playSound(1200, 0.15, 'triangle');
+                    break;
+                default:
+                    playSound(660, 0.2, 'square');
+            }
+        }
+
+        // --- 게임 상태 ---
+        let gameState = {
+            board: Array(12).fill(null),
+            currentPlayer: 1,
+            selectedPiece: null,
+            selectedPosition: null,
+            capturedPieces: { 1: [], 2: [] },
+            gameOver: false,
+            isAnimating: false
+        };
+
+        // --- 기물 정의 ---
+        const pieces = {
+            lion: { emoji: '🦁', name: '사자', moves: [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] },
+            giraffe: { emoji: '🦒', name: '기린', moves: [[-1,0],[1,0],[0,-1],[0,1]] },
+            elephant: { emoji: '🐘', name: '코끼리', moves: [[-1,-1],[-1,1],[1,-1],[1,1]] },
+            chick: { emoji: '🐣', name: '병아리', moves: [[-1,0]] },
+            hen: { emoji: '🐓', name: '닭', moves: [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,0]] }
+        };
+
+        const dotPositionMap = {
+            '-1,-1': { top: '12%', left: '12%' },
+            '-1,0':  { top: '12%', left: '50%', transform: 'translateX(-50%)' },
+            '-1,1':  { top: '12%', right: '12%' },
+            '0,-1':  { top: '50%', left: '12%', transform: 'translateY(-50%)' },
+            '0,1':   { top: '50%', right: '12%', transform: 'translateY(-50%)' },
+            '1,-1':  { bottom: '12%', left: '12%' },
+            '1,0':   { bottom: '12%', left: '50%', transform: 'translateX(-50%)' },
+            '1,1':   { bottom: '12%', right: '12%' },
+        };
+
+        // --- 게임 로직 ---
+        function initializeBoard() {
+            gameState.board = Array(12).fill(null);
+            gameState.capturedPieces = { 1: [], 2: [] };
+            gameState.currentPlayer = 1;
+            gameState.gameOver = false;
+            gameState.isAnimating = false;
+            gameState.selectedPiece = null;
+            gameState.selectedPosition = null;
+
+            gameState.board[0] = { type: 'elephant', player: 2 };
+            gameState.board[4] = { type: 'lion', player: 2 };
+            gameState.board[8] = { type: 'giraffe', player: 2 };
+            gameState.board[5] = { type: 'chick', player: 2 };
+
+            gameState.board[3] = { type: 'giraffe', player: 1 };
+            gameState.board[7] = { type: 'lion', player: 1 };
+            gameState.board[11] = { type: 'elephant', player: 1 };
+            gameState.board[6] = { type: 'chick', player: 1 };
+            
+            renderBoard();
+            updateTurnIndicator();
+        }
+
+        function renderBoard() {
+            const boardElement = document.getElementById('gameBoard');
+            boardElement.innerHTML = '';
+            for (let i = 0; i < 12; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'board-cell w-16 h-16 sm:w-20 sm:h-20 bg-amber-50 border-2 border-amber-200 rounded-lg flex items-center justify-center cursor-pointer';
+                cell.dataset.position = i;
+                cell.onclick = () => handleCellClick(i);
+
+                if (gameState.board[i]) {
+                    const piece = gameState.board[i];
+                    
+                    const pieceContainer = document.createElement('div');
+                    const rotationClass = piece.player === 1 ? 'transform -rotate-90' : 'transform rotate-90';
+                    pieceContainer.className = `piece-container ${rotationClass}`;
+
+                    const pieceElement = document.createElement('div');
+                    pieceElement.className = 'piece text-3xl sm:text-4xl';
+                    pieceElement.textContent = pieces[piece.type].emoji;
+                    
+                    pieceContainer.appendChild(pieceElement);
+
+                    const movesToDraw = pieces[piece.type].moves;
+
+                    movesToDraw.forEach(([dr, dc]) => {
+                        const dot = document.createElement('div');
+                        dot.className = 'move-dot';
+                        dot.style.backgroundColor = piece.player === 1 ? '#3b82f6' : '#ef4444';
+                        const posKey = `${dr},${dc}`;
+                        const style = dotPositionMap[posKey];
+                        if (style) {
+                            Object.assign(dot.style, style);
+                            pieceContainer.appendChild(dot);
+                        }
+                    });
+
+                    cell.appendChild(pieceContainer);
+
+                    if (piece.player === 1) {
+                        cell.classList.replace('bg-amber-50', 'bg-blue-100');
+                    } else {
+                        cell.classList.replace('bg-amber-50', 'bg-red-100');
+                    }
+                }
+                boardElement.appendChild(cell);
+            }
+            renderCapturedPieces();
+        }
+        
+        function renderCapturedPieces() {
+            const player1Captured = document.getElementById('player1Captured');
+            const player2Captured = document.getElementById('player2Captured');
+            player1Captured.innerHTML = '';
+            player2Captured.innerHTML = '';
+
+            gameState.capturedPieces[1].forEach((piece, index) => {
+                const pieceElement = document.createElement('div');
+                const rotation = '-rotate-90';
+                pieceElement.className = `captured-piece text-2xl cursor-pointer p-1 rounded transform ${rotation}`;
+                pieceElement.textContent = pieces[piece.type === 'hen' ? 'chick' : piece.type].emoji;
+                pieceElement.onclick = () => selectCapturedPiece(piece, index, 1);
+                player1Captured.appendChild(pieceElement);
+            });
+            gameState.capturedPieces[2].forEach((piece, index) => {
+                const pieceElement = document.createElement('div');
+                const rotation = 'rotate-90';
+                pieceElement.className = `captured-piece text-2xl cursor-pointer p-1 rounded transform ${rotation}`;
+                pieceElement.textContent = pieces[piece.type === 'hen' ? 'chick' : piece.type].emoji;
+                pieceElement.onclick = () => selectCapturedPiece(piece, index, 2);
+                player2Captured.appendChild(pieceElement);
+            });
+        }
+
+        function handleCellClick(position) {
+            if (gameState.gameOver || gameState.isAnimating) return;
+            const piece = gameState.board[position];
+
+            if (gameState.selectedPiece && gameState.selectedPiece.captured) {
+                if (!piece && canDropPiece(gameState.selectedPiece, position)) {
+                    dropPiece(gameState.selectedPiece, position);
+                } else {
+                    playSound(220, 0.2, 'sawtooth');
+                    clearSelection();
+                }
+                return;
+            }
+
+            if (gameState.selectedPosition !== null) {
+                if (canMovePiece(gameState.selectedPosition, position)) {
+                    movePiece(gameState.selectedPosition, position);
+                } else {
+                    playSound(220, 0.2, 'sawtooth');
+                    clearSelection();
+                    if (piece && piece.player === gameState.currentPlayer) {
+                       selectPieceOnBoard(position);
+                    }
+                }
+                return;
+            }
+
+            if (piece && piece.player === gameState.currentPlayer) {
+                selectPieceOnBoard(position);
+            }
+        }
+        
+        function selectPieceOnBoard(position) {
+            clearSelection();
+            gameState.selectedPosition = position;
+            gameState.selectedPiece = gameState.board[position];
+            const cells = document.querySelectorAll('.board-cell');
+            const selectedClass = gameState.currentPlayer === 1 ? 'selected-player1' : 'selected-player2';
+            cells[position].classList.add(selectedClass);
+            const validMoves = getValidMoves(position);
+            validMoves.forEach(move => {
+                cells[move].classList.add('highlight');
+            });
+        }
+
+        function selectCapturedPiece(piece, index, player) {
+            if (player !== gameState.currentPlayer || gameState.gameOver || gameState.isAnimating) return;
+            clearSelection();
+            gameState.selectedPiece = { ...piece, captured: true, capturedIndex: index };
+            gameState.selectedPosition = null;
+            const capturedArea = player === 1 ? 'player1Captured' : 'player2Captured';
+            document.getElementById(capturedArea).children[index].classList.add('captured-selected');
+            const cells = document.querySelectorAll('.board-cell');
+            for (let i = 0; i < 12; i++) {
+                if (!gameState.board[i] && canDropPiece(gameState.selectedPiece, i)) {
+                    cells[i].classList.add('highlight');
+                }
+            }
+        }
+        
+        function getValidMoves(position) {
+            const piece = gameState.board[position];
+            if (!piece) return [];
+
+            const validMoves = [];
+            const moves = pieces[piece.type].moves;
+            const boardRow = Math.floor(position / 4);
+            const boardCol = position % 4;
+
+            moves.forEach(([dr, dc]) => {
+                let newRow, newCol;
+                if (piece.player === 1) { // Player 1 (오른쪽) -> 왼쪽으로 이동 (-90도 회전)
+                    newRow = boardRow - dc;
+                    newCol = boardCol + dr;
+                } else { // Player 2 (왼쪽) -> 오른쪽으로 이동 (+90도 회전)
+                    newRow = boardRow + dc;
+                    newCol = boardCol - dr;
+                }
+
+                if (newRow >= 0 && newRow < 3 && newCol >= 0 && newCol < 4) {
+                    const newPos = newRow * 4 + newCol;
+                    const targetPiece = gameState.board[newPos];
+                    if (!targetPiece || targetPiece.player !== piece.player) {
+                        validMoves.push(newPos);
+                    }
+                }
+            });
+            return validMoves;
+        }
+
+
+        function canMovePiece(from, to) {
+            return getValidMoves(from).includes(to);
+        }
+
+        function canDropPiece(piece, position) {
+            if (gameState.board[position]) return false;
+            if (piece.type === 'chick' || piece.type === 'hen') {
+                const col = position % 4;
+                if ((gameState.currentPlayer === 1 && col === 0) || (gameState.currentPlayer === 2 && col === 3)) {
+                    return false;
+                }
+                for (let row = 0; row < 3; row++) {
+                    const checkPos = row * 4 + col;
+                    const checkPiece = gameState.board[checkPos];
+                    if (checkPiece && checkPiece.player === gameState.currentPlayer && (checkPiece.type === 'chick' || checkPiece.type === 'hen')) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function movePiece(from, to) {
+            const piece = gameState.board[from];
+            const targetPiece = gameState.board[to];
+
+            if (targetPiece) {
+                const capturedPiece = { ...targetPiece };
+                if (capturedPiece.type === 'hen') capturedPiece.type = 'chick';
+                gameState.capturedPieces[gameState.currentPlayer].push(capturedPiece);
+                
+                playCaptureSound(targetPiece.type);
+
+                if (targetPiece.type === 'lion') {
+                    endGame(`플레이어 ${gameState.currentPlayer} 승리!`, '상대의 사자를 잡았습니다! 🎉');
+                    return;
+                }
+            } else {
+                playSound(440, 0.2, 'sine');
+            }
+
+            gameState.board[to] = piece;
+            gameState.board[from] = null;
+            clearSelection(); 
+
+            const col = to % 4;
+            if (piece.type === 'chick' && ((piece.player === 1 && col === 0) || (piece.player === 2 && col === 3))) {
+                gameState.isAnimating = true;
+                gameState.board[to].type = 'hen';
+                
+                renderBoard(); 
+                playSound(880, 0.5, 'triangle');
+                
+                const cells = document.querySelectorAll('.board-cell');
+                const container = cells[to].querySelector('.piece-container');
+                if (container) {
+                    container.classList.add('promotion-animation');
+                    setTimeout(() => {
+                        gameState.isAnimating = false;
+                        nextTurn();
+                    }, 800);
+                    return; 
+                }
+            }
+
+            if (piece.type === 'lion') {
+                const promotionCol = piece.player === 1 ? 0 : 3;
+                if (col === promotionCol) {
+                     endGame(`플레이어 ${gameState.currentPlayer} 승리!`, '사자가 상대 진영에 도달했습니다! 🏆');
+                     return;
+                }
+            }
+            nextTurn();
+        }
+
+        function dropPiece(piece, position) {
+            gameState.board[position] = { type: piece.type === 'hen' ? 'chick' : piece.type, player: gameState.currentPlayer };
+            gameState.capturedPieces[gameState.currentPlayer].splice(piece.capturedIndex, 1);
+            playSound(330, 0.3, 'triangle');
+            nextTurn();
+        }
+
+        function nextTurn() {
+            if(gameState.isAnimating) return; 
+            gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+            clearSelection();
+            renderBoard();
+            updateTurnIndicator();
+        }
+        
+        function clearSelection() {
+            gameState.selectedPiece = null;
+            gameState.selectedPosition = null;
+            document.querySelectorAll('.board-cell, .captured-piece').forEach(el => {
+                el.classList.remove('highlight', 'selected-player1', 'selected-player2', 'captured-selected');
+            });
+        }
+
+        function updateTurnIndicator() {
+            const indicator1 = document.getElementById('turnIndicator1');
+            const indicator2 = document.getElementById('turnIndicator2');
+            if (gameState.currentPlayer === 1) {
+                indicator1.textContent = '내 턴';
+                indicator1.className = 'text-sm text-green-600 font-semibold turn-indicator';
+                indicator2.textContent = '대기 중';
+                indicator2.className = 'text-sm text-gray-600';
+            } else {
+                indicator1.textContent = '대기 중';
+                indicator1.className = 'text-sm text-gray-600';
+                indicator2.textContent = '내 턴';
+                indicator2.className = 'text-sm text-green-600 font-semibold turn-indicator';
+            }
+        }
+
+        function endGame(title, message) {
+            gameState.gameOver = true;
+            stopBackgroundMusic();
+            playSound(900, 1, 'triangle');
+            showModal('winModal', { title, message });
+        }
+        
+        // --- 화면 및 모달 관리 ---
+        const screens = ['mainMenu', 'gameScreen', 'howToPlay', 'settings'];
+        const modals = ['winModal', 'rulebookModal', 'confirmHomeModal'];
+
+        function showScreen(screenId) {
+            screens.forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        function showModal(modalId, content = {}) {
+            const modal = document.getElementById(modalId);
+            if (modalId === 'winModal') {
+                document.getElementById('winContent').innerHTML = `
+                    <h2 class="text-2xl sm:text-3xl font-bold text-green-600 mb-4">${content.title}</h2>
+                    <p class="text-gray-600 mb-4">${content.message}</p>
+                    <div class="text-6xl mb-4">🎉</div>`;
+            }
+            document.getElementById('modalBackdrop').classList.remove('hidden');
+            modal.classList.remove('hidden');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            const isAnyModalVisible = modals.some(id => !document.getElementById(id).classList.contains('hidden'));
+            if (!isAnyModalVisible) {
+                document.getElementById('modalBackdrop').classList.add('hidden');
+            }
+        }
+        
+        function showMainMenu() { showScreen('mainMenu'); }
+        function showHowToPlay() { showScreen('howToPlay'); }
+        function showSettings() { showScreen('settings'); }
+
+        function startGame() {
+            showScreen('gameScreen');
+            initAudio();
+            playBackgroundMusic();
+            initializeBoard();
+        }
+
+        function resetGame() {
+            hideModal('winModal');
+            playBackgroundMusic();
+            initializeBoard();
+        }
+
+        function exitToMenu() {
+            hideModal('winModal');
+            hideModal('confirmHomeModal');
+            stopBackgroundMusic();
+            showMainMenu();
+        }
+
+        function showRulebookModal() { showModal('rulebookModal'); }
+        function hideRulebookModal() { hideModal('rulebookModal'); }
+        function showConfirmHomeModal() { showModal('confirmHomeModal'); }
+        function hideConfirmHomeModal() { hideModal('confirmHomeModal'); }
+
+        function toggleMusic(enabled) {
+            musicEnabled = enabled;
+            if (enabled) {
+                playBackgroundMusic();
+            } else {
+                stopBackgroundMusic();
+            }
+        }
+        function toggleSound(enabled) { soundEnabled = enabled; }
+
+        // --- 초기화 ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const rulebookHTML = `
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">🎯 게임 목표</h3>
+                    <p class="text-gray-600">상대의 사자를 잡거나, 내 사자를 상대 진영 끝까지 이동시켜 승리하세요!</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">🐾 동물 기물들</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="flex items-center space-x-3"><span class="text-3xl w-8 text-center">🦁</span><div><p class="font-semibold">사자</p><p class="text-xs text-gray-500">모든 8방향으로 1칸</p></div></div>
+                        <div class="flex items-center space-x-3"><span class="text-3xl w-8 text-center">🦒</span><div><p class="font-semibold">기린</p><p class="text-xs text-gray-500">상하좌우 1칸</p></div></div>
+                        <div class="flex items-center space-x-3"><span class="text-3xl w-8 text-center">🐘</span><div><p class="font-semibold">코끼리</p><p class="text-xs text-gray-500">대각선 4방향으로 1칸</p></div></div>
+                        <div class="flex items-center space-x-3"><span class="text-3xl w-8 text-center">🐣</span><div><p class="font-semibold">병아리</p><p class="text-xs text-gray-500">앞으로만 1칸</p></div></div>
+                        <div class="flex items-center space-x-3"><span class="text-3xl w-8 text-center">🐓</span><div><p class="font-semibold">닭 (병아리 승급)</p><p class="text-xs text-gray-500">앞, 뒤, 좌우, 대각선 앞 (6방향)</p></div></div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">⭐ 특수 규칙</h3>
+                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                        <li><strong>승급:</strong> 병아리가 상대 진영 맨 끝 칸에 도달하면 즉시 닭(🐓)으로 승급합니다.</li>
+                        <li><strong>내려놓기:</strong> 잡았던 상대 기물을 자신의 턴에 빈칸 어디든 내려놓을 수 있습니다. (단, 병아리를 마지막 칸에 내려놓거나, 이미 내 병아리가 있는 세로줄에 또 병아리를 놓을 수는 없습니다.)</li>
+                        <li><strong>승리 조건:</strong> 1) 상대방의 사자를 잡는 경우 (Checkmate). 2) 자신의 사자가 안전하게 상대 진영 맨 끝 칸에 도달하는 경우 (Try).</li>
+                    </ul>
+                </div>`;
+            document.getElementById('rulebookContent').innerHTML = rulebookHTML;
+            document.getElementById('rulebookModalContent').innerHTML = rulebookHTML;
+            
+            showMainMenu();
+        });
+    </script>
+</body>
+</html>

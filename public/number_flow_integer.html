@@ -413,6 +413,9 @@
             .info-box, .card-guide { font-size: 0.7rem; padding: 0.2rem 0.3rem; }
             .card-guide { gap: 0.2rem; }
             .guide-chip { font-size: 0.7rem; padding: 0.1rem 0.25rem; }
+            .info-panel { bottom: 0.5rem; left: 0.5rem; }
+            .game-container .main-area { max-height: 700px; }
+            .tower-container { margin-bottom: 3rem; }
         }
     </style>
 </head>
@@ -605,23 +608,8 @@
                 this.selectedCard = null;
                 this.jokerUsed = false;
                 
-                this.towerLevels = [
-                    { name: 'level1', count: 8 }, 
-                    { name: 'level2', count: 1 }, 
-                    { name: 'level3', count: 1 }, 
-                    { name: 'level4', count: 1 }, 
-                    { name: 'level5', count: 1 },
-                    { name: 'level6', count: 8 }
-                ];
-                
-                this.layoutConfig = [
-                    { level: 'level1', xOffset: 'calc(50% - 500px)', yMargin: 0 },
-                    { level: 'level2', xOffset: 'calc(50% + 20px)', yMargin: 8 },
-                    { level: 'level3', xOffset: 'calc(50% - 10px)', yMargin: 8 },
-                    { level: 'level4', xOffset: 'calc(50% - 40px)', yMargin: 8 },
-                    { level: 'level5', xOffset: 'calc(50% - 70px)', yMargin: 8 },
-                    { level: 'level6', xOffset: 'calc(50% - 100px)', yMargin: 8 }
-                ];
+                this.towerLevels = this.getResponsiveTowerLevels();
+                this.layoutConfig = this.getResponsiveLayoutConfig();
                 
                 this.seedWords = ['사과', '바나나', '딸기', '포도', '수박', '오렌지', '레몬', '복숭아', '자두', '체리'];
                 this.operators = ['+', '-', '×', '÷'];

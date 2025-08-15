@@ -41,7 +41,7 @@ export const MainNavigation: React.FC<MainNavigationProps> = ({ items, activeSec
             ))}
             <button
               onClick={onContactClick}
-              className="text-sm sm:text-lg font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded transition-colors duration-150 bg-blue-600 text-white shadow hover:bg-blue-700 ml-1 sm:ml-2"
+              className="text-sm sm:text-lg font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded transition-colors duration-150 ml-1 sm:ml-2 text-blue-700 bg-blue-50 hover:bg-blue-100"
               style={{ minWidth: '72px' }}
             >
               문의하기

@@ -57,6 +57,19 @@ export const ContactFormModal: React.FC<ContactFormModalProps> = ({ isOpen, onCl
     <Dialog open={isOpen} onOpenChange={open => { if (!open) onClose(); }}>
       <DialogContent className="max-w-md p-6">
         <DialogHeader>
+          {/* 로고 추가 */}
+          <div className="flex justify-center mb-6">
+            <img
+              src="/images/math_game_logo.png"
+              alt="Math Game Logo"
+              className="h-16 w-auto"
+              style={{ objectFit: 'contain' }}
+              onError={(e) => {
+                console.error('로고 이미지 로드 실패:', e);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          </div>
           <DialogTitle className="text-2xl font-bold mb-2">문의 또는 제안사항</DialogTitle>
           <DialogDescription className="text-sm text-gray-500">
             궁금한 점이나 제안 사항이 있으시면 언제든지 메시지를 남겨주세요.

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>포켓 동물장기 (Pocket Animal Shogi)</title>
+    <title>🦁동물 장기(Animal Shogi)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
@@ -94,7 +94,7 @@
     <!-- 메인 메뉴 -->
     <div id="mainMenu" class="flex flex-col items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center">
-            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-2">🦁 포켓 동물장기</h1>
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-600 mb-2">🦁동물 장기</h1>
             <p class="text-gray-600 mb-8">귀여운 동물들과</br> 함께하는 전략 게임</p>
             <div class="space-y-4">
                 <button onclick="showHowToPlay()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors">
@@ -161,7 +161,7 @@
                     <div class="text-center"><p class="font-semibold text-gray-800">플레이어 2</p><p id="turnIndicator2" class="text-sm text-gray-600">대기 중</p></div>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg p-2 lg:p-4 lg:mt-4">
-                    <p class="text-sm text-gray-600 mb-2 text-center hidden lg:block">잡은 기물</p>
+                    <p class="text-sm text-gray-600 mb-2 text-center hidden lg:block">잡은 동물</p>
                     <div id="player2Captured" class="flex flex-row lg:flex-col space-x-1 lg:space-x-0 lg:space-y-2 items-center min-h-10"></div>
                 </div>
             </div>
@@ -180,7 +180,7 @@
                     <div class="text-center"><p class="font-semibold text-gray-800">플레이어 1</p><p id="turnIndicator1" class="text-sm text-green-600 font-semibold turn-indicator">내 턴</p></div>
                 </div>
                 <div class="bg-white rounded-xl shadow-lg p-2 lg:p-4 lg:mt-4">
-                    <p class="text-sm text-gray-600 mb-2 text-center hidden lg:block">잡은 기물</p>
+                    <p class="text-sm text-gray-600 mb-2 text-center hidden lg:block">잡은 동물</p>
                     <div id="player1Captured" class="flex flex-row lg:flex-col space-x-1 lg:space-x-0 lg:space-y-2 items-center min-h-10"></div>
                 </div>
             </div>
@@ -358,7 +358,7 @@
             isAnimating: false
         };
 
-        // --- 기물 정의 ---
+        // --- 동물 정의 ---
         const pieces = {
             lion: { emoji: '🦁', name: '사자', moves: [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] },
             giraffe: { emoji: '🦒', name: '기린', moves: [[-1,0],[1,0],[0,-1],[0,1]] },
@@ -763,7 +763,7 @@
                     <p class="text-gray-600">상대의 사자를 잡거나, 내 사자를 상대 진영 끝까지 이동시켜 승리하세요!</p>
                 </div>
                 <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">🐾 동물 기물들</h3>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">🐾 동물들</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="flex items-center space-x-3"><span class="text-3xl w-8 text-center">🦁</span><div><p class="font-semibold">사자</p><p class="text-xs text-gray-500">모든 8방향으로 1칸</p></div></div>
                         <div class="flex items-center space-x-3"><span class="text-3xl w-8 text-center">🦒</span><div><p class="font-semibold">기린</p><p class="text-xs text-gray-500">상하좌우 1칸</p></div></div>
@@ -776,7 +776,7 @@
                     <h3 class="text-lg font-semibold text-gray-800 mb-2">⭐ 특수 규칙</h3>
                     <ul class="list-disc list-inside space-y-2 text-gray-600">
                         <li><strong>승급:</strong> 병아리가 상대 진영 맨 끝 칸에 도달하면 즉시 닭(🐓)으로 승급합니다.</li>
-                        <li><strong>내려놓기:</strong> 잡았던 상대 기물을 자신의 턴에 빈칸 어디든 내려놓을 수 있습니다. (단, 병아리를 마지막 칸에 내려놓거나, 이미 내 병아리가 있는 세로줄에 또 병아리를 놓을 수는 없습니다.)</li>
+                        <li><strong>내려놓기:</strong> 잡았던 상대 동물을 자신의 턴에 빈칸 어디든 내려놓을 수 있습니다. (단, 병아리를 마지막 칸에 내려놓거나, 이미 내 병아리가 있는 세로줄에 또 병아리를 놓을 수는 없습니다.)</li>
                         <li><strong>승리 조건:</strong> 1) 상대방의 사자를 잡는 경우 (Checkmate). 2) 자신의 사자가 안전하게 상대 진영 맨 끝 칸에 도달하는 경우 (Try).</li>
                     </ul>
                 </div>`;

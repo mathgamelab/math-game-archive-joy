@@ -391,6 +391,33 @@ export const gamesData: Record<string, GameData[]> = {
       summary: '경우의 수의 원리를 다양한 문제로 익히는 경우의 수 게임',
       url: '/number_of_cases_challenge.html',
       mobile: '지원'
+    },
+    {
+      id: 'set_master',
+      title: 'Set Master',
+      description: `🎮게임명 : Set Master
+📘 교과명 : 공통수학1/집합과 명제
+📂 내용범주 : 집합의 연산
+📌 내용요소 : 집합의 교집합, 합집합, 차집합, 여집합, 벤다이어그램
+✏️ 학습 가능 용어 : 교집합, 합집합, 차집합, 여집합, 벤다이어그램, A∩B, A∪B, A-B, Aᶜ
+🎯 성취기준 :
+[10공수1-03-01] 집합의 연산을 이해하고, 벤다이어그램을 이용하여 집합의 연산을 시각화할 수 있다.
+[10공수1-03-02] 집합의 연산의 성질을 이해하고 활용할 수 있다.
+[10공수1-03-03] 집합을 활용하여 문제를 해결할 수 있다.
+📚 학습 유형 : 집합 연산 게임
+🔥 난이도 : ★★★☆☆`,
+      icon: '🌐',
+      status: 'playable',
+      difficulty: '중급',
+      estimatedTime: '10분',
+      category: '집합과 명제',
+      content: '집합의 연산과 벤다이어그램',
+      terms: '교집합, 합집합, 차집합, 여집합, 벤다이어그램',
+      standard: '10공수1-03',
+      type: '집합 연산 게임',
+      summary: '집합의 연산을 벤다이어그램으로 시각화하며 학습하는 집합 연산 게임',
+      url: '/set_master.html',
+      mobile: '지원'
     }
   ],
   'algebra': [

@@ -20,35 +20,11 @@ export const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose, onP
     }
   };
 
-  const handlePlayGame = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
+  const handlePlayGame = () => {
     if (onPlay) {
       onPlay();
     } else if (game.url) {
-      // 모바일/테블릿 환경에서 더 안정적인 방법으로 새 창 열기
-      const newWindow = window.open(game.url, '_blank', 'noopener,noreferrer');
-      if (!newWindow) {
-        // 팝업이 차단된 경우 현재 창에서 이동
-        window.location.href = game.url;
-      }
-    }
-  };
-
-  const handlePlayGameTouch = (e: React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (onPlay) {
-      onPlay();
-    } else if (game.url) {
-      // 모바일/테블릿 환경에서 더 안정적인 방법으로 새 창 열기
-      const newWindow = window.open(game.url, '_blank', 'noopener,noreferrer');
-      if (!newWindow) {
-        // 팝업이 차단된 경우 현재 창에서 이동
-        window.location.href = game.url;
-      }
+      window.open(game.url, '_blank');
     }
   };
 
@@ -137,7 +113,6 @@ export const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose, onP
           {game.status === 'playable' && (game.url || onPlay) && (
             <Button 
               onClick={handlePlayGame}
-              onTouchEnd={handlePlayGameTouch}
               className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
             >
               <Play className="w-4 h-4 mr-2" />

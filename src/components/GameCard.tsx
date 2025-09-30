@@ -40,18 +40,6 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
     }
   };
 
-  const handleCardClick = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onClick(game);
-  };
-
-  const handleCardTouch = (e: React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onClick(game);
-  };
-
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case '초급': return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -73,8 +61,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick, onPlayClick }
   return (
     <Card 
       className="cursor-pointer border-0 shadow-lg bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl"
-      onClick={handleCardClick}
-      onTouchEnd={handleCardTouch}
+      onClick={() => onClick(game)}
     >
       <div className="relative">
         {/* 게임 아이콘 배경 */}

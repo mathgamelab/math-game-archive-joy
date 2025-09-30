@@ -46,7 +46,12 @@ const Main = () => {
   const handlePlayClick = (game: GameData) => {
     incrementPlayCount(game.id);
     if (game.url) {
-      window.open(game.url, '_blank');
+      // 모바일/테블릿 환경에서 더 안정적인 방법으로 새 창 열기
+      const newWindow = window.open(game.url, '_blank', 'noopener,noreferrer');
+      if (!newWindow) {
+        // 팝업이 차단된 경우 현재 창에서 이동
+        window.location.href = game.url;
+      }
     }
   };
 

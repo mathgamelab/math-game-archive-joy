@@ -1999,6 +1999,8 @@
       gameMode: 'pvp', // 'pvp' or 'practice'
       buttonOrder: { p1: ['A_MINUS_B', 'AB', 'B_MINUS_A', 'NONE'], p2: ['A_MINUS_B', 'AB', 'B_MINUS_A', 'NONE'] }, // 버튼 순서 저장
       randomized: { p1: false, p2: false }, // 하드모드 진입 시 랜덤화 여부
+      disabledPlayers: [], // 비활성화된 플레이어 목록
+      disableTimers: {} // 각 플레이어의 비활성화 타이머
     };
 
     // Venn diagram problems by difficulty level
@@ -2304,6 +2306,51 @@
       }
     }
 
+    // 플레이어 버튼 비활성화/활성화 함수들
+    function disablePlayerButtons(player) {
+      // 해당 플레이어의 모든 버튼 비활성화
+      const buttons = document.querySelectorAll(`.p${player} .btn`);
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        btn.style.cursor = 'not-allowed';
+      });
+      
+      // 비활성화 상태에 추가
+      if (!state.disabledPlayers.includes(player)) {
+        state.disabledPlayers.push(player);
+      }
+    }
+
+    function enablePlayerButtons(player) {
+      // 해당 플레이어의 모든 버튼 활성화
+      const buttons = document.querySelectorAll(`.p${player} .btn`);
+      buttons.forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      });
+      
+      // 비활성화 상태에서 제거
+      state.disabledPlayers = state.disabledPlayers.filter(p => p !== player);
+    }
+
+    function disablePlayerTemporarily(player, duration = 500) {
+      // 기존 타이머가 있으면 정리
+      if (state.disableTimers[player]) {
+        clearTimeout(state.disableTimers[player]);
+      }
+      
+      // 버튼 비활성화
+      disablePlayerButtons(player);
+      
+      // 지정된 시간 후 자동 활성화
+      state.disableTimers[player] = setTimeout(() => {
+        enablePlayerButtons(player);
+        delete state.disableTimers[player];
+      }, duration);
+    }
+
     function startTimer(){
       clearInterval(state.timer);
       state.timer = setInterval(()=>{
@@ -2385,6 +2432,15 @@
       state.playing = true; 
       state.answered=false;
       
+      // 비활성화 상태 초기화
+      state.disabledPlayers = [];
+      Object.values(state.disableTimers).forEach(timer => clearTimeout(timer));
+      state.disableTimers = {};
+      
+      // 모든 버튼 활성화
+      enablePlayerButtons(1);
+      enablePlayerButtons(2);
+      
       // 버튼 순서 초기화
       state.buttonOrder.p1 = ['A_MINUS_B', 'AB', 'B_MINUS_A', 'NONE'];
       state.buttonOrder.p2 = ['A_MINUS_B', 'AB', 'B_MINUS_A', 'NONE'];
@@ -2407,6 +2463,16 @@
     function endGame(){
       state.playing=false; 
       clearInterval(state.timer);
+      
+      // 모든 비활성화 타이머 정리
+      Object.values(state.disableTimers).forEach(timer => clearTimeout(timer));
+      state.disableTimers = {};
+      state.disabledPlayers = [];
+      
+      // 모든 버튼 활성화
+      enablePlayerButtons(1);
+      enablePlayerButtons(2);
+      
       const [a,b] = state.s;
       
       if(state.gameMode === 'practice'){
@@ -2760,6 +2826,9 @@
     function handleAnswer(player, ans){
       if(!state.playing || state.answered) return;
       
+      // 비활성화된 플레이어는 무시
+      if(state.disabledPlayers.includes(player)) return;
+      
       // 연습모드에서는 플레이어 1만 답변 가능
       if(state.gameMode === 'practice' && player !== 1) return;
       
@@ -2795,6 +2864,10 @@
         // 오답 시 -1점 감점 (최소 0점)
         state.s[player-1] = Math.max(0, state.s[player-1] - 1);
         state.combo[player-1] = 0;
+        
+        // 0.5초 동안 해당 플레이어 버튼 비활성화
+        disablePlayerTemporarily(player, 500);
+        
         updateHUD();
         const playerText = state.gameMode === 'practice' ? '플레이어 1' : `플레이어 ${player}`;
         showFB(`${playerText} 오답! -1점`, false);
@@ -2838,15 +2911,20 @@
       
       // 연습모드에서는 플레이어 1 키만 작동
       if(state.gameMode === 'practice'){
+        if (state.disabledPlayers.includes(1)) return; // 비활성화된 플레이어는 무시
         const p1Answer = getAnswerFromKey(k, 'p1');
         if(p1Answer) return handleAnswer(1, p1Answer);
       } else {
         // PvP모드에서는 모든 키 작동
         const p1Answer = getAnswerFromKey(k, 'p1');
-        if(p1Answer) return handleAnswer(1, p1Answer);
+        if(p1Answer && !state.disabledPlayers.includes(1)) {
+          return handleAnswer(1, p1Answer);
+        }
         
         const p2Answer = getAnswerFromKey(k, 'p2');
-        if(p2Answer) return handleAnswer(2, p2Answer);
+        if(p2Answer && !state.disabledPlayers.includes(2)) {
+          return handleAnswer(2, p2Answer);
+        }
       }
     });
     
@@ -2952,6 +3030,16 @@
           clearInterval(state.timer);
           state.playing = false;
         }
+        
+        // 모든 비활성화 타이머 정리
+        Object.values(state.disableTimers).forEach(timer => clearTimeout(timer));
+        state.disableTimers = {};
+        state.disabledPlayers = [];
+        
+        // 모든 버튼 활성화
+        enablePlayerButtons(1);
+        enablePlayerButtons(2);
+        
         // 모든 오버레이 숨기고 시작 화면 표시
         endOv.style.display = 'none';
         startOv.style.display = 'flex';

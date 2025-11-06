@@ -55,6 +55,9 @@
 
     <div id="gameContainer" class="hidden w-full h-screen flex-col sm:flex-row relative">
         <div class="absolute top-4 right-4 flex gap-2 z-20">
+             <button id="pauseBtn" title="일시정지" class="bg-white p-2 rounded-full shadow-md hover:bg-gray-200 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+             </button>
              <button id="rulebookBtn" title="룰북 보기" class="bg-white p-2 rounded-full shadow-md hover:bg-gray-200 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
              </button>
@@ -100,6 +103,8 @@
         </div>
     </div>
     <div id="quizModal" class="fixed inset-0 quiz-overlay hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-auto"><div class="flex justify-between items-center mb-4"><h3 id="quizTitle" class="text-xl font-bold text-gray-800">도형의 이동 퀴즈</h3><div id="quizTimer" class="text-2xl font-bold text-red-500"></div></div><div id="quizQuestion" class="text-gray-700 mb-4 text-center bg-gray-100 p-4 rounded-lg"></div><div id="quizOptions" class="space-y-3"></div><div class="flex space-x-3 mt-6"><button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all" onclick="submitQuiz()">제출</button></div></div></div>
+    <div id="cardSelectionModal" class="fixed inset-0 quiz-overlay hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-2xl p-6 max-w-lg w-full mx-auto"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold text-gray-800">카드를 선택하세요</h3><div id="cardSelectionTimer" class="text-2xl font-bold text-red-500">10</div></div><div id="cardSelectionContainer" class="flex justify-center items-center gap-4"></div></div></div>
+    <div id="pauseModal" class="fixed inset-0 quiz-overlay hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-auto text-center"><h3 class="text-3xl font-bold text-gray-800 mb-4">일시정지</h3><p class="text-gray-600 mb-6">게임이 일시정지되었습니다.</p><button onclick="resumeGame()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-all">게임 재개</button></div></div>
     <div id="summonListModal" class="fixed inset-0 debug-overlay hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full mx-auto"><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold text-gray-800">카드 소환</h3><button id="closeSummonListBtn" class="text-gray-500 hover:text-gray-800">✖</button></div><div id="summonListContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-96 overflow-y-auto"></div></div></div>
     <div id="rulebookModal" class="fixed inset-0 rulebook-overlay hidden items-center justify-center z-50 p-4"><div class="bg-white rounded-2xl shadow-2xl p-8 max-w-3xl w-full mx-auto h-5/6 flex flex-col"><div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold text-gray-800">게임 룰북</h2><button id="closeRulebookBtn" class="text-gray-500 hover:text-gray-800 text-2xl">✖</button></div><div id="rulebookContent" class="prose max-w-none overflow-y-auto"></div></div></div>
     <div id="toastContainer"></div>
@@ -108,17 +113,17 @@
         // --- 게임 상태 변수 ---
         let gameMode = ''; 
         let players = { 
-            p1: { pos: {x: 0, y: 0}, previousPos: null, cards: [], pieceEl: null, gigantifiedEl: null, character: '🚀', name: 'Player 1', isGigantified: false }, 
-            p2: { pos: {x: 0, y: 0}, previousPos: null, cards: [], pieceEl: null, gigantifiedEl: null, character: '🛸', name: 'Player 2', isGigantified: false } 
+            p1: { pos: {x: 0, y: 0}, lastUsedCard: null, cards: [], pieceEl: null, gigantifiedEl: null, character: '🚀', name: 'Player 1', isGigantified: false }, 
+            p2: { pos: {x: 0, y: 0}, lastUsedCard: null, cards: [], pieceEl: null, gigantifiedEl: null, character: '🛸', name: 'Player 2', isGigantified: false } 
         };
-        let practicePlayer = { pos: {x: 0, y: 0}, targetPos: {x: 0, y: 0}, cards: [], previousPos: null }; 
+        let practicePlayer = { pos: {x: 0, y: 0}, targetPos: {x: 0, y: 0}, cards: [], lastUsedCard: null }; 
         let pvpScores = { p1: 0, p2: 0 }; 
         let currentPlayerId = 'p1';
         let nextRoundStarterId = null;
         let selectedCard = null, selectedCardElement = null; 
         let cardsUsedThisTurn = 0, currentTurn = 1, quizSolvedThisTurn = false; 
         let isDebugMode = false; let isEncoreActive = false; let isKnightMoveActive = false;
-        const MAX_CARDS_PER_TURN = 3; const MAX_HAND_SIZE = 6; const TURN_TIME_LIMIT = 60;
+        const MAX_CARDS_PER_TURN = 3; const MAX_HAND_SIZE = 6; const TURN_TIME_LIMIT = 40;
         
         // --- 게임 설정 변수 ---
         const GRID_MIN = -5, GRID_MAX = 5, GRID_SIZE = GRID_MAX - GRID_MIN;
@@ -141,11 +146,12 @@
         const rulebookModal = document.getElementById('rulebookModal'); const rulebookContent = document.getElementById('rulebookContent');
         
         // --- 카드 덱 정의 (레어 카드 추가) ---
-        const cardDeck = [ { type: 'move', value: { x: 1 }, text: 'X : +1', educationalDesc: 'x축 방향으로<br>1만큼 평행이동', color: 'blue' }, { type: 'move', value: { x: 2 }, text: 'X : +2', educationalDesc: 'x축 방향으로<br>2만큼 평행이동', color: 'blue' }, { type: 'move', value: { x: 3 }, text: 'X : +3', educationalDesc: 'x축 방향으로<br>3만큼 평행이동', color: 'blue' }, { type: 'move', value: { x: -1 }, text: 'X : -1', educationalDesc: 'x축 방향으로<br>-1만큼 평행이동', color: 'orange' }, { type: 'move', value: { x: -2 }, text: 'X : -2', educationalDesc: 'x축 방향으로<br>-2만큼 평행이동', color: 'orange' }, { type: 'move', value: { y: 1 }, text: 'Y : +1', educationalDesc: 'y축 방향으로<br>1만큼 평행이동', color: 'green' }, { type: 'move', value: { y: 2 }, text: 'Y : +2', educationalDesc: 'y축 방향으로<br>2만큼 평행이동', color: 'green' }, { type: 'move', value: { y: 3 }, text: 'Y : +3', educationalDesc: 'y축 방향으로<br>3만큼 평행이동', color: 'green' }, { type: 'move', value: { y: -1 }, text: 'Y : -1', educationalDesc: 'y축 방향으로<br>-1만큼 평행이동', color: 'teal' }, { type: 'move', value: { y: -2 }, text: 'Y : -2', educationalDesc: 'y축 방향으로<br>-2만큼 평행이동', color: 'teal' }, ];
-        const specialCardDeck = [ { type: 'special', value: 'origin', text: '원점 대칭', educationalDesc: '원점에 대하여<br>대칭이동', color: 'purple' }, { type: 'special', value: 'x-axis', text: 'X축 대칭', educationalDesc: 'x축에 대하여<br>대칭이동', color: 'red' }, { type: 'special', value: 'y-axis', text: 'Y축 대칭', educationalDesc: 'y축에 대하여<br>대칭이동', color: 'indigo' }, ];
-        const rareCardDeck = [ { type: 'rare', value: 'sniper', text: '저격총', educationalDesc: '상대방과 같은 직선에<br>있다면 즉시 추격', color: 'slate' }, { type: 'rare', value: 'emergency_escape', text: '비상탈출', educationalDesc: '모든 플레이어의 위치를<br>무작위로 재설정', color: 'slate' }, { type: 'rare', value: 'magnet', text: '자석', educationalDesc: '상대방을 4칸<br>거리까지 끌어오기', color: 'slate' }, { type: 'rare', value: 'encore', text: '앵콜', educationalDesc: '자신의 턴을<br>한 번 더 진행', color: 'slate' }, { type: 'rare', value: 'knight', text: '나이트', educationalDesc: '체스 나이트처럼<br>한 칸 이동', color: 'slate' }, { type: 'rare', value: 'gigantify', text: '거대화', educationalDesc: '1턴간 3x3 크기로<br>영역을 확장', color: 'slate' }, { type: 'rare', value: 'rewind', text: '도르마무', educationalDesc: '이전 위치로<br>되돌아갑니다', color: 'slate' }, ];
+        const cardDeck = [ { type: 'move', value: { x: 1 }, text: 'X : +1', educationalDesc: 'x축 방향으로<br>1만큼 평행이동', color: 'blue' }, { type: 'move', value: { x: 2 }, text: 'X : +2', educationalDesc: 'x축 방향으로<br>2만큼 평행이동', color: 'blue' }, { type: 'move', value: { x: -1 }, text: 'X : -1', educationalDesc: 'x축 방향으로<br>-1만큼 평행이동', color: 'orange' }, { type: 'move', value: { x: -2 }, text: 'X : -2', educationalDesc: 'x축 방향으로<br>-2만큼 평행이동', color: 'orange' }, { type: 'move', value: { y: 1 }, text: 'Y : +1', educationalDesc: 'y축 방향으로<br>1만큼 평행이동', color: 'green' }, { type: 'move', value: { y: 2 }, text: 'Y : +2', educationalDesc: 'y축 방향으로<br>2만큼 평행이동', color: 'green' }, { type: 'move', value: { y: -1 }, text: 'Y : -1', educationalDesc: 'y축 방향으로<br>-1만큼 평행이동', color: 'teal' }, { type: 'move', value: { y: -2 }, text: 'Y : -2', educationalDesc: 'y축 방향으로<br>-2만큼 평행이동', color: 'teal' }, ];
+        const specialCardDeck = [ { type: 'move', value: { x: 3 }, text: 'X : +3', educationalDesc: 'x축 방향으로<br>3만큼 평행이동', color: 'blue' }, { type: 'move', value: { x: -3 }, text: 'X : -3', educationalDesc: 'x축 방향으로<br>-3만큼 평행이동', color: 'orange' }, { type: 'move', value: { y: 3 }, text: 'Y : +3', educationalDesc: 'y축 방향으로<br>3만큼 평행이동', color: 'green' }, { type: 'move', value: { y: -3 }, text: 'Y : -3', educationalDesc: 'y축 방향으로<br>-3만큼 평행이동', color: 'teal' }, { type: 'special', value: 'origin', text: '원점 대칭', educationalDesc: '원점에 대하여<br>대칭이동', color: 'purple' }, { type: 'special', value: 'x-axis', text: 'X축 대칭', educationalDesc: 'x축에 대하여<br>대칭이동', color: 'indigo' }, { type: 'special', value: 'y-axis', text: 'Y축 대칭', educationalDesc: 'y축에 대하여<br>대칭이동', color: 'indigo' }, { type: 'special', value: 'y=x', text: 'y=x 대칭', educationalDesc: '직선 y=x에<br>대하여 대칭이동', color: 'pink' }, { type: 'special', value: 'y=-x', text: 'y=-x 대칭', educationalDesc: '직선 y=-x에<br>대하여 대칭이동', color: 'rose' }, ];
+        const rareCardDeck = [ { type: 'rare', value: 'sniper', text: '저격총', educationalDesc: '상대방과 같은 직선에<br>있다면 즉시 추격', color: 'slate' }, { type: 'rare', value: 'emergency_escape', text: '비상탈출', educationalDesc: '모든 플레이어의 위치를<br>무작위로 재설정', color: 'slate' }, { type: 'rare', value: 'magnet', text: '자석', educationalDesc: '상대방을 4칸<br>거리까지 끌어오기', color: 'slate' }, { type: 'rare', value: 'encore', text: '앵콜', educationalDesc: '자신의 턴을<br>한 번 더 진행', color: 'slate' }, { type: 'rare', value: 'knight', text: '나이트', educationalDesc: '체스 나이트처럼<br>한 칸 이동', color: 'slate' }, { type: 'rare', value: 'gigantify', text: '거대화', educationalDesc: '1턴간 3x3 크기로<br>영역을 확장', color: 'slate' }, { type: 'rare', value: 'rewind', text: '도르마무', educationalDesc: '마지막에 사용한<br>카드를 즉시 사용', color: 'slate' }, ];
 
         let currentQuiz = null, quizTimerInterval = null; let debugClickSequence = []; let turnTimerInterval = null;
+        let cardSelectionTimerInterval = null; let cardSelectionOptions = [];
 
         window.onload = () => { 
             players.p1.pieceEl = player1Piece; 
@@ -160,6 +166,7 @@
             document.getElementById('closeSummonListBtn').addEventListener('click', toggleSummonList);
             document.getElementById('rulebookBtn').addEventListener('click', showRulebook);
             document.getElementById('closeRulebookBtn').addEventListener('click', hideRulebook);
+            document.getElementById('pauseBtn').addEventListener('click', pauseGame);
         };
         
         function handleDebugClick(e, axis) { e.stopPropagation(); debugClickSequence.push(axis); if (debugClickSequence.length > 2) debugClickSequence.shift(); if (debugClickSequence.join('') === 'XY') { isDebugMode = !isDebugMode; showToast(`디버그 모드 ${isDebugMode ? '활성화' : '비활성화'}`, isDebugMode ? 'bg-red-500' : 'bg-green-500'); debugClickSequence = []; debugPanel.classList.toggle('hidden'); updateButtons(); if (isDebugMode) { stopTurnTimer(); } else { startTurnTimer(); } } }
@@ -199,7 +206,7 @@
             if (gameMode === 'practice') {
                 player1Piece.innerHTML = '🚀'; player2Piece.classList.add('hidden'); targetGoal.classList.remove('hidden');
                 do { practicePlayer.pos = { x: getRandomInt(GRID_MIN, GRID_MAX), y: getRandomInt(GRID_MIN, GRID_MAX) }; practicePlayer.targetPos = { x: getRandomInt(GRID_MIN, GRID_MAX), y: getRandomInt(GRID_MIN, GRID_MAX) }; } while (Math.abs(practicePlayer.pos.x - practicePlayer.targetPos.x) + Math.abs(practicePlayer.pos.y - practicePlayer.targetPos.y) < 6);
-                practicePlayer.cards = []; practicePlayer.previousPos = null; drawInitialCards();
+                practicePlayer.cards = []; practicePlayer.lastUsedCard = null; drawInitialCards();
             } else {
                 currentPlayerId = nextRoundStarterId || 'p1';
                 nextRoundStarterId = null;
@@ -209,7 +216,7 @@
                 do { p1Pos = { x: getRandomInt(GRID_MIN, GRID_MAX), y: getRandomInt(GRID_MIN, GRID_MAX) }; p2Pos = { x: getRandomInt(GRID_MIN, GRID_MAX), y: getRandomInt(GRID_MIN, GRID_MAX) }; } while ((p1Pos.x === p2Pos.x && p1Pos.y === p2Pos.y) || (p1Pos.x === p2Pos.x && p1Pos.y === -p2Pos.y) || (p1Pos.x === -p2Pos.x && p1Pos.y === p2Pos.y) || (p1Pos.x === -p2Pos.x && p1Pos.y === -p2Pos.y) || (Math.abs(p1Pos.x - p2Pos.x) + Math.abs(p1Pos.y - p2Pos.y) < 4));
                 players.p1.pos = p1Pos; players.p2.pos = p2Pos;
                 players.p1.cards = []; players.p2.cards = [];
-                players.p1.previousPos = null; players.p2.previousPos = null;
+                players.p1.lastUsedCard = null; players.p2.lastUsedCard = null;
                 players.p1.isGigantified = false; players.p2.isGigantified = false;
                 drawInitialCards('p1'); drawInitialCards('p2');
             }
@@ -218,7 +225,7 @@
             if (currentTurn === 1 && pvpScores.p1 === 0 && pvpScores.p2 === 0) { showToast(`${gameMode === 'practice' ? '연습' : 'PvP'} 모드 시작!`, 'bg-blue-500'); }
         }
 
-        function createCardElement(cardData, isMini = false) { const cardElement = document.createElement('div'); const colorMap = { blue: 'text-blue-600', orange: 'text-orange-600', green: 'text-green-600', teal: 'text-teal-600', purple: 'text-purple-600', red: 'text-red-600', indigo: 'text-indigo-600', slate: 'text-slate-600' }; let bgClass = 'bg-white'; let borderClass = 'border-gray-200'; if (cardData.type === 'special') { bgClass = 'bg-sky-50'; borderClass = 'border-sky-200'; } else if (cardData.type === 'rare') { bgClass = 'bg-yellow-50'; borderClass = 'border-yellow-200'; } if (isMini) { cardElement.className = `${bgClass} border ${borderClass} rounded-md p-2 shadow-sm flex-shrink-0`; cardElement.innerHTML = `<div class="text-center"><div class="text-xs font-bold ${colorMap[cardData.color] || 'text-gray-800'}">${cardData.text}</div></div>`; } else { cardElement.className = `card-hover ${bgClass} border-2 ${borderClass} rounded-xl p-4 cursor-pointer shadow-md flex-shrink-0`; cardElement.onclick = () => selectCard(cardElement, cardData); cardElement.innerHTML = `<div class="text-center"><div class="text-lg font-bold ${colorMap[cardData.color] || 'text-gray-800'} mb-2">${cardData.text}</div><div class="text-xs text-gray-500 h-8 flex items-center justify-center">${cardData.educationalDesc}</div></div>`; } return cardElement; }
+        function createCardElement(cardData, isMini = false) { const cardElement = document.createElement('div'); const colorMap = { blue: 'text-blue-600', orange: 'text-orange-600', green: 'text-green-600', teal: 'text-teal-600', purple: 'text-purple-600', red: 'text-red-600', indigo: 'text-indigo-600', slate: 'text-slate-600', pink: 'text-pink-600', rose: 'text-rose-600' }; let bgClass = 'bg-white'; let borderClass = 'border-gray-200'; if (cardData.type === 'special') { bgClass = 'bg-sky-50'; borderClass = 'border-sky-200'; } else if (cardData.type === 'rare') { bgClass = 'bg-yellow-50'; borderClass = 'border-yellow-200'; } if (isMini) { cardElement.className = `${bgClass} border ${borderClass} rounded-md p-2 shadow-sm flex-shrink-0`; cardElement.innerHTML = `<div class="text-center"><div class="text-xs font-bold ${colorMap[cardData.color] || 'text-gray-800'}">${cardData.text}</div></div>`; } else { cardElement.className = `card-hover ${bgClass} border-2 ${borderClass} rounded-xl p-4 cursor-pointer shadow-md flex-shrink-0`; cardElement.onclick = () => selectCard(cardElement, cardData); cardElement.innerHTML = `<div class="text-center"><div class="text-lg font-bold ${colorMap[cardData.color] || 'text-gray-800'} mb-2">${cardData.text}</div><div class="text-xs text-gray-500 h-8 flex items-center justify-center">${cardData.educationalDesc}</div></div>`; } return cardElement; }
         function renderPlayerCards() { cardContainer.innerHTML = ''; const currentCards = (gameMode === 'practice') ? practicePlayer.cards : players[currentPlayerId].cards; currentCards.forEach(cardData => { const cardElement = createCardElement(cardData, false); cardContainer.appendChild(cardElement); }); }
         function renderOpponentCards() { opponentHandContainer.innerHTML = ''; if (gameMode !== 'pvp') return; const opponentId = currentPlayerId === 'p1' ? 'p2' : 'p1'; const opponent = players[opponentId]; opponentHandContainer.innerHTML = `<div class="flex items-center gap-2 bg-gray-900/10 backdrop-blur-sm p-2 rounded-lg"><span class="font-bold text-sm mr-2 text-white">${opponent.character} 상대방 카드:</span></div>`; const cardWrapper = opponentHandContainer.querySelector('div'); opponent.cards.forEach(cardData => { const cardElement = createCardElement(cardData, true); cardWrapper.appendChild(cardElement); }); }
         function drawInitialCards(playerId) { const targetPlayer = (gameMode === 'practice') ? practicePlayer : players[playerId]; for (let i = 0; i < 4; i++) { targetPlayer.cards.push(cardDeck[Math.floor(Math.random() * cardDeck.length)]); } targetPlayer.cards.push(specialCardDeck[Math.floor(Math.random() * specialCardDeck.length)]); }
@@ -229,17 +236,13 @@
         function useSelectedCard() {
             const targetPlayer = (gameMode === 'practice') ? practicePlayer : players[currentPlayerId];
             if (!selectedCard || (!isDebugMode && cardsUsedThisTurn >= MAX_CARDS_PER_TURN)) return;
-            
-            if (selectedCard.type === 'move' || selectedCard.type === 'special' || (selectedCard.type === 'rare' && ['sniper', 'magnet', 'rewind'].includes(selectedCard.value))) {
-                targetPlayer.previousPos = { ...targetPlayer.pos }; 
-            }
 
             const elementToRemove = selectedCardElement; 
             let newPos = { ...targetPlayer.pos }; let success = true;
 
             if (selectedCard.type === 'move' || selectedCard.type === 'special') {
                 if (selectedCard.type === 'move') { newPos.x += selectedCard.value.x || 0; newPos.y += selectedCard.value.y || 0; } 
-                else { if (selectedCard.value === 'origin') newPos = { x: -targetPlayer.pos.x, y: -targetPlayer.pos.y }; else if (selectedCard.value === 'x-axis') newPos = { x: targetPlayer.pos.x, y: -targetPlayer.pos.y }; else if (selectedCard.value === 'y-axis') newPos = { x: -targetPlayer.pos.x, y: targetPlayer.pos.y }; }
+                else { if (selectedCard.value === 'origin') newPos = { x: -targetPlayer.pos.x, y: -targetPlayer.pos.y }; else if (selectedCard.value === 'x-axis') newPos = { x: targetPlayer.pos.x, y: -targetPlayer.pos.y }; else if (selectedCard.value === 'y-axis') newPos = { x: -targetPlayer.pos.x, y: targetPlayer.pos.y }; else if (selectedCard.value === 'y=x') newPos = { x: targetPlayer.pos.y, y: targetPlayer.pos.x }; else if (selectedCard.value === 'y=-x') newPos = { x: -targetPlayer.pos.y, y: -targetPlayer.pos.x }; }
             } else if (selectedCard.type === 'rare') {
                 const me = targetPlayer; const opponent = players[currentPlayerId === 'p1' ? 'p2' : 'p1'];
                 switch(selectedCard.value) {
@@ -260,14 +263,58 @@
                     case 'encore': showToast('앵콜! 턴을 한 번 더 진행합니다!', 'bg-pink-500'); isEncoreActive = true; break;
                     case 'knight': showToast('나이트 이동! 이동할 위치를 선택하세요.', 'bg-gray-700'); isKnightMoveActive = true; me.pieceEl.innerHTML = '♞'; success = false; const cardIdx = me.cards.indexOf(selectedCard); if (cardIdx > -1) me.cards.splice(cardIdx, 1); renderPlayerCards(); break;
                     case 'gigantify': showToast('거대화! 1턴간 3x3 영역으로 확장됩니다.', 'bg-yellow-500'); me.isGigantified = true; break;
-                    case 'rewind': if(me.previousPos) { showToast('도르마무! 이전 위치로 돌아갑니다.', 'bg-orange-500'); newPos = { ...me.previousPos }; } else { showToast('되돌아갈 위치가 없습니다.', 'bg-gray-500'); success = false; } break;
+                    case 'rewind': 
+                        if (me.lastUsedCard) {
+                            showToast('도르마무! 마지막에 사용한 카드를 즉시 사용합니다!', 'bg-orange-500');
+                            const cardToReuse = me.lastUsedCard;
+                            if (cardToReuse.type === 'move' || cardToReuse.type === 'special') {
+                                if (cardToReuse.type === 'move') { newPos.x += cardToReuse.value.x || 0; newPos.y += cardToReuse.value.y || 0; } 
+                                else { if (cardToReuse.value === 'origin') newPos = { x: -me.pos.x, y: -me.pos.y }; else if (cardToReuse.value === 'x-axis') newPos = { x: me.pos.x, y: -me.pos.y }; else if (cardToReuse.value === 'y-axis') newPos = { x: -me.pos.x, y: me.pos.y }; else if (cardToReuse.value === 'y=x') newPos = { x: me.pos.y, y: me.pos.x }; else if (cardToReuse.value === 'y=-x') newPos = { x: -me.pos.y, y: -me.pos.x }; }
+                            } else if (cardToReuse.type === 'rare') {
+                                switch(cardToReuse.value) {
+                                    case 'sniper':
+                                        if (
+                                            (me.pos.x === opponent.pos.x && Math.abs(me.pos.y - opponent.pos.y) <= 5) ||
+                                            (me.pos.y === opponent.pos.y && Math.abs(me.pos.x - opponent.pos.x) <= 5)
+                                        ) {
+                                            showToast('사정거리 포착! 상대방을 추격합니다!', 'bg-red-700');
+                                            newPos = { ...opponent.pos };
+                                        } else {
+                                            showToast('상대방이 사정거리에 없습니다.', 'bg-gray-500');
+                                            success = false;
+                                        }
+                                        break;
+                                    case 'emergency_escape': showToast('비상탈출! 위치를 재설정합니다!', 'bg-yellow-500'); let p1Pos, p2Pos; do { p1Pos = { x: getRandomInt(GRID_MIN, GRID_MAX), y: getRandomInt(GRID_MIN, GRID_MAX) }; p2Pos = { x: getRandomInt(GRID_MIN, GRID_MAX), y: getRandomInt(GRID_MIN, GRID_MAX) }; } while ((p1Pos.x === p2Pos.x && p1Pos.y === p2Pos.y) || (p1Pos.x === p2Pos.x && p1Pos.y === -p2Pos.y) || (p1Pos.x === -p2Pos.x && p1Pos.y === p2Pos.y) || (p1Pos.x === -p2Pos.x && p1Pos.y === -p2Pos.y) || (Math.abs(p1Pos.x - p2Pos.x) + Math.abs(p1Pos.y - p2Pos.y) < 4)); players.p1.pos = p1Pos; players.p2.pos = p2Pos; newPos = players[currentPlayerId].pos; break;
+                                    case 'magnet': const dist = Math.abs(me.pos.x - opponent.pos.x) + Math.abs(me.pos.y - opponent.pos.y); if (dist <= 4) { showToast('상대방이 너무 가깝습니다!', 'bg-gray-500'); success = false; } else { showToast('자석 발동! 상대방을 끌어옵니다!', 'bg-blue-700'); let stepsToPull = dist - 4; let opponentNewPos = { ...opponent.pos }; while (stepsToPull > 0) { const dx = me.pos.x - opponentNewPos.x; const dy = me.pos.y - opponentNewPos.y; if (Math.abs(dx) > Math.abs(dy)) { opponentNewPos.x += Math.sign(dx); } else { opponentNewPos.y += Math.sign(dy); } stepsToPull--; } opponent.pos = opponentNewPos; } break;
+                                    case 'encore': showToast('앵콜! 턴을 한 번 더 진행합니다!', 'bg-pink-500'); isEncoreActive = true; break;
+                                    case 'knight': showToast('나이트 이동! 이동할 위치를 선택하세요.', 'bg-gray-700'); isKnightMoveActive = true; me.pieceEl.innerHTML = '♞'; success = false; break;
+                                    case 'gigantify': showToast('거대화! 1턴간 3x3 영역으로 확장됩니다.', 'bg-yellow-500'); me.isGigantified = true; break;
+                                    case 'rewind': showToast('도르마무는 연속으로 사용할 수 없습니다.', 'bg-gray-500'); success = false; break;
+                                }
+                            }
+                        } else {
+                            showToast('사용할 카드가 없습니다.', 'bg-gray-500');
+                            success = false;
+                        }
+                        break;
                 }
             }
             if (!success) { selectCard(selectedCardElement, selectedCard); return; }
 
             newPos.x = Math.max(GRID_MIN, Math.min(GRID_MAX, newPos.x)); newPos.y = Math.max(GRID_MIN, Math.min(GRID_MAX, newPos.y));
             targetPlayer.pos = newPos; 
-            if (selectedCard.value !== 'knight') { const cardIndex = targetPlayer.cards.indexOf(selectedCard); if (cardIndex > -1) targetPlayer.cards.splice(cardIndex, 1); }
+            
+            if (selectedCard.value === 'rewind') {
+                const cardIndex = targetPlayer.cards.indexOf(selectedCard);
+                if (cardIndex > -1) targetPlayer.cards.splice(cardIndex, 1);
+            } else if (selectedCard.value !== 'knight') {
+                if (selectedCard.type === 'move' || selectedCard.type === 'special' || (selectedCard.type === 'rare' && ['sniper', 'magnet'].includes(selectedCard.value))) {
+                    targetPlayer.lastUsedCard = JSON.parse(JSON.stringify(selectedCard));
+                }
+                const cardIndex = targetPlayer.cards.indexOf(selectedCard);
+                if (cardIndex > -1) targetPlayer.cards.splice(cardIndex, 1);
+            }
+            
             if (!isDebugMode) cardsUsedThisTurn++;
             elementToRemove.classList.add('card-use-animation'); const pieceEl = (gameMode === 'practice') ? player1Piece : targetPlayer.pieceEl;
             pieceEl.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
@@ -345,10 +392,12 @@
             } 
         }
 
-        function showQuiz() { if (quizSolvedThisTurn) { showToast('퀴즈는 턴 당 한 번만 풀 수 있습니다.', 'bg-orange-500'); return; } currentQuiz = generateQuizData(); document.getElementById('quizQuestion').innerHTML = currentQuiz.question.replace(/\n/g, '<br>'); const optionsContainer = document.getElementById('quizOptions'); optionsContainer.innerHTML = ''; currentQuiz.options.forEach((option, index) => { const label = document.createElement('label'); label.className = "flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition"; label.innerHTML = `<input type="radio" name="quiz" value="${index}" class="mr-3 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span>${option}</span>`; optionsContainer.appendChild(label); }); quizModal.classList.remove('hidden'); quizModal.classList.add('flex'); let timeLeft = 30; if (isDebugMode) return; stopTurnTimer(); const timerEl = document.getElementById('quizTimer'); timerEl.textContent = timeLeft; quizTimerInterval = setInterval(() => { timeLeft--; timerEl.textContent = timeLeft; if (timeLeft <= 0) { clearInterval(quizTimerInterval); showToast('시간 초과! 카드를 얻지 못했습니다.', 'bg-red-500'); quizSolvedThisTurn = true; quizBtn.disabled = true; closeQuiz(); } }, 1000); }
-        function submitQuiz() { const selected = document.querySelector('input[name="quiz"]:checked'); if (!selected) { showToast('답을 선택해주세요!', 'bg-red-500'); return; } clearInterval(quizTimerInterval); quizSolvedThisTurn = true; quizBtn.disabled = true; if (parseInt(selected.value) === currentQuiz.correctIndex) { const rand = Math.random(); if (rand < 0.3) { showToast('정답! 레어 카드를 획득했습니다!', 'bg-yellow-400'); addCardToHand(rareCardDeck[Math.floor(Math.random() * rareCardDeck.length)]); } else { showToast('정답! 특수 카드를 획득했습니다!', 'bg-green-500'); addCardToHand(specialCardDeck[Math.floor(Math.random() * specialCardDeck.length)]); } } else { showToast(`오답입니다! 정답은 ${currentQuiz.options[currentQuiz.correctIndex]} 입니다.`, 'bg-orange-500', 4000); } closeQuiz(); }
-        function closeQuiz() { clearInterval(quizTimerInterval); quizModal.classList.add('hidden'); quizModal.classList.remove('flex'); if (gameMode === 'pvp' && !isDebugMode) { startTurnTimer(); } }
-        const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min; const getRandomNonZeroInt = (min, max) => { let num; do { num = getRandomInt(min, max); } while (num === 0); return num; }; function formatLine(m, b) { let str = 'y = '; if (m === 1) str += 'x'; else if (m === -1) str += '-x'; else if (m !== 0) str += `${m}x`; if (b > 0) str += (m !== 0 ? ' + ' : '') + `${b}`; else if (b < 0) str += ` - ${-b}`; if (m === 0 && b === 0) return 'y = 0'; return str; } function formatCircle(h, k, r) { let str = ''; if (h === 0) str += 'x²'; else str += `(x ${h > 0 ? '-' : '+'} ${Math.abs(h)})²`; str += ' + '; if (k === 0) str += 'y²'; else str += `(y ${k > 0 ? '-' : '+'} ${Math.abs(k)})²`; str += ` = ${r*r}`; return str; } function generateQuizData() { const type = getRandomInt(0, 3); switch (type) { case 0: return generateTranslateLineQuiz(); case 1: return generateReflectLineQuiz(); case 2: return generateTranslateCircleQuiz(); case 3: return generateReflectCircleQuiz(); } } function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; } function generateTranslateLineQuiz() { const m = getRandomNonZeroInt(-2, 2), b = getRandomInt(-3, 3), dx = getRandomNonZeroInt(-3, 3), dy = getRandomNonZeroInt(-3, 3); const question = `직선 ${formatLine(m, b)}를\nx축 방향으로 ${dx}만큼, y축 방향으로 ${dy}만큼\n평행이동한 방정식은?`; const correct = formatLine(m, -m * dx + b + dy); const distractors = [ formatLine(m, m * dx + b - dy), formatLine(m, -m * dx + b - dy), formatLine(m, m * dx + b + dy) ]; const options = shuffle([correct, ...new Set(distractors.filter(d => d !== correct))].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; } function generateReflectLineQuiz() { const m = getRandomInt(0,1) === 0 ? 1 : -1, b = getRandomInt(-3, 3); const types = ['x축', 'y축', '원점', '직선 y=x'], type = types[getRandomInt(0, 3)]; const question = `직선 ${formatLine(m, b)}를\n${type}에 대칭이동한 방정식은?`; let correct, distractors; if (type === 'x축') { correct = formatLine(-m, -b); distractors = [formatLine(-m, b), formatLine(m, -b), formatLine(m, b), formatLine(1/m, b)]; } else if (type === 'y축') { correct = formatLine(-m, b); distractors = [formatLine(-m, -b), formatLine(m, -b), formatLine(m, b), formatLine(1/m, -b)]; } else if (type === '원점') { correct = formatLine(m, -b); distractors = [formatLine(-m, -b), formatLine(-m, b), formatLine(m, b), formatLine(-1/m, b)]; } else { correct = formatLine(1/m, -b/m); distractors = [formatLine(m, b), formatLine(-m, b), formatLine(m, -b), formatLine(-m, -b)]; } const options = shuffle([correct, ...new Set(distractors.filter(d => d !== correct))].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; } function generateTranslateCircleQuiz() { const h = getRandomInt(-3, 3), k = getRandomInt(-3, 3), r = getRandomInt(1, 4), dx = getRandomNonZeroInt(-3, 3), dy = getRandomNonZeroInt(-3, 3); const question = `원 ${formatCircle(h, k, r)}를\nx축 방향으로 ${dx}만큼, y축 방향으로 ${dy}만큼\n평행이동한 방정식은?`; const correct = formatCircle(h + dx, k + dy, r); const distractors = [ formatCircle(h - dx, k - dy, r), formatCircle(h + dx, k + dy, r + 1), formatCircle(h, k, r) ]; const options = shuffle([correct, ...new Set(distractors)].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; } function generateReflectCircleQuiz() { const h = getRandomInt(-3, 3), k = getRandomInt(-3, 3), r = getRandomInt(1, 4); const types = ['x축', 'y축', '원점', '직선 y=x'], type = types[getRandomInt(0, 3)]; const question = `원 ${formatCircle(h, k, r)}를\n${type}에 대칭이동한 방정식은?`; let correct, distractors; if (type === 'x축') { correct = formatCircle(h, -k, r); distractors = [formatCircle(-h, k, r), formatCircle(h, k, r), formatCircle(h, -k, r+1)]; } else if (type === 'y축') { correct = formatCircle(-h, k, r); distractors = [formatCircle(h, -k, r), formatCircle(h, k, r), formatCircle(-h, k, r+1)]; } else if (type === '원점') { correct = formatCircle(-h, -k, r); distractors = [formatLine(h, -k, r), formatCircle(-h, k, r), formatCircle(-h, -k, r+1)]; } else { correct = formatCircle(k, h, r); distractors = [formatCircle(-k, -h, r), formatCircle(h, k, r), formatCircle(k, h, r+1)]; } const options = shuffle([correct, ...new Set(distractors)].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; }
+        function showQuiz() { if (quizSolvedThisTurn) { showToast('퀴즈는 턴 당 한 번만 풀 수 있습니다.', 'bg-orange-500'); return; } currentQuiz = generateQuizData(); document.getElementById('quizQuestion').innerHTML = currentQuiz.question.replace(/\n/g, '<br>'); const optionsContainer = document.getElementById('quizOptions'); optionsContainer.innerHTML = ''; currentQuiz.options.forEach((option, index) => { const label = document.createElement('label'); label.className = "flex items-center p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition"; label.innerHTML = `<input type="radio" name="quiz" value="${index}" class="mr-3 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"><span>${option}</span>`; optionsContainer.appendChild(label); }); quizModal.classList.remove('hidden'); quizModal.classList.add('flex'); let timeLeft = 30; if (isDebugMode) return; stopTurnTimer(); const timerEl = document.getElementById('quizTimer'); timerEl.textContent = timeLeft; quizTimerInterval = setInterval(() => { timeLeft--; timerEl.textContent = timeLeft; if (timeLeft <= 0) { clearInterval(quizTimerInterval); showToast('시간 초과! 카드를 얻지 못했습니다.', 'bg-red-500'); quizSolvedThisTurn = true; quizBtn.disabled = true; closeQuiz(); if (gameMode === 'pvp' && !isDebugMode) { startTurnTimer(); } } }, 1000); }
+        function submitQuiz() { const selected = document.querySelector('input[name="quiz"]:checked'); if (!selected) { showToast('답을 선택해주세요!', 'bg-red-500'); return; } clearInterval(quizTimerInterval); quizSolvedThisTurn = true; quizBtn.disabled = true; if (parseInt(selected.value) === currentQuiz.correctIndex) { showToast('정답! 카드를 선택하세요!', 'bg-green-500'); closeQuiz(); showCardSelection(); } else { showToast(`오답입니다! 정답은 ${currentQuiz.options[currentQuiz.correctIndex]} 입니다.`, 'bg-orange-500', 4000); closeQuiz(); if (gameMode === 'pvp' && !isDebugMode) { startTurnTimer(); } } }
+        function showCardSelection() { cardSelectionOptions = []; for (let i = 0; i < 3; i++) { const rand = Math.random(); let selectedCard; if (rand < 0.5) { selectedCard = cardDeck[Math.floor(Math.random() * cardDeck.length)]; } else if (rand < 0.8) { selectedCard = specialCardDeck[Math.floor(Math.random() * specialCardDeck.length)]; } else { selectedCard = rareCardDeck[Math.floor(Math.random() * rareCardDeck.length)]; } cardSelectionOptions.push(selectedCard); } const container = document.getElementById('cardSelectionContainer'); container.innerHTML = ''; cardSelectionOptions.forEach((cardData, index) => { const cardElement = createCardElement(cardData, false); cardElement.className = cardElement.className.replace('cursor-pointer', 'cursor-pointer hover:scale-105'); cardElement.onclick = () => selectCardFromSelection(cardData, index); container.appendChild(cardElement); }); const cardSelectionModal = document.getElementById('cardSelectionModal'); cardSelectionModal.classList.remove('hidden'); cardSelectionModal.classList.add('flex'); let timeLeft = 10; const timerEl = document.getElementById('cardSelectionTimer'); timerEl.textContent = timeLeft; clearInterval(cardSelectionTimerInterval); cardSelectionTimerInterval = setInterval(() => { timeLeft--; timerEl.textContent = timeLeft; if (timeLeft <= 0) { clearInterval(cardSelectionTimerInterval); const randomIndex = Math.floor(Math.random() * cardSelectionOptions.length); selectCardFromSelection(cardSelectionOptions[randomIndex], randomIndex); } }, 1000); }
+        function selectCardFromSelection(cardData, index) { clearInterval(cardSelectionTimerInterval); addCardToHand(cardData); const cardSelectionModal = document.getElementById('cardSelectionModal'); cardSelectionModal.classList.add('hidden'); cardSelectionModal.classList.remove('flex'); showToast('카드를 선택했습니다!', 'bg-blue-500'); if (gameMode === 'pvp' && !isDebugMode) { startTurnTimer(); } }
+        function closeQuiz() { clearInterval(quizTimerInterval); quizModal.classList.add('hidden'); quizModal.classList.remove('flex'); }
+        const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min; const getRandomNonZeroInt = (min, max) => { let num; do { num = getRandomInt(min, max); } while (num === 0); return num; }; function formatLine(m, b) { let str = 'y = '; if (m === 1) str += 'x'; else if (m === -1) str += '-x'; else if (m !== 0) str += `${m}x`; if (b > 0) str += (m !== 0 ? ' + ' : '') + `${b}`; else if (b < 0) str += ` - ${-b}`; if (m === 0 && b === 0) return 'y = 0'; return str; } function formatCircle(h, k, r) { let str = ''; if (h === 0) str += 'x²'; else str += `(x ${h > 0 ? '-' : '+'} ${Math.abs(h)})²`; str += ' + '; if (k === 0) str += 'y²'; else str += `(y ${k > 0 ? '-' : '+'} ${Math.abs(k)})²`; str += ` = ${r*r}`; return str; } function generateQuizData() { const type = getRandomInt(0, 3); switch (type) { case 0: return generateTranslateLineQuiz(); case 1: return generateReflectLineQuiz(); case 2: return generateTranslateCircleQuiz(); case 3: return generateReflectCircleQuiz(); } } function shuffle(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } return array; } function generateTranslateLineQuiz() { const m = getRandomNonZeroInt(-2, 2), b = getRandomInt(-3, 3), dx = getRandomNonZeroInt(-3, 3), dy = getRandomNonZeroInt(-3, 3); const question = `직선 ${formatLine(m, b)}를\nx축 방향으로 ${dx}만큼, y축 방향으로 ${dy}만큼\n평행이동한 방정식은?`; const correct = formatLine(m, -m * dx + b + dy); const distractors = [ formatLine(m, m * dx + b - dy), formatLine(m, -m * dx + b - dy), formatLine(m, m * dx + b + dy) ]; const options = shuffle([correct, ...new Set(distractors.filter(d => d !== correct))].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; } function generateReflectLineQuiz() { const m = getRandomInt(0,1) === 0 ? 1 : -1, b = getRandomInt(-3, 3); const types = ['x축', 'y축', '원점', '직선 y=x'], type = types[getRandomInt(0, 3)]; const question = `직선 ${formatLine(m, b)}를\n${type}에 대칭이동한 방정식은?`; let correct, distractors; if (type === 'x축') { correct = formatLine(-m, -b); distractors = [formatLine(-m, b), formatLine(m, -b), formatLine(m, b), formatLine(1/m, b)]; } else if (type === 'y축') { correct = formatLine(-m, b); distractors = [formatLine(-m, -b), formatLine(m, -b), formatLine(m, b), formatLine(1/m, -b)]; } else if (type === '원점') { correct = formatLine(m, -b); distractors = [formatLine(-m, -b), formatLine(-m, b), formatLine(m, b), formatLine(-1/m, b)]; } else { correct = formatLine(1/m, -b/m); distractors = [formatLine(m, b), formatLine(-m, b), formatLine(m, -b), formatLine(-m, -b)]; } const options = shuffle([correct, ...new Set(distractors.filter(d => d !== correct))].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; } function generateTranslateCircleQuiz() { const h = getRandomInt(-3, 3), k = getRandomInt(-3, 3), r = getRandomInt(1, 4), dx = getRandomNonZeroInt(-3, 3), dy = getRandomNonZeroInt(-3, 3); const question = `원 ${formatCircle(h, k, r)}를\nx축 방향으로 ${dx}만큼, y축 방향으로 ${dy}만큼\n평행이동한 방정식은?`; const correct = formatCircle(h + dx, k + dy, r); const distractors = [ formatCircle(h - dx, k - dy, r), formatCircle(h + dx, k + dy, r + 1), formatCircle(h, k, r) ]; const options = shuffle([correct, ...new Set(distractors.filter(d => d !== correct))].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; } function generateReflectCircleQuiz() { const h = getRandomInt(-3, 3), k = getRandomInt(-3, 3), r = getRandomInt(1, 4); const types = ['x축', 'y축', '원점', '직선 y=x'], type = types[getRandomInt(0, 3)]; const question = `원 ${formatCircle(h, k, r)}를\n${type}에 대칭이동한 방정식은?`; let correct, distractors; if (type === 'x축') { correct = formatCircle(h, -k, r); distractors = [formatCircle(-h, k, r), formatCircle(h, k, r), formatCircle(h, -k, r+1)]; } else if (type === 'y축') { correct = formatCircle(-h, k, r); distractors = [formatCircle(h, -k, r), formatCircle(h, k, r), formatCircle(-h, k, r+1)]; } else if (type === '원점') { correct = formatCircle(-h, -k, r); distractors = [formatCircle(h, -k, r), formatCircle(-h, k, r), formatCircle(-h, -k, r+1)]; } else { correct = formatCircle(k, h, r); distractors = [formatCircle(-k, -h, r), formatCircle(h, k, r), formatCircle(k, h, r+1)]; } const options = shuffle([correct, ...new Set(distractors.filter(d => d !== correct))].slice(0, 4)); return { question, options, correctIndex: options.indexOf(correct) }; }
 
         function coordToPixel(pos) { const boardSize = gameBoard.clientWidth, unit = boardSize / (GRID_SIZE + 1); return { left: (pos.x - GRID_MIN) * unit + unit / 2 - 36 / 2, top: (GRID_MAX - pos.y) * unit + unit / 2 - 36 / 2 }; }
         function updateAllPiecePositions() { 
@@ -433,7 +482,6 @@
                 const dx = Math.abs(targetCoord.x - me.pos.x);
                 const dy = Math.abs(targetCoord.y - me.pos.y);
                 if ((dx === 1 && dy === 2) || (dx === 2 && dy === 1)) {
-                    me.previousPos = { ...me.pos };
                     me.pos = targetCoord;
                     isKnightMoveActive = false;
                     me.pieceEl.innerHTML = me.character;
@@ -482,17 +530,19 @@
                 <ul class="list-disc list-inside mb-4">
                     <li>자신의 턴에 최대 3장의 카드를 사용할 수 있습니다.</li>
                     <li>'퀴즈 도전' 버튼을 눌러 수학 퀴즈를 풀 수 있습니다. (턴 당 1회)</li>
-                    <li>퀴즈를 맞히면 '특수 카드'(70%) 또는 '레어 카드'(30%)를 보상으로 얻습니다.</li>
+                    <li>퀴즈를 맞히면 일반 카드 50%, 특수 카드 30%, 레어 카드 20% 확률로 3장의 카드가 나타나며, 그 중 1장을 선택할 수 있습니다. (10초 이내 선택하지 않으면 자동으로 랜덤 선택됩니다)</li>
                     <li>손에 들 수 있는 카드는 최대 6장입니다. 턴 종료 시 6장을 초과하면 가장 오래된 카드부터 자동으로 버려집니다.</li>
-                    <li>PvP 모드에서는 각 턴마다 2분의 시간 제한이 있습니다.</li>
+                    <li>턴 종료 시 새로운 카드 2장을 자동으로 받습니다. (PvP 모드: 레어 10%, 특수 30%, 일반 60% / 연습 모드: 특수 30%, 일반 70%)</li>
+                    <li>PvP 모드에서는 각 턴마다 40초의 시간 제한이 있습니다. 퀴즈 도전, 룰북 열기, 일시정지 시에는 타이머가 일시 정지됩니다.</li>
+                    <li>일시정지 버튼을 누르면 게임이 일시정지되며, 화면이 가려집니다. 게임 재개 버튼을 눌러 계속 진행할 수 있습니다.</li>
                 </ul>
 
                 <h3 class="text-xl font-bold mb-2">카드 등급</h3>
                 <p class="mb-4">카드는 일반, 특수, 레어 세 가지 등급으로 나뉩니다.</p>
                 <ul class="list-disc list-inside mb-4">
-                    <li><b>일반 카드 (흰색):</b> x축 또는 y축 방향으로 말을 이동시킵니다.</li>
-                    <li><b>특수 카드 (하늘색):</b> x축, y축, 원점 대칭이동과 같은 특별한 움직임을 제공합니다.</li>
-                    <li><b>레어 카드 (노란색):</b> 게임의 판도를 뒤집을 수 있는 강력하고 희귀한 효과를 가집니다.</li>
+                    <li><b>일반 카드 (흰색 배경):</b> x축 또는 y축 방향으로 ±1, ±2만큼 말을 이동시킵니다.</li>
+                    <li><b>특수 카드 (하늘색 배경):</b> x축 또는 y축 방향으로 ±3만큼 이동하거나, x축, y축, 원점, y=x, y=-x 대칭이동과 같은 특별한 움직임을 제공합니다.</li>
+                    <li><b>레어 카드 (노란색 배경):</b> 게임의 판도를 뒤집을 수 있는 강력하고 희귀한 효과를 가집니다.</li>
                 </ul>
 
                 <h4 class="text-lg font-bold mt-4 mb-2">레어 카드 상세 설명</h4>
@@ -503,15 +553,37 @@
                     <li><b>앵콜:</b> 이번 턴을 마친 뒤, 상대방에게 턴을 넘기지 않고 자신의 턴을 한 번 더 진행합니다.</li>
                     <li><b>나이트:</b> 말을 체스 나이트(♞)처럼 한 칸 이동시킵니다.</li>
                     <li><b>거대화:</b> 1턴간 자신의 말이 <b>3x3 영역</b>을 차지하게 됩니다.<br>(x, y)에서 사용 시, (x-1, y+1)부터 (x+1, y-1)까지 3x3 영역이 영향을 미치며,<br>거대화된 아이콘의 중심과 노란색 정사각형 영역의 중심은 원래 위치와 동일합니다.<br>이 3x3 영역에 상대방이 닿으면 승리합니다.</li>
-                    <li><b>도르마무:</b> 마지막으로 이동 카드를 사용하기 전의 위치로 되돌아갑니다.</li>
+                    <li><b>도르마무:</b> 마지막에 사용한 카드를 즉시 다시 사용합니다.</li>
                 </ul>
             `;
             rulebookModal.classList.remove('hidden');
             rulebookModal.classList.add('flex');
+            if (gameMode === 'pvp' && !isDebugMode) {
+                stopTurnTimer();
+            }
         }
         function hideRulebook() {
             rulebookModal.classList.add('hidden');
             rulebookModal.classList.remove('flex');
+            if (gameMode === 'pvp' && !isDebugMode) {
+                startTurnTimer();
+            }
+        }
+        function pauseGame() {
+            const pauseModal = document.getElementById('pauseModal');
+            pauseModal.classList.remove('hidden');
+            pauseModal.classList.add('flex');
+            if (gameMode === 'pvp' && !isDebugMode) {
+                stopTurnTimer();
+            }
+        }
+        function resumeGame() {
+            const pauseModal = document.getElementById('pauseModal');
+            pauseModal.classList.add('hidden');
+            pauseModal.classList.remove('flex');
+            if (gameMode === 'pvp' && !isDebugMode) {
+                startTurnTimer();
+            }
         }
     </script>
 </body>

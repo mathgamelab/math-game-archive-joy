@@ -1958,8 +1958,8 @@
                         return { inline_data: { mime_type: "image/png", data: imageData } };
                     });
                     
-                    // 고정 프롬프트 사용
-                    const promptText = reviewPrompt;
+                    // 동적 프롬프트 생성
+                    const promptText = generateReviewPrompt();
                     
                     // 여러 이미지와 함께 프롬프트 구성
                     const parts = [{ text: promptText }, ...imageParts];
@@ -2383,43 +2383,37 @@
             // 섹션 헤더 div 사이의 과도한 줄바꿈 정리
             formatted = formatted.replace(/(<\/div>)\s*\n{3,}\s*(<div)/g, '$1\n\n$2');
             
-            // 제목성 강조 텍스트는 줄바꿈 유지 (해답, 풀이 과정 등)
-            const titleKeywords = ['해답', '풀이 과정', '풀이과정', '오류 내용', '난이도 평가', '개선 제안', '학생용 풀이', '간략한 풀이'];
-            titleKeywords.forEach(keyword => {
-                const regex = new RegExp(`(<strong>.*?${keyword}.*?</strong>)`, 'gi');
-                formatted = formatted.replace(regex, (match) => {
-                    return match.replace(/\n/g, '___TITLE_NEWLINE___');
-                });
+            // 제목성 강조만 보호 (실제 제목 역할: "해답:", "풀이 과정:" 등 콜론 포함)
+            const titlePattern = /(<strong>.*?(?:해답|풀이\s*과정|오류\s*내용|난이도\s*평가|개선\s*제안|학생용\s*풀이|간략한\s*풀이)[:：]\s*<\/strong>)/gi;
+            formatted = formatted.replace(titlePattern, (match) => {
+                return match.replace(/\n/g, '___TITLE_NL___');
             });
             
-            // 일반 강조 텍스트(<strong>) 앞뒤의 불필요한 줄바꿈 제거 (제목성 강조 제외)
+            // 일반 강조 텍스트는 무조건 인라인 처리 (줄바꿈 제거)
             formatted = formatted.replace(/\n\s*<strong>/g, ' <strong>');
             formatted = formatted.replace(/<\/strong>\s*\n/g, '</strong> ');
             formatted = formatted.replace(/<strong>\s*\n/g, '<strong>');
             formatted = formatted.replace(/\n\s*<\/strong>/g, '</strong>');
             
-            // 제목성 강조의 줄바꿈 복원
-            formatted = formatted.replace(/___TITLE_NEWLINE___/g, '\n');
+            // 제목성 강조 복원
+            formatted = formatted.replace(/___TITLE_NL___/g, '\n');
             
-            // 일반 텍스트 줄바꿈 처리
+            // HTML 변환
             formatted = formatted.replace(/\n\n+/g, '</p><p>');
             formatted = formatted.replace(/\n/g, '<br>');
             
-            // HTML 변환 후 일반 강조 텍스트 주변의 불필요한 <br> 제거 (제목성 강조 제외)
-            // 제목성 강조는 먼저 보호
-            titleKeywords.forEach(keyword => {
-                const regex = new RegExp(`(<strong>.*?${keyword}.*?</strong>)`, 'gi');
-                formatted = formatted.replace(regex, (match) => {
-                    return match.replace(/<br>/g, '___TITLE_BR___');
-                });
+            // 제목성 강조 보호 (HTML 변환 후)
+            formatted = formatted.replace(titlePattern, (match) => {
+                return match.replace(/<br>/g, '___TITLE_BR___');
             });
             
+            // 일반 강조 텍스트 주변의 <br> 제거 (인라인 처리)
             formatted = formatted.replace(/<br>\s*<strong>/g, ' <strong>');
             formatted = formatted.replace(/<\/strong>\s*<br>/g, '</strong> ');
             formatted = formatted.replace(/<p>\s*<strong>/g, '<p><strong>');
             formatted = formatted.replace(/<\/strong>\s*<\/p>/g, '</strong></p>');
             
-            // 제목성 강조의 <br> 복원
+            // 제목성 강조 복원
             formatted = formatted.replace(/___TITLE_BR___/g, '<br>');
             
             // 목록이 있으면 ul로 감싸기

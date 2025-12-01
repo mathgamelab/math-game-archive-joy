@@ -1,0 +1,2783 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖AI 원안지 검토기</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true,
+                processEnvironments: true,
+                // 오류 메시지 숨기기
+                formatError: (jax, error) => {
+                    console.warn('MathJax 렌더링 오류:', error);
+                    // 오류 메시지를 화면에 표시하지 않음
+                    return '';
+                }
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+                // 오류 메시지 숨기기
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Pretendard', 'Malgun Gothic', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0; 
+            padding: 20px; 
+            min-height: 100vh;
+        }
+        
+        /* 상단 패널 */
+        .header-panel {
+            background: #fff; 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            margin-bottom: 20px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            align-items: center; 
+            gap: 15px;
+        }
+        .header-panel select, .header-panel input {
+            padding: 12px 15px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 8px; 
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .header-panel select { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea; 
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .header-panel select:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+        .header-panel input[type="password"] { 
+            flex: 1; 
+            min-width: 250px; 
+            border-color: #667eea;
+        }
+        .header-panel input[type="password"]:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        /* 메인 컨테이너 */
+        .container { 
+            display: flex; 
+            gap: 20px; 
+            height: calc(100vh - 150px);
+            min-height: 600px;
+        }
+        
+        @media (max-width: 1024px) {
+            .container { flex-direction: column; height: auto; }
+            #pdf-container { flex: none; height: 500px; }
+            #crop-result { flex: none; max-height: 500px; }
+        }
+        
+        /* 왼쪽: PDF 캔버스 영역 (드롭존) */
+        #pdf-container { 
+            flex: 6; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+            overflow-y: auto; 
+            position: relative;
+            text-align: center; 
+            border: 3px dashed transparent; 
+            transition: all 0.3s;
+        }
+        /* 드래그 앤 드롭 활성화 시 스타일 */
+        #pdf-container.drag-over {
+            border-color: #667eea; 
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            transform: scale(1.01);
+        }
+
+        /* 오른쪽: 결과 영역 */
+        #crop-result { 
+            flex: 4; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px;
+        }
+        #crop-result h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 18px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        /* 캔버스 래퍼 (페이지별) */
+        .page-wrapper {
+            position: relative; 
+            display: inline-block; 
+            margin-bottom: 20px;
+            margin-top: 60px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            background: white;
+        }
+        .page-wrapper canvas {
+            display: block;
+            border-radius: 0 0 8px 8px;
+        }
+        canvas { 
+            display: block; 
+            cursor: crosshair; 
+            max-width: 100%;
+            height: auto;
+        }
+        
+
+        /* 드래그 선택 박스 (사용자 수동) */
+        #selection-box { 
+            position: fixed; 
+            border: 3px dashed #FF5722; 
+            background-color: rgba(255, 87, 34, 0.15); 
+            display: none; 
+            pointer-events: none; 
+            z-index: 1000;
+            box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
+        }
+
+        /* AI 추천 박스 (자동) */
+        .ai-box {
+            position: absolute; 
+            border: 3px solid #2196F3; 
+            background-color: rgba(33, 150, 243, 0.2);
+            cursor: move; 
+            z-index: 50; 
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+        .ai-box:hover { 
+            background-color: rgba(33, 150, 243, 0.4); 
+            border-color: #1976D2;
+            box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+        }
+        .ai-box-label {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            background: #2196F3;
+            color: white;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .ai-box:hover .ai-box-label {
+            background: #1976D2;
+        }
+        .ai-box-click-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #FFD700;
+            font-weight: 900;
+            text-align: center;
+            pointer-events: none;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.6), 2px 2px 4px rgba(0,0,0,0.9);
+            white-space: nowrap;
+            z-index: 1;
+            font-size: 16px;
+        }
+        
+        /* 크기 조절 핸들 */
+        .resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #2196F3;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 51;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+        }
+        .resize-handle:hover {
+            background: #1976D2;
+            transform: scale(1.3);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+        }
+        .resize-handle.nw {
+            top: -6px;
+            left: -6px;
+            cursor: nw-resize;
+        }
+        .resize-handle.ne {
+            top: -6px;
+            right: -6px;
+            cursor: ne-resize;
+        }
+        .resize-handle.sw {
+            bottom: -6px;
+            left: -6px;
+            cursor: sw-resize;
+        }
+        .resize-handle.se {
+            bottom: -6px;
+            right: -6px;
+            cursor: se-resize;
+        }
+
+        /* 결과 카드 스타일 */
+        .card { 
+            border: 2px solid #e0e0e0; 
+            border-radius: 12px; 
+            padding: 15px; 
+            background: #fff; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+        .card img { 
+            max-width: 100%; 
+            border-radius: 8px; 
+            border: 2px solid #e0e0e0; 
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .btn-group { 
+            display: flex; 
+            gap: 8px; 
+            margin-bottom: 12px; 
+        }
+        button { 
+            padding: 10px 15px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .btn-analyze { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            flex: 1;
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+        .btn-analyze:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-analyze:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-del { 
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 4px 8px rgba(245, 87, 108, 0.3);
+        }
+        .btn-del:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(245, 87, 108, 0.4);
+        }
+        .btn-add { 
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 4px 8px rgba(79, 172, 254, 0.3);
+        }
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(79, 172, 254, 0.4);
+        }
+        .btn-add.active {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .images-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .image-item {
+            position: relative;
+            width: 100%;
+        }
+        .image-item img {
+            width: 100%;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
+        .image-item .remove-img-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(245, 87, 108, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            transition: all 0.2s;
+            opacity: 0;
+        }
+        .image-item:hover .remove-img-btn {
+            opacity: 1;
+        }
+        .image-item .remove-img-btn:hover {
+            background: rgba(245, 87, 108, 1);
+            transform: scale(1.1);
+        }
+        .image-count-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: rgba(102, 126, 234, 0.9);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .ai-response { 
+            background: #ffffff;
+            padding: 20px; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            line-height: 1.8;
+            min-height: 50px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            max-height: 600px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .ai-response::-webkit-scrollbar {
+            width: 8px;
+        }
+        .ai-response::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .ai-response::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        .ai-response::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .response-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-copy {
+            background: #f5f5f5;
+            color: #666;
+            border: 1px solid #ddd;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-copy:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .btn-copy.copied {
+            background: #4caf50;
+            color: white;
+            border-color: #4caf50;
+        }
+        .response-content {
+            color: #333;
+            font-size: 16px;
+        }
+        .response-content p {
+            margin: 0 0 12px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        .response-content p:last-child {
+            margin-bottom: 0;
+        }
+        .response-content strong {
+            color: #667eea;
+            font-weight: 700;
+            display: block;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            font-size: 18px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .response-content strong:first-child {
+            margin-top: 0;
+        }
+        .response-content em {
+            color: #666;
+            font-style: normal;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        .response-content ul, .response-content ol {
+            margin: 8px 0 8px 20px;
+            padding: 0;
+            color: #444;
+        }
+        .response-content li {
+            margin: 6px 0;
+            line-height: 1.7;
+        }
+        .response-content h1, .response-content h2, .response-content h3 {
+            color: #667eea;
+            margin: 16px 0 8px 0;
+            font-weight: 700;
+        }
+        .response-content h1 {
+            font-size: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        .response-content h2 {
+            font-size: 18px;
+        }
+        .response-content h3 {
+            font-size: 17px;
+        }
+        
+        /* 판정 결과 스타일 */
+        .verdict-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+        .verdict-red {
+            background: #ffebee;
+            color: #c62828;
+            border: 2px solid #ef5350;
+        }
+        .verdict-yellow {
+            background: #fff8e1;
+            color: #f57c00;
+            border: 2px solid #ffb74d;
+        }
+        .verdict-green {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 2px solid #66bb6a;
+        }
+        .verdict-icon {
+            font-size: 24px;
+        }
+        
+        .summary-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .summary-text {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        .detail-toggle {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            color: #666;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            width: 100%;
+            justify-content: center;
+        }
+        .detail-toggle:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .detail-toggle.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .detail-content {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            animation: slideDown 0.3s ease;
+        }
+        .detail-content.show {
+            display: block;
+        }
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .loading { 
+            color: #667eea; 
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .loading::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error-msg { 
+            color: #d32f2f; 
+            background: #ffebee; 
+            padding: 12px; 
+            border-radius: 8px;
+            border-left: 4px solid #d32f2f;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        .empty-state h2 {
+            margin: 0 0 10px 0;
+            color: #666;
+        }
+        
+        /* 일괄 검토 버튼 */
+        .batch-review-section {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .batch-review-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .btn-batch-review {
+            width: 100%;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .btn-batch-review:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            background: white;
+            border-color: white;
+        }
+        .btn-batch-review:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .batch-progress {
+            margin-top: 12px;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+            font-weight: 600;
+        }
+        .batch-progress.show {
+            display: block;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        /* MathJax 오류 메시지 숨기기 */
+        .MathJax_Error,
+        mjx-merror,
+        [class*="MathJax_Error"],
+        [class*="merror"] {
+            display: none !important;
+            visibility: hidden !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-panel">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 15px; width: 100%;">
+            <span style="font-size: 22px; font-weight: bold; margin-right: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;">📝 AI 원안지 검토기</span>
+            <select id="model-select">
+                <option value="gemini-3-pro-preview" selected>🚀 Gemini 3.0 Pro (프리뷰)</option>
+                <option value="gemini-2.5-pro">🚀 Gemini 2.5 Pro (추천)</option>
+                <option value="gemini-1.5-pro">🚀 Gemini 1.5 Pro (안정)</option>
+                <option value="gemini-2.0-flash">⚡ Gemini 2.0 Flash (빠름)</option>
+                <option value="gemini-1.5-flash">⚡ Gemini 1.5 Flash (빠름)</option>
+            </select>
+            <input type="password" id="api-key" placeholder="🔑 API Key 입력 (Google AI Studio에서 발급)" style="flex: 1; min-width: 200px;">
+            <button id="help-btn" style="padding: 10px 20px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(76, 175, 80, 0.4)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 8px rgba(76, 175, 80, 0.3)';" onclick="toggleHelp()">📖 사용법</button>
+            <button id="settings-btn" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 8px rgba(102, 126, 234, 0.3)';" onclick="toggleSettings()">⚙️설정</button>
+            <button id="clear-cache-btn" style="padding: 10px 20px; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(255, 107, 107, 0.4)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 8px rgba(255, 107, 107, 0.3)';" onclick="clearCache()" title="저장된 모든 데이터 삭제">🧹초기화</button>
+        </div>
+    </div>
+
+    <!-- 설정 모달 -->
+    <div id="settings-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 style="margin: 0; color: #667eea; font-size: 24px;">⚙️ AI 검토 설정</h2>
+                <button onclick="toggleSettings()" style="background: #f5f5f5; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='#e0e0e0';" onmouseout="this.style.background='#f5f5f5';">×</button>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333; font-size: 18px;">📚 교과목</label>
+                <select id="subject-select" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; transition: all 0.3s;" onfocus="this.style.borderColor='#667eea';" onblur="this.style.borderColor='#e0e0e0';">
+                    <option value="국어">국어</option>
+                    <option value="영어">영어</option>
+                    <option value="수학">수학</option>
+                    <option value="과학">과학</option>
+                    <option value="사회">사회</option>
+                    <option value="기타">기타</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333; font-size: 18px;">📊 분석 수준</label>
+                <select id="analysis-level-select" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; transition: all 0.3s;" onfocus="this.style.borderColor='#667eea';" onblur="this.style.borderColor='#e0e0e0';">
+                    <option value="자세히" selected>자세히 (기본)</option>
+                    <option value="간략히">간략히</option>
+                    <option value="답만">답만</option>
+                </select>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333; font-size: 18px;">📝 추가 요구사항</label>
+                <textarea id="additional-requirements" placeholder="예: 특정 교육과정 기준으로 검토, 특정 난이도 기준 적용, 특정 형식 요구사항 등&#10;AI가 검토 시 참고할 추가 요구사항을 입력하세요." style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; font-family: inherit; resize: vertical; min-height: 100px; transition: all 0.3s;" onfocus="this.style.borderColor='#667eea';" onblur="this.style.borderColor='#e0e0e0';"></textarea>
+                <div style="margin-top: 5px; color: #999; font-size: 14px;">💡 이 요구사항은 AI 검토 시 프롬프트에 자동으로 포함됩니다.</div>
+            </div>
+            
+            <div style="margin-bottom: 25px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <label style="font-weight: 600; color: #333; font-size: 18px; margin: 0;">📋 프롬프트 편집</label>
+                    <button onclick="togglePromptEditor()" style="padding: 8px 14px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">보기/편집</button>
+                </div>
+                <div style="color: #666; font-size: 15px; margin-bottom: 10px;">AI 검토에 사용되는 프롬프트를 확인하고 수정할 수 있습니다.</div>
+                <div id="prompt-editor-container" style="display: none; margin-top: 10px;">
+                    <textarea id="prompt-editor" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: 'Courier New', monospace; resize: vertical; min-height: 200px; transition: all 0.3s;" onfocus="this.style.borderColor='#667eea';" onblur="this.style.borderColor='#e0e0e0';"></textarea>
+                    <div style="margin-top: 8px; display: flex; gap: 8px;">
+                        <button onclick="loadCurrentPrompt()" style="flex: 1; padding: 10px; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">현재 프롬프트 불러오기</button>
+                        <button onclick="resetPrompt()" style="flex: 1; padding: 10px; background: #fff3cd; color: #856404; border: 1px solid #ffc107; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600;">기본값으로 복원</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="saveSettings()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 16px; cursor: pointer; box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3); transition: all 0.3s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 4px 8px rgba(102, 126, 234, 0.3)';">💾 설정 저장</button>
+        </div>
+    </div>
+
+    <!-- 사용법 모달 -->
+    <div id="help-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h2 style="margin: 0; color: #4caf50; font-size: 24px;">📖 사용법 안내</h2>
+                <button onclick="toggleHelp()" style="background: #f5f5f5; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='#e0e0e0';" onmouseout="this.style.background='#f5f5f5';">×</button>
+            </div>
+            
+            <div style="line-height: 1.8; color: #333; font-size: 16px;">
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 8px;">1️⃣ API Key 발급 및 입력</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #4caf50;">
+                    <p style="margin: 0 0 15px 0; font-weight: 600; color: #333;">🔑 Google AI Studio에서 API Key 발급받기:</p>
+                    <ol style="margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;">브라우저에서 <a href="https://aistudio.google.com/apikey" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">Google AI Studio</a>에 접속합니다.</li>
+                        <li style="margin-bottom: 10px;">Google 계정으로 로그인합니다.</li>
+                        <li style="margin-bottom: 10px;">"Create API Key" 또는 "API 키 만들기" 버튼을 클릭합니다.</li>
+                        <li style="margin-bottom: 10px;">프로젝트를 선택하거나 새로 생성합니다.</li>
+                        <li style="margin-bottom: 10px;">생성된 API Key를 복사합니다.</li>
+                        <li style="margin-bottom: 10px;">상단의 "🔑 API Key 입력" 필드에 붙여넣습니다.</li>
+                    </ol>
+                    <p style="margin: 15px 0 0 0; color: #666; font-size: 14px;">💡 API Key는 자동으로 저장되며, 다음에 접속할 때 자동으로 불러옵니다.</p>
+                </div>
+
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 8px;">2️⃣ PDF 파일 업로드</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;">왼쪽 영역에 PDF 파일을 <strong>드래그 앤 드롭</strong>하거나, 영역을 클릭하여 파일을 선택합니다.</li>
+                        <li style="margin-bottom: 10px;">PDF 파일이 업로드되면 자동으로 페이지별로 표시됩니다.</li>
+                    </ul>
+                </div>
+
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 8px;">3️⃣ 문제 영역 선택</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;">PDF 페이지에서 검토하고 싶은 <strong>문제 영역을 마우스로 드래그</strong>하여 선택합니다.</li>
+                        <li style="margin-bottom: 10px;">선택한 영역이 빨간색 점선으로 표시됩니다.</li>
+                        <li style="margin-bottom: 10px;">여러 문제를 선택할 수 있으며, 각 문제는 오른쪽 목록에 추가됩니다.</li>
+                    </ul>
+                </div>
+
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 8px;">4️⃣ AI 검토 실행</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                    <p style="margin: 0 0 15px 0; font-weight: 600;">개별 검토:</p>
+                    <ul style="margin: 0 0 15px 20px; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;">오른쪽 목록에서 각 문제 카드의 <strong>"⚡ AI 검토"</strong> 버튼을 클릭합니다.</li>
+                        <li style="margin-bottom: 10px;">AI가 문제를 분석하여 검토 결과를 제공합니다.</li>
+                    </ul>
+                    <p style="margin: 15px 0 0 0; font-weight: 600;">일괄 검토:</p>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;">여러 문제를 선택한 후, 상단의 <strong>"🚀 일괄 검토 시작"</strong> 버튼을 클릭합니다.</li>
+                        <li style="margin-bottom: 10px;">모든 문제가 순차적으로 자동 검토됩니다.</li>
+                        <li style="margin-bottom: 10px;">진행 상황이 실시간으로 표시됩니다.</li>
+                    </ul>
+                </div>
+
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 8px;">5️⃣ 검토 결과 확인</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;"><strong>🔴 빨간불</strong>: 치명적 오류 - 즉시 수정이 필요한 문제</li>
+                        <li style="margin-bottom: 10px;"><strong>🟡 노란불</strong>: 오류 의심 / 점검 필요 - 선생님 확인이 필요한 부분</li>
+                        <li style="margin-bottom: 10px;"><strong>🟢 초록불</strong>: 문제 없음 - 정상적으로 출제 가능</li>
+                        <li style="margin-bottom: 10px;">각 결과 카드에서 <strong>"📖 자세히 보기"</strong>를 클릭하면 상세한 분석 내용을 확인할 수 있습니다.</li>
+                        <li style="margin-bottom: 10px;"><strong>"📋 전체 복사"</strong> 버튼으로 검토 결과를 복사할 수 있습니다.</li>
+                    </ul>
+                </div>
+
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 8px;">6️⃣ 설정 활용</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;"><strong>⚙️ 설정</strong> 버튼을 클릭하여 다음을 설정할 수 있습니다:</li>
+                        <li style="margin-left: 20px; margin-bottom: 10px;">📚 교과목 선택 (국어, 영어, 수학, 과학, 사회, 기타)</li>
+                        <li style="margin-left: 20px; margin-bottom: 10px;">📊 분석 수준 선택 (자세히, 간략히, 답만)</li>
+                        <li style="margin-left: 20px; margin-bottom: 10px;">📝 추가 요구사항 입력</li>
+                        <li style="margin-left: 20px; margin-bottom: 10px;">📋 프롬프트 편집 (고급 사용자용)</li>
+                    </ul>
+                </div>
+
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px; font-size: 20px; border-bottom: 2px solid #667eea; padding-bottom: 8px;">7️⃣ 기타 기능</h3>
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 15px;">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li style="margin-bottom: 10px;"><strong>🧹 초기화</strong> 버튼: 저장된 모든 데이터(API Key, 설정 등)를 삭제합니다.</li>
+                        <li style="margin-bottom: 10px;"><strong>모델 선택</strong>: 상단에서 사용할 AI 모델을 선택할 수 있습니다.</li>
+                        <li style="margin-bottom: 10px;">각 문제 카드의 <strong>❌</strong> 버튼으로 개별 문제를 삭제할 수 있습니다.</li>
+                    </ul>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-top: 25px;">
+                    <p style="margin: 0; font-weight: 600; font-size: 18px;">💡 팁</p>
+                    <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+                        <li style="margin-bottom: 8px;">수학 문제의 경우 LaTeX 수식이 자동으로 렌더링됩니다.</li>
+                        <li style="margin-bottom: 8px;">API Key는 안전하게 관리하고, 타인과 공유하지 마세요.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="pdf-container">
+            <div id="selection-box"></div>
+            <div id="canvas-wrapper-inner">
+                <div style="margin-top: 100px; color: #999; padding: 40px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">📄</div>
+                    <h1 style="color: #667eea; margin: 0 0 10px 0;">PDF 파일을 업로드하세요</h1>
+                    <p style="margin: 0 0 20px 0;">파일을 드래그하거나 클릭하여 선택하세요</p>
+                    <input type="file" id="file-input" accept="application/pdf" style="display:none;">
+                </div>
+            </div>
+        </div>
+
+        <div id="crop-result">
+            <h3>✂️ 문항 분석 목록</h3>
+            <div class="batch-review-section" id="batch-review-section" style="display: none;">
+                <button class="btn-batch-review" id="btn-batch-review" onclick="startBatchReview()">
+                    <span>🚀</span>
+                    <span>일괄 검토 시작</span>
+                </button>
+                <div class="batch-progress" id="batch-progress">
+                    <div>진행 중: <span id="progress-text">0 / 0</span></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="crops-list">
+                <div class="empty-state">
+                    <h2>📋 분석할 문항이 없습니다</h2>
+                    <p>PDF를 업로드하고 영역을 선택하세요</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        const pdfContainer = document.getElementById('pdf-container');
+        const fileInput = document.getElementById('file-input');
+        const canvasWrapperInner = document.getElementById('canvas-wrapper-inner');
+        const selectionBox = document.getElementById('selection-box');
+        const cropsList = document.getElementById('crops-list');
+        const apiKeyInput = document.getElementById('api-key');
+        const modelSelect = document.getElementById('model-select');
+
+        let isDragging = false, startX, startY;
+        let activeCanvas = null;
+        let activeWrapper = null;
+        let cropCount = 0;
+        let addingToCardId = null; // 이미지를 추가할 카드 ID (null이면 새 카드 생성)
+        
+        // 설정값 (기본값)
+        let settings = {
+            subject: '기타',
+            analysisLevel: '자세히',
+            additionalRequirements: '',
+            customPrompt: '' // 사용자 정의 프롬프트 (비어있으면 기본 프롬프트 사용)
+        };
+        
+        // 설정 불러오기 (DOM 로드 후 실행)
+        function loadSettings() {
+            const savedSettings = localStorage.getItem('exam_review_settings');
+            if (savedSettings) {
+                try {
+                    settings = JSON.parse(savedSettings);
+                    // 기존 설정에 필드가 없으면 빈 문자열로 초기화
+                    if (!settings.additionalRequirements) {
+                        settings.additionalRequirements = '';
+                    }
+                    if (!settings.customPrompt) {
+                        settings.customPrompt = '';
+                    }
+                    const subjectSelect = document.getElementById('subject-select');
+                    const analysisLevelSelect = document.getElementById('analysis-level-select');
+                    const additionalRequirements = document.getElementById('additional-requirements');
+                    if (subjectSelect) subjectSelect.value = settings.subject;
+                    if (analysisLevelSelect) analysisLevelSelect.value = settings.analysisLevel;
+                    if (additionalRequirements) additionalRequirements.value = settings.additionalRequirements || '';
+                } catch (e) {
+                    console.error('설정 불러오기 오류:', e);
+                }
+            }
+        }
+        
+        // DOM 로드 후 설정 불러오기
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadSettings);
+        } else {
+            loadSettings();
+        }
+        
+        // 동적 프롬프트 생성 함수
+        function generateReviewPrompt() {
+            // 사용자 정의 프롬프트가 있으면 그것을 사용
+            if (settings.customPrompt && settings.customPrompt.trim()) {
+                console.log('사용자 정의 프롬프트 사용');
+                return settings.customPrompt.trim();
+            }
+            
+            // 최신 설정값 사용 (항상 최신 settings 객체 참조)
+            const subject = settings.subject;
+            const level = settings.analysisLevel;
+            
+            // 디버깅용 로그 (개발자 도구에서 확인 가능)
+            console.log('프롬프트 생성 - 교과목:', subject, '분석 수준:', level);
+            
+            let prompt = `이 시험 문제를 검토하고 다음 기준에 따라 정확히 판정해주세요.`;
+            
+            if (subject !== '기타') {
+                prompt += `\n\n📚 교과목: ${subject}`;
+            }
+            
+            prompt += `\n\n🚦 [확정] AI 시험지 검토 판정 기준
+
+🔴 빨간불 (치명적 오류) - "이대로 출제하면 큰일 납니다!"
+기준: 출제 시 재시험이 확실시되는 심각한 결함.
+상황:
+- 정답 없음 / 복수 정답
+- 수식 및 계산의 논리적 오류
+- 조건 부족으로 문제 성립 불가
+액션: 선생님, 이건 무조건 수정하셔야 합니다.
+
+🟡 노란불 (오류 의심 / 점검 필요) - "틀린 건 아닌데... 선생님 확인이 필요합니다."
+기준: 문제는 풀리지만, 완성도나 규정에 어긋날 소지가 있음.
+상황:
+- 중의적 표현: 학생이 다르게 해석할 여지가 있음
+- 단순 오타: '함수' → '함스' (풀이는 가능하나 수정 필요)
+- 교육과정 위반 의심: "이거 고1 과정 맞나요? 선행 개념 같습니다."
+- 가독성 불량: 폰트 깨짐, 그래프 흐릿함, 그림 안 보임
+액션: AI가 지적한 부분을 보시고 넘길지, 수정할지 선생님이 결정해 주세요.
+
+🟢 초록불 (정상) - "완벽합니다."
+기준: 출제해도 아무런 문제가 없는 클린한 상태.
+상황:
+- 논리, 계산, 표기법, 교육과정 적합성 등 모든 면에서 이상 없음
+액션: 안심하고 다음 문제로 넘어가세요.
+
+**중요: 반드시 다음 형식으로 응답해주세요:**
+
+1. 첫 줄에 판정 결과를 명확히 표시: 🔴 빨간불 또는 🟡 노란불 또는 🟢 초록불
+
+2. <<요약>> 섹션 (2-3문장):
+   - 판정 이유를 간단히 설명
+   - 가장 중요한 문제점 또는 정상임을 명시`;
+
+            if (level === '자세히') {
+                prompt += `
+
+3. <<자세한 설명>> 섹션:
+   - 오류 내용 (있는 경우)
+   - 난이도 평가
+   - **간략한 풀이 과정**: 문제를 해결하는 핵심 단계를 간단히 설명
+   - **해답**: 
+     * 주관식/서술형: 정답을 명확히 제시
+     * 객관식: 정답 번호(예: ①, ②, ③, ④, ⑤ 또는 1번, 2번 등)를 명확히 표시하고, 해당 선택지의 내용도 함께 제시
+   - 학생용 풀이 과정 (상세)
+   - 개선 제안 (필요한 경우)`;
+            } else if (level === '간략히') {
+                prompt += `
+
+3. <<자세한 설명>> 섹션:
+   - 오류 내용 (있는 경우)
+   - **해답**: 
+     * 주관식/서술형: 정답을 명확히 제시
+     * 객관식: 정답 번호(예: ①, ②, ③, ④, ⑤)를 명확히 표시하고, 해당 선택지의 내용도 함께 제시
+   - 간략한 풀이 과정`;
+            } else if (level === '답만') {
+                prompt += `
+
+3. <<자세한 설명>> 섹션:
+   - **해답**: 
+     * 주관식/서술형: 정답을 명확히 제시
+     * 객관식: 정답 번호(예: ①, ②, ③, ④, ⑤ 또는 1번, 2번 등)를 명확히 표시하고, 해당 선택지의 내용도 함께 제시`;
+            }
+            
+            prompt += `\n\n반드시 🔴, 🟡, 🟢 중 하나를 첫 줄에 명시하고, <<요약>>과 <<자세한 설명>> 섹션을 명확히 구분하여 작성해주세요.`;
+            
+            // 추가 요구사항이 있으면 프롬프트에 포함
+            if (settings.additionalRequirements && settings.additionalRequirements.trim()) {
+                prompt += `\n\n📌 추가 요구사항:\n${settings.additionalRequirements.trim()}\n\n위 요구사항을 반드시 참고하여 검토해주세요.`;
+            }
+            
+            return prompt;
+        }
+        
+        
+        // API Key 로컬 저장소에서 불러오기
+        const savedApiKey = localStorage.getItem('gemini_api_key');
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+        }
+        
+        // API Key 저장
+        apiKeyInput.addEventListener('blur', () => {
+            if (apiKeyInput.value.trim()) {
+                localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
+            }
+        });
+
+        // --- 1. 드래그 앤 드롭 & 파일 처리 (개선) ---
+        pdfContainer.addEventListener('click', (e) => {
+            // 캔버스, 버튼, AI 박스 클릭이 아닐 때만 파일창 열기
+            if (e.target.tagName === 'CANVAS' || 
+                e.target.classList.contains('detect-btn') || 
+                e.target.classList.contains('ai-box') ||
+                e.target.closest('.ai-box') ||
+                e.target.closest('.page-wrapper')) {
+                return;
+            }
+            
+            if (e.target === pdfContainer || 
+                e.target === canvasWrapperInner || 
+                e.target.parentElement === canvasWrapperInner ||
+                canvasWrapperInner.contains(e.target)) {
+                fileInput.click();
+            }
+        });
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        // 드래그 효과
+        pdfContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            pdfContainer.classList.add('drag-over');
+        });
+        pdfContainer.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            pdfContainer.classList.remove('drag-over');
+        });
+        pdfContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            pdfContainer.classList.remove('drag-over');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            if (!file || file.type !== 'application/pdf') {
+                alert('❌ PDF 파일만 업로드 가능합니다.'); 
+                return;
+            }
+            
+            try {
+                canvasWrapperInner.innerHTML = '<div style="padding: 50px; color: #667eea;"><div class="loading"></div> PDF 로딩 중...</div>';
+            const buffer = await file.arrayBuffer();
+            canvasWrapperInner.innerHTML = ''; // 초기화
+            
+            const pdf = await pdfjsLib.getDocument(buffer).promise;
+            for (let i = 1; i <= pdf.numPages; i++) {
+                    await renderPage(pdf, i);
+                }
+            } catch (error) {
+                console.error('PDF 로딩 오류:', error);
+                alert('❌ PDF 파일을 읽는 중 오류가 발생했습니다: ' + error.message);
+                canvasWrapperInner.innerHTML = `
+                    <div style="margin-top: 100px; color: #999; padding: 40px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">📄</div>
+                        <h1 style="color: #667eea; margin: 0 0 10px 0;">PDF 파일을 업로드하세요</h1>
+                        <p style="margin: 0 0 20px 0;">파일을 드래그하거나 클릭하여 선택하세요</p>
+                        <input type="file" id="file-input" accept="application/pdf" style="display:none;">
+                    </div>
+                `;
+            }
+        }
+
+        async function renderPage(pdf, pageNum) {
+            const page = await pdf.getPage(pageNum);
+            const scale = 2.0; // 고화질 렌더링
+            const viewport = page.getViewport({ scale: scale });
+
+            // 래퍼 생성 (캔버스 + 버튼 + 오버레이 담을 공간)
+            const wrapper = document.createElement('div');
+            wrapper.className = 'page-wrapper';
+            
+            // 캔버스 생성
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            // 화면 표시용 스타일 (반응형)
+            canvas.style.width = (viewport.width / scale) + 'px'; 
+            canvas.style.height = (viewport.height / scale) + 'px';
+            
+            wrapper.appendChild(canvas);
+            canvasWrapperInner.appendChild(wrapper);
+
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+            
+            // 수동 드래그 이벤트 연결
+            addManualCropEvents(canvas, wrapper);
+        }
+
+        // --- 2. 좌표 보정된 수동 드래그 컷 (개선) ---
+        function addManualCropEvents(canvas, wrapper) {
+            canvas.addEventListener('mousedown', e => {
+                // AI 박스 클릭이 아닐 때만 드래그 시작
+                if (e.target.classList.contains('ai-box') || e.target.closest('.ai-box')) {
+                    return;
+                }
+                
+                e.preventDefault();
+                isDragging = true; 
+                activeCanvas = canvas;
+                activeWrapper = wrapper;
+                
+                // 추가 모드가 활성화되어 있으면 안내
+                if (addingToCardId) {
+                    const card = document.getElementById(addingToCardId);
+                    if (card) {
+                        card.style.boxShadow = '0 0 20px rgba(79, 172, 254, 0.6)';
+                        setTimeout(() => {
+                            card.style.boxShadow = '';
+                        }, 500);
+                    }
+                }
+                
+                const rect = canvas.getBoundingClientRect();
+                
+                // 화면에 보이는 박스를 그리기 위한 좌표 (Fixed position)
+                selectionBox.style.display = 'block';
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                // 박스 초기 위치 (fixed positioning)
+                selectionBox.style.left = startX + 'px';
+                selectionBox.style.top = startY + 'px';
+                selectionBox.style.width = '0px';
+                selectionBox.style.height = '0px';
+            });
+
+            document.addEventListener('mousemove', e => {
+                if (!isDragging || !activeCanvas) return;
+                
+                const curX = e.clientX;
+                const curY = e.clientY;
+                
+                const w = Math.abs(curX - startX);
+                const h = Math.abs(curY - startY);
+                const left = Math.min(curX, startX);
+                const top = Math.min(curY, startY);
+
+                selectionBox.style.width = w + 'px';
+                selectionBox.style.height = h + 'px';
+                selectionBox.style.left = left + 'px';
+                selectionBox.style.top = top + 'px';
+            });
+
+            document.addEventListener('mouseup', e => {
+                if (!isDragging || !activeCanvas) return;
+                isDragging = false; 
+                selectionBox.style.display = 'none';
+                
+                const rect = activeCanvas.getBoundingClientRect();
+                const scaleX = activeCanvas.width / rect.width;
+                const scaleY = activeCanvas.height / rect.height;
+
+                const mouseEndX = e.clientX;
+                const mouseEndY = e.clientY;
+
+                // 캔버스 내부 좌표로 변환
+                const relativeStartX = Math.max(0, Math.min((startX - rect.left) * scaleX, activeCanvas.width));
+                const relativeStartY = Math.max(0, Math.min((startY - rect.top) * scaleY, activeCanvas.height));
+                const relativeEndX = Math.max(0, Math.min((mouseEndX - rect.left) * scaleX, activeCanvas.width));
+                const relativeEndY = Math.max(0, Math.min((mouseEndY - rect.top) * scaleY, activeCanvas.height));
+
+                const x = Math.min(relativeStartX, relativeEndX);
+                const y = Math.min(relativeStartY, relativeEndY);
+                const w = Math.abs(relativeEndX - relativeStartX);
+                const h = Math.abs(relativeEndY - relativeStartY);
+
+                // 최소 크기 체크
+                if (w > 30 && h > 30) {
+                    cropImage(activeCanvas, x, y, w, h);
+                    
+                    // 추가 모드가 활성화되어 있으면 성공 메시지 표시
+                    if (addingToCardId) {
+                        const card = document.getElementById(addingToCardId);
+                        if (card) {
+                            const responseDiv = document.getElementById(`response-${addingToCardId}`);
+                            if (responseDiv && !responseDiv.querySelector('.verdict-badge')) {
+                                responseDiv.innerHTML = `
+                                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%); border-radius: 8px; border: 2px dashed #4facfe;">
+                                        <div style="font-size: 32px; margin-bottom: 10px;">✅</div>
+                                        <div style="color: #4facfe; font-weight: 600; margin-bottom: 5px;">이미지가 추가되었습니다!</div>
+                                        <div style="color: #666; font-size: 13px;">계속 추가하거나 "➕ 추가" 버튼을 다시 클릭하여 취소하세요</div>
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+                }
+                
+                activeCanvas = null;
+                activeWrapper = null;
+            });
+        }
+
+
+        // --- 공통: 이미지 자르기 & 결과 생성 (개선) ---
+        function cropImage(sourceCanvas, x, y, w, h) {
+            // 좌표 검증 및 보정
+            x = Math.max(0, Math.min(x, sourceCanvas.width));
+            y = Math.max(0, Math.min(y, sourceCanvas.height));
+            w = Math.max(1, Math.min(w, sourceCanvas.width - x));
+            h = Math.max(1, Math.min(h, sourceCanvas.height - y));
+            
+            if (w <= 0 || h <= 0) {
+                console.warn('유효하지 않은 크기:', w, h);
+                return;
+            }
+            
+            const destCanvas = document.createElement('canvas');
+            destCanvas.width = w;
+            destCanvas.height = h;
+            
+            const ctx = destCanvas.getContext('2d');
+            ctx.drawImage(sourceCanvas, x, y, w, h, 0, 0, w, h);
+            const imgData = destCanvas.toDataURL('image/png', 0.95);
+
+            // 기존 카드에 이미지 추가 모드인지 확인
+            if (addingToCardId) {
+                const card = document.getElementById(addingToCardId);
+                if (card) {
+                    addImageToCard(card, imgData);
+                    // 추가 모드 해제
+                    cancelAddMode();
+                    return;
+                }
+            }
+
+            // 새 카드 생성
+            cropCount++;
+            const cardId = `crop-${cropCount}`;
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.id = cardId;
+            card.dataset.images = JSON.stringify([imgData]); // 이미지 배열 저장
+            
+            card.innerHTML = `
+                <div style="font-size: 12px; color: #666; margin-bottom: 12px; font-weight: 600; padding: 8px 12px; background: #f8f9fa; border-radius: 6px; display: flex; align-items: center; gap: 8px;">
+                    <span>📋 문항 #${cropCount}</span>
+                </div>
+                <div class="images-container" id="images-${cardId}">
+                    <div class="image-item">
+                        <img src="${imgData}" alt="선택한 영역" class="crop-image" onclick="toggleImageZoom(this)">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-analyze" onclick="analyzeImage(this, '${cardId}')">⚡ AI 검토</button>
+                    <button class="btn-add" id="btn-add-${cardId}" onclick="enableAddMode('${cardId}')">➕ 추가</button>
+                    <button class="btn-del" onclick="removeCard('${cardId}')">🗑️ 삭제</button>
+                </div>
+                <div class="ai-response" id="response-${cardId}">
+                    <div style="text-align: center; color: #999; padding: 20px;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+                        <div>AI 검토를 시작하려면 버튼을 클릭하세요</div>
+                    </div>
+                </div>
+            `;
+            
+            // 빈 상태 제거
+            const emptyState = cropsList.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+            
+            // 일괄 검토 버튼 표시
+            const batchSection = document.getElementById('batch-review-section');
+            if (batchSection) {
+                batchSection.style.display = 'block';
+            }
+            
+            cropsList.appendChild(card);
+            cropsList.scrollTop = cropsList.scrollHeight;
+            
+            // 카드 애니메이션
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(-20px)';
+                card.style.transition = 'all 0.3s';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 10);
+            }, 10);
+        }
+        
+        // 카드에 이미지 추가 함수
+        function addImageToCard(card, imgData) {
+            const cardId = card.id;
+            const imagesContainer = document.getElementById(`images-${cardId}`);
+            if (!imagesContainer) return;
+            
+            // 기존 이미지 배열 가져오기
+            let images = [];
+            try {
+                images = JSON.parse(card.dataset.images || '[]');
+            } catch (e) {
+                // 기존 이미지가 없으면 첫 번째 이미지 찾기
+                const firstImg = card.querySelector('.crop-image');
+                if (firstImg && firstImg.src) {
+                    images = [firstImg.src];
+                }
+            }
+            
+            // 새 이미지 추가
+            images.push(imgData);
+            card.dataset.images = JSON.stringify(images);
+            
+            // 이미지 아이템 생성
+            const imageItem = document.createElement('div');
+            imageItem.className = 'image-item';
+            const imageIndex = images.length;
+            imageItem.innerHTML = `
+                <div class="image-count-badge">${imageIndex}</div>
+                <img src="${imgData}" alt="추가된 영역" class="crop-image" onclick="toggleImageZoom(this)">
+                <button class="remove-img-btn" onclick="removeImageFromCard('${cardId}', ${imageIndex - 1})" title="이미지 삭제">×</button>
+            `;
+            
+            imagesContainer.appendChild(imageItem);
+            
+            // 기존 이미지에도 배지 추가 (없는 경우)
+            const existingItems = imagesContainer.querySelectorAll('.image-item');
+            existingItems.forEach((item, idx) => {
+                if (!item.querySelector('.image-count-badge')) {
+                    const badge = document.createElement('div');
+                    badge.className = 'image-count-badge';
+                    badge.textContent = idx + 1;
+                    item.insertBefore(badge, item.firstChild);
+                }
+                if (!item.querySelector('.remove-img-btn')) {
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-img-btn';
+                    removeBtn.innerHTML = '×';
+                    removeBtn.title = '이미지 삭제';
+                    removeBtn.onclick = () => removeImageFromCard(cardId, idx);
+                    item.appendChild(removeBtn);
+                }
+            });
+            
+            // 추가 모드는 유지 (여러 이미지를 연속으로 추가할 수 있도록)
+            // 사용자가 직접 취소하거나 AI 검토를 시작할 때 해제됨
+        }
+        
+        // 카드에서 이미지 제거 함수
+        window.removeImageFromCard = function(cardId, imageIndex) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            
+            let images = [];
+            try {
+                images = JSON.parse(card.dataset.images || '[]');
+            } catch (e) {
+                return;
+            }
+            
+            if (imageIndex < 0 || imageIndex >= images.length) return;
+            
+            // 이미지 제거
+            images.splice(imageIndex, 1);
+            card.dataset.images = JSON.stringify(images);
+            
+            // UI 업데이트
+            const imagesContainer = document.getElementById(`images-${cardId}`);
+            if (imagesContainer) {
+                imagesContainer.innerHTML = '';
+                images.forEach((imgData, idx) => {
+                    const imageItem = document.createElement('div');
+                    imageItem.className = 'image-item';
+                    imageItem.innerHTML = `
+                        <div class="image-count-badge">${idx + 1}</div>
+                        <img src="${imgData}" alt="선택한 영역" class="crop-image" onclick="toggleImageZoom(this)">
+                        <button class="remove-img-btn" onclick="removeImageFromCard('${cardId}', ${idx})" title="이미지 삭제">×</button>
+                    `;
+                    imagesContainer.appendChild(imageItem);
+                });
+            }
+            
+            // 이미지가 없으면 카드 삭제
+            if (images.length === 0) {
+                removeCard(cardId);
+            }
+        };
+        
+        // 이미지 추가 모드 활성화
+        window.enableAddMode = function(cardId) {
+            // 이미 활성화되어 있으면 해제
+            if (addingToCardId === cardId) {
+                cancelAddMode();
+                return;
+            }
+            
+            // 기존 추가 모드 해제
+            if (addingToCardId) {
+                cancelAddMode();
+            }
+            
+            addingToCardId = cardId;
+            const btn = document.getElementById(`btn-add-${cardId}`);
+            const card = document.getElementById(cardId);
+            
+            if (btn) {
+                btn.classList.add('active');
+                btn.innerHTML = '<span>⏸️</span><span>추가 모드</span>';
+            }
+            
+            if (card) {
+                card.style.border = '3px solid #4facfe';
+                card.style.boxShadow = '0 0 15px rgba(79, 172, 254, 0.5)';
+            }
+            
+            // 안내 메시지
+            const responseDiv = document.getElementById(`response-${cardId}`);
+            if (responseDiv) {
+                responseDiv.innerHTML = `
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%); border-radius: 8px; border: 2px dashed #4facfe;">
+                        <div style="font-size: 32px; margin-bottom: 10px;">➕</div>
+                        <div style="color: #4facfe; font-weight: 600; margin-bottom: 5px;">이미지 추가 모드 활성화</div>
+                        <div style="color: #666; font-size: 13px;">PDF에서 드래그하여 영역을 선택하면<br>이 문항에 이미지가 추가됩니다</div>
+                        <div style="margin-top: 10px; color: #999; font-size: 12px;">"➕ 추가" 버튼을 다시 클릭하면 취소됩니다</div>
+                    </div>
+                `;
+            }
+        };
+        
+        // 이미지 추가 모드 취소
+        function cancelAddMode() {
+            if (addingToCardId) {
+                const btn = document.getElementById(`btn-add-${addingToCardId}`);
+                const card = document.getElementById(addingToCardId);
+                
+                if (btn) {
+                    btn.classList.remove('active');
+                    btn.innerHTML = '<span>➕</span><span>추가</span>';
+                }
+                
+                if (card) {
+                    card.style.border = '';
+                    card.style.boxShadow = '';
+                    
+                    // 응답 영역 초기화 (검토 결과가 없을 때만)
+                    const responseDiv = document.getElementById(`response-${addingToCardId}`);
+                    if (responseDiv && !responseDiv.querySelector('.verdict-badge')) {
+                        responseDiv.innerHTML = `
+                            <div style="text-align: center; color: #999; padding: 20px;">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+                                <div>AI 검토를 시작하려면 버튼을 클릭하세요</div>
+                            </div>
+                        `;
+                    }
+                }
+            }
+            addingToCardId = null;
+        }
+        
+        // 전역으로 노출
+        window.cancelAddMode = cancelAddMode;
+        
+        function removeCard(cardId) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.style.transition = 'all 0.3s';
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    card.remove();
+                    // 카드가 없으면 일괄 검토 버튼 숨김
+                    const cards = cropsList.querySelectorAll('.card');
+                    if (cards.length === 0) {
+                        cropsList.innerHTML = `
+                            <div class="empty-state">
+                                <h2>📋 분석할 문항이 없습니다</h2>
+                                <p>PDF를 업로드하고 영역을 선택하세요</p>
+                            </div>
+                        `;
+                        const batchSection = document.getElementById('batch-review-section');
+                        if (batchSection) {
+                            batchSection.style.display = 'none';
+                        }
+                    }
+                }, 300);
+            }
+        }
+
+        // --- AI 검토 (개선) ---
+        // 전역으로 노출 (onclick에서 사용)
+        window.analyzeImage = async function(btn, cardId) {
+            const apiKey = apiKeyInput.value.trim();
+            const selectedModel = modelSelect.value;
+            if (!apiKey) { 
+                alert("⚠️ API Key를 먼저 입력해주세요!"); 
+                return; 
+            }
+
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            
+            const responseDiv = document.getElementById(`response-${cardId}`);
+            if (!responseDiv) return;
+            
+            // 카드의 모든 이미지 가져오기
+            let images = [];
+            try {
+                images = JSON.parse(card.dataset.images || '[]');
+            } catch (e) {
+                // 기존 방식 호환성: 첫 번째 이미지 찾기
+                const firstImg = card.querySelector('.crop-image');
+                if (firstImg && firstImg.src) {
+                    images = [firstImg.src];
+                }
+            }
+            
+            if (images.length === 0) {
+                alert('⚠️ 분석할 이미지가 없습니다.');
+                return;
+            }
+            
+            // 추가 모드가 활성화되어 있으면 해제
+            if (addingToCardId === cardId) {
+                cancelAddMode();
+            }
+            
+            btn.disabled = true;
+            btn.innerText = `⏳ 분석 중...`;
+            responseDiv.innerHTML = `
+                <div style="text-align: center; padding: 30px;">
+                    <div class="loading" style="justify-content: center; margin-bottom: 10px;"></div>
+                    <div style="color: #667eea; font-weight: 600; margin-bottom: 5px;">🤔 AI 분석 중...</div>
+                    <div style="color: #999; font-size: 13px;">${selectedModel} 모델이 문제를 분석하고 있습니다</div>
+                </div>
+            `;
+            
+            try {
+                // 이미지들을 Base64 데이터로 변환
+                const imageParts = images.map(imgData => {
+                    const imageData = imgData.includes(',') ? imgData.split(',')[1] : imgData;
+                    return { inline_data: { mime_type: "image/png", data: imageData } };
+                });
+                
+                // 동적 프롬프트 생성 (설정값 반영)
+                const promptText = generateReviewPrompt();
+                
+                // 여러 이미지와 함께 프롬프트 구성
+                const parts = [{ text: promptText }, ...imageParts];
+
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: parts
+                        }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            maxOutputTokens: 8192,
+                            topP: 0.95,
+                            topK: 40
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const errorMessage = errorData.error?.message || `HTTP ${response.status}`;
+                    console.error('API 오류 응답:', errorData);
+                    console.error('사용한 모델:', selectedModel);
+                    console.error('사용한 URL:', url.replace(apiKey, 'API_KEY_HIDDEN'));
+                    throw new Error(errorMessage);
+                }
+                
+                const data = await response.json();
+                
+                // 전체 응답 로깅 (디버깅용)
+                console.log('전체 API 응답:', JSON.stringify(data, null, 2));
+                
+                if (data.error) {
+                    console.error('API 오류:', data.error);
+                    console.error('사용한 모델:', selectedModel);
+                    throw new Error(data.error.message);
+                }
+                
+                if (!data.candidates || !Array.isArray(data.candidates) || data.candidates.length === 0) {
+                    console.error('응답 데이터:', JSON.stringify(data, null, 2));
+                    throw new Error('AI 응답에 candidates가 없습니다. 개발자 도구(F12) 콘솔에서 응답 구조를 확인해주세요.');
+                }
+                
+                const candidate = data.candidates[0];
+                console.log('첫 번째 candidate:', JSON.stringify(candidate, null, 2));
+                
+                if (!candidate) {
+                    console.error('응답 데이터:', JSON.stringify(data, null, 2));
+                    throw new Error('AI 응답에 candidate가 없습니다.');
+                }
+                
+                // finishReason 확인
+                if (candidate.finishReason === 'MAX_TOKENS') {
+                    console.warn('토큰 제한에 도달했습니다. 응답이 잘렸을 수 있습니다.');
+                    // MAX_TOKENS인 경우에도 parts가 있으면 사용
+                } else if (candidate.finishReason === 'SAFETY') {
+                    throw new Error('AI 응답이 안전 필터에 의해 차단되었습니다. 다른 이미지로 시도해주세요.');
+                } else if (candidate.finishReason === 'RECITATION') {
+                    throw new Error('AI 응답이 저작권 보호로 인해 차단되었습니다.');
+                }
+                
+                // 다양한 응답 형식 지원
+                let resultText = null;
+                
+                // 형식 1: candidate.content.parts[0].text (표준 형식)
+                if (candidate.content && candidate.content.parts && Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
+                    const part = candidate.content.parts[0];
+                    if (part && part.text) {
+                        resultText = part.text;
+                    }
+                }
+                
+                // 형식 2: candidate.text (직접 text 속성)
+                if (!resultText && candidate.text) {
+                    resultText = candidate.text;
+                }
+                
+                // 형식 3: candidate.content.text (content에 직접 text)
+                if (!resultText && candidate.content && candidate.content.text) {
+                    resultText = candidate.content.text;
+                }
+                
+                // 형식 4: candidate.output 또는 candidate.response
+                if (!resultText && candidate.output) {
+                    resultText = typeof candidate.output === 'string' ? candidate.output : JSON.stringify(candidate.output);
+                }
+                if (!resultText && candidate.response) {
+                    resultText = typeof candidate.response === 'string' ? candidate.response : JSON.stringify(candidate.response);
+                }
+                
+                if (!resultText) {
+                    console.error('응답 데이터 구조:', JSON.stringify(data, null, 2));
+                    console.error('candidate 구조:', JSON.stringify(candidate, null, 2));
+                    
+                    // finishReason에 따른 구체적인 에러 메시지
+                    if (candidate.finishReason === 'MAX_TOKENS') {
+                        throw new Error('토큰 제한에 도달하여 응답이 생성되지 않았습니다. maxOutputTokens를 늘렸으니 다시 시도해주세요. (현재: 8192 토큰)');
+                    } else if (candidate.finishReason === 'SAFETY') {
+                        throw new Error('AI 응답이 안전 필터에 의해 차단되었습니다.');
+                    } else if (candidate.finishReason === 'RECITATION') {
+                        throw new Error('AI 응답이 저작권 보호로 인해 차단되었습니다.');
+                    } else {
+                        throw new Error(`AI 응답에서 텍스트를 찾을 수 없습니다. (finishReason: ${candidate.finishReason || 'unknown'}) 개발자 도구(F12) 콘솔에서 응답 구조를 확인해주세요.`);
+                    }
+                }
+                
+                // 판정 결과 파싱
+                const verdict = parseVerdict(resultText);
+                
+                // 간단한 설명 추출 (첫 2-3문장)
+                const summary = extractSummary(resultText, verdict.type);
+                
+                // 자세한 설명 (전체 텍스트 포맷팅)
+                const detailText = formatDetailText(resultText);
+                
+                // UI 구성
+                const copyBtnId = `copy-btn-${cardId}`;
+                const toggleBtnId = `toggle-btn-${cardId}`;
+                const detailId = `detail-${cardId}`;
+                
+                responseDiv.innerHTML = `
+                    <div class="verdict-badge verdict-${verdict.type}">
+                        <span class="verdict-icon">${verdict.icon}</span>
+                        <span>${verdict.label}</span>
+                    </div>
+                    <div class="summary-section">
+                        <p class="summary-text">${summary}</p>
+                    </div>
+                    <button class="detail-toggle" id="${toggleBtnId}" onclick="toggleDetail('${detailId}', '${toggleBtnId}')">
+                        <span>📖</span>
+                        <span>자세히 보기</span>
+                        <span style="margin-left: auto;">▼</span>
+                    </button>
+                    <div class="detail-content" id="${detailId}">
+                        <div class="response-content">${detailText}</div>
+                        <div style="margin-top: 15px; text-align: right;">
+                            <button class="btn-copy" id="${copyBtnId}" onclick="copyResponse('${cardId}')">
+                                <span>📋</span>
+                                <span>전체 복사</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                // MathJax로 LaTeX 수식 렌더링
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    setTimeout(() => {
+                        window.MathJax.typesetPromise([responseDiv]).then(() => {
+                            // 렌더링 후 오류 메시지 요소 제거
+                            const errorElements = responseDiv.querySelectorAll('.MathJax_Error, mjx-merror, [class*="MathJax_Error"], [class*="merror"]');
+                            errorElements.forEach(el => el.remove());
+                        }).catch((err) => {
+                            console.warn('MathJax 렌더링 오류:', err);
+                            // 오류 발생 시에도 오류 메시지 요소 제거
+                            const errorElements = responseDiv.querySelectorAll('.MathJax_Error, mjx-merror, [class*="MathJax_Error"], [class*="merror"]');
+                            errorElements.forEach(el => el.remove());
+                        });
+                    }, 100);
+                }
+                
+                // 복사 기능 추가
+                window.copyResponse = function(cardId) {
+                    const responseDiv = document.getElementById(`response-${cardId}`);
+                    const detailDiv = responseDiv.querySelector('.detail-content .response-content');
+                    const summaryDiv = responseDiv.querySelector('.summary-text');
+                    
+                    // 전체 텍스트 복사 (간단 설명 + 자세한 설명)
+                    let fullText = '';
+                    if (summaryDiv) {
+                        fullText += summaryDiv.innerText || summaryDiv.textContent;
+                        fullText += '\n\n';
+                    }
+                    if (detailDiv) {
+                        fullText += detailDiv.innerText || detailDiv.textContent;
+                    }
+                    
+                    const copyBtn = document.getElementById(`copy-btn-${cardId}`);
+                    
+                    navigator.clipboard.writeText(fullText).then(() => {
+                        copyBtn.innerHTML = '<span>✓</span><span>복사됨</span>';
+                        copyBtn.classList.add('copied');
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '<span>📋</span><span>전체 복사</span>';
+                            copyBtn.classList.remove('copied');
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('복사 실패:', err);
+                        alert('복사에 실패했습니다. 텍스트를 직접 선택해서 복사해주세요.');
+                    });
+                };
+                
+                btn.disabled = false;
+                btn.innerText = '⚡ AI 검토';
+                
+            } catch (error) {
+                console.error('AI 검토 오류:', error);
+                console.error('전체 오류 정보:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name,
+                    model: selectedModel
+                });
+                
+                let errorMsg = '검토 실패: ';
+                if (error.message.includes('API_KEY') || error.message.includes('401')) {
+                    errorMsg += 'API Key가 유효하지 않습니다.';
+                } else if (error.message.includes('quota') || error.message.includes('429')) {
+                    errorMsg += 'API 할당량을 초과했습니다. 잠시 후 다시 시도해주세요.';
+                } else if (error.message.includes('403')) {
+                    errorMsg += 'API 접근이 거부되었습니다. API Key와 권한을 확인해주세요.';
+                } else if (error.message.includes('not found') || error.message.includes('not supported') || error.message.includes('not available')) {
+                    errorMsg += `모델 "${selectedModel}"을 찾을 수 없거나 지원되지 않습니다. 다른 모델을 선택해주세요.`;
+                } else if (error.message.includes('토큰 제한') || error.message.includes('MAX_TOKENS')) {
+                    errorMsg += error.message + '\n\n💡 해결 방법: 이미 maxOutputTokens를 8192로 늘렸습니다. 그래도 문제가 지속되면 프롬프트를 간단히 하거나 모델을 변경해보세요.';
+                } else if (error.message.includes('텍스트를 찾을 수 없습니다') || error.message.includes('parts가 없습니다') || error.message.includes('candidates가 없습니다')) {
+                    errorMsg += error.message + '\n\n💡 개발자 도구(F12) → Console 탭에서 "전체 API 응답"을 확인해주세요.';
+                } else {
+                    errorMsg += error.message;
+                }
+                
+                // 모델 관련 에러인 경우 추가 안내
+                if (error.message.includes('not found') || error.message.includes('not supported')) {
+                    errorMsg += '\n\n💡 해결 방법: 모델 선택에서 "Gemini 1.5 Pro" 또는 "Gemini 2.0 Flash"를 선택해보세요.';
+                }
+                
+                responseDiv.innerHTML = `<span class="error-msg">${errorMsg}</span>`;
+                btn.disabled = false;
+                btn.innerText = '⚡ AI 검토';
+            }
+        };
+        
+        // removeCard도 전역으로 노출
+        window.removeCard = removeCard;
+        
+        // 일괄 검토 함수
+        window.startBatchReview = async function() {
+            const apiKey = apiKeyInput.value.trim();
+            const selectedModel = modelSelect.value;
+            if (!apiKey) {
+                alert("⚠️ API Key를 먼저 입력해주세요!");
+                return;
+            }
+            
+            // 모든 카드 찾기
+            const cards = cropsList.querySelectorAll('.card');
+            if (cards.length === 0) {
+                alert("⚠️ 검토할 문항이 없습니다.");
+                return;
+            }
+            
+            // 이미 검토 완료된 카드 제외
+            const pendingCards = Array.from(cards).filter(card => {
+                const responseDiv = card.querySelector('.ai-response');
+                if (!responseDiv) return false;
+                const hasResult = responseDiv.querySelector('.verdict-badge');
+                return !hasResult; // 결과가 없는 카드만
+            });
+            
+            if (pendingCards.length === 0) {
+                alert("✅ 모든 문항이 이미 검토되었습니다.");
+                return;
+            }
+            
+            const batchBtn = document.getElementById('btn-batch-review');
+            const progressDiv = document.getElementById('batch-progress');
+            const progressText = document.getElementById('progress-text');
+            const progressFill = document.getElementById('progress-fill');
+            
+            batchBtn.disabled = true;
+            batchBtn.innerHTML = '<span>⏳</span><span>일괄 검토 진행 중...</span>';
+            progressDiv.classList.add('show');
+            
+            let completed = 0;
+            const total = pendingCards.length;
+            
+            // 각 카드 순차적으로 검토
+            for (let i = 0; i < pendingCards.length; i++) {
+                const card = pendingCards[i];
+                const cardId = card.id;
+                const btn = card.querySelector('.btn-analyze');
+                const responseDiv = document.getElementById(`response-${cardId}`);
+                
+                if (!btn || !responseDiv) continue;
+                
+                // 카드의 모든 이미지 가져오기
+                let images = [];
+                try {
+                    images = JSON.parse(card.dataset.images || '[]');
+                } catch (e) {
+                    // 기존 방식 호환성: 첫 번째 이미지 찾기
+                    const firstImg = card.querySelector('.crop-image');
+                    if (firstImg && firstImg.src) {
+                        images = [firstImg.src];
+                    }
+                }
+                
+                if (images.length === 0) continue;
+                
+                // 진행 상태 업데이트 (시작 전)
+                progressText.textContent = `${i + 1} / ${total}`;
+                progressFill.style.width = `${((i + 1) / total) * 100}%`;
+                
+                // 스크롤하여 현재 카드 보이게
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // 로딩 상태 표시
+                btn.disabled = true;
+                btn.innerText = '⏳ 분석 중...';
+                responseDiv.innerHTML = `
+                    <div style="text-align: center; padding: 30px;">
+                        <div class="loading" style="justify-content: center; margin-bottom: 10px;"></div>
+                        <div style="color: #667eea; font-weight: 600; margin-bottom: 5px;">🤔 AI 분석 중... (${i + 1}/${total})</div>
+                        <div style="color: #999; font-size: 13px;">${selectedModel} 모델이 문제를 분석하고 있습니다</div>
+                    </div>
+                `;
+                
+                // 검토 실행
+                try {
+                    // 이미지들을 Base64 데이터로 변환
+                    const imageParts = images.map(imgData => {
+                        const imageData = imgData.includes(',') ? imgData.split(',')[1] : imgData;
+                        return { inline_data: { mime_type: "image/png", data: imageData } };
+                    });
+                    
+                    // 고정 프롬프트 사용
+                    const promptText = reviewPrompt;
+                    
+                    // 여러 이미지와 함께 프롬프트 구성
+                    const parts = [{ text: promptText }, ...imageParts];
+                    
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: parts
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                maxOutputTokens: 4096,
+                                topP: 0.95,
+                                topK: 40
+                            }
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // 전체 응답 로깅 (디버깅용)
+                    console.log(`[일괄 검토 ${i + 1}/${total}] 전체 API 응답:`, JSON.stringify(data, null, 2));
+                    
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+                    
+                    if (!data.candidates || !Array.isArray(data.candidates) || data.candidates.length === 0) {
+                        console.error('응답 데이터:', JSON.stringify(data, null, 2));
+                        throw new Error('AI 응답에 candidates가 없습니다.');
+                    }
+                    
+                    const candidate = data.candidates[0];
+                    console.log(`[일괄 검토 ${i + 1}/${total}] 첫 번째 candidate:`, JSON.stringify(candidate, null, 2));
+                    
+                    if (!candidate) {
+                        console.error('응답 데이터:', JSON.stringify(data, null, 2));
+                        throw new Error('AI 응답에 candidate가 없습니다.');
+                    }
+                    
+                    // finishReason 확인
+                    if (candidate.finishReason === 'MAX_TOKENS') {
+                        console.warn(`[일괄 검토 ${i + 1}/${total}] 토큰 제한에 도달했습니다. 응답이 잘렸을 수 있습니다.`);
+                    } else if (candidate.finishReason === 'SAFETY') {
+                        throw new Error('AI 응답이 안전 필터에 의해 차단되었습니다. 다른 이미지로 시도해주세요.');
+                    } else if (candidate.finishReason === 'RECITATION') {
+                        throw new Error('AI 응답이 저작권 보호로 인해 차단되었습니다.');
+                    }
+                    
+                    // 다양한 응답 형식 지원
+                    let resultText = null;
+                    
+                    // 형식 1: candidate.content.parts[0].text (표준 형식)
+                    if (candidate.content && candidate.content.parts && Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
+                        const part = candidate.content.parts[0];
+                        if (part && part.text) {
+                            resultText = part.text;
+                        }
+                    }
+                    
+                    // 형식 2: candidate.text (직접 text 속성)
+                    if (!resultText && candidate.text) {
+                        resultText = candidate.text;
+                    }
+                    
+                    // 형식 3: candidate.content.text (content에 직접 text)
+                    if (!resultText && candidate.content && candidate.content.text) {
+                        resultText = candidate.content.text;
+                    }
+                    
+                    // 형식 4: candidate.output 또는 candidate.response
+                    if (!resultText && candidate.output) {
+                        resultText = typeof candidate.output === 'string' ? candidate.output : JSON.stringify(candidate.output);
+                    }
+                    if (!resultText && candidate.response) {
+                        resultText = typeof candidate.response === 'string' ? candidate.response : JSON.stringify(candidate.response);
+                    }
+                    
+                    if (!resultText) {
+                        console.error('응답 데이터 구조:', JSON.stringify(data, null, 2));
+                        console.error('candidate 구조:', JSON.stringify(candidate, null, 2));
+                        
+                        // finishReason에 따른 구체적인 에러 메시지
+                        if (candidate.finishReason === 'MAX_TOKENS') {
+                            throw new Error('토큰 제한에 도달하여 응답이 생성되지 않았습니다. maxOutputTokens를 늘렸으니 다시 시도해주세요. (현재: 8192 토큰)');
+                        } else if (candidate.finishReason === 'SAFETY') {
+                            throw new Error('AI 응답이 안전 필터에 의해 차단되었습니다.');
+                        } else if (candidate.finishReason === 'RECITATION') {
+                            throw new Error('AI 응답이 저작권 보호로 인해 차단되었습니다.');
+                        } else {
+                            throw new Error(`AI 응답에서 텍스트를 찾을 수 없습니다. (finishReason: ${candidate.finishReason || 'unknown'}) 개발자 도구(F12) 콘솔에서 응답 구조를 확인해주세요.`);
+                        }
+                    }
+                    
+                    // 판정 결과 파싱
+                    const verdict = parseVerdict(resultText);
+                    
+                    // 간단한 설명 추출
+                    const summary = extractSummary(resultText, verdict.type);
+                    
+                    // 자세한 설명 포맷팅
+                    const detailText = formatDetailText(resultText);
+                    
+                    // UI 구성
+                    const copyBtnId = `copy-btn-${cardId}`;
+                    const toggleBtnId = `toggle-btn-${cardId}`;
+                    const detailId = `detail-${cardId}`;
+                    
+                    responseDiv.innerHTML = `
+                        <div class="verdict-badge verdict-${verdict.type}">
+                            <span class="verdict-icon">${verdict.icon}</span>
+                            <span>${verdict.label}</span>
+                        </div>
+                        <div class="summary-section">
+                            <p class="summary-text">${summary}</p>
+                        </div>
+                        <button class="detail-toggle" id="${toggleBtnId}" onclick="toggleDetail('${detailId}', '${toggleBtnId}')">
+                            <span>📖</span>
+                            <span>자세히 보기</span>
+                            <span style="margin-left: auto;">▼</span>
+                        </button>
+                        <div class="detail-content" id="${detailId}">
+                            <div class="response-content">${detailText}</div>
+                            <div style="margin-top: 15px; text-align: right;">
+                                <button class="btn-copy" id="${copyBtnId}" onclick="copyResponse('${cardId}')">
+                                    <span>📋</span>
+                                    <span>전체 복사</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    btn.disabled = false;
+                    btn.innerText = '⚡ AI 검토';
+                    completed++;
+                    
+                    // MathJax로 LaTeX 수식 렌더링
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        setTimeout(() => {
+                            window.MathJax.typesetPromise([responseDiv]).then(() => {
+                                // 렌더링 후 오류 메시지 요소 제거
+                                const errorElements = responseDiv.querySelectorAll('.MathJax_Error, mjx-merror, [class*="MathJax_Error"], [class*="merror"]');
+                                errorElements.forEach(el => el.remove());
+                            }).catch((err) => {
+                                console.warn('MathJax 렌더링 오류:', err);
+                                // 오류 발생 시에도 오류 메시지 요소 제거
+                                const errorElements = responseDiv.querySelectorAll('.MathJax_Error, mjx-merror, [class*="MathJax_Error"], [class*="merror"]');
+                                errorElements.forEach(el => el.remove());
+                            });
+                        }, 100);
+                    }
+                    
+                    // 각 검토 사이에 약간의 딜레이 (API 부하 방지)
+                    if (i < pendingCards.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                } catch (error) {
+                    console.error(`카드 ${cardId} 검토 오류:`, error);
+                    console.error(`카드 ${cardId} 전체 오류 정보:`, {
+                        message: error.message,
+                        stack: error.stack,
+                        name: error.name
+                    });
+                    
+                    let errorMsg = '검토 실패: ';
+                    if (error.message.includes('API_KEY') || error.message.includes('401')) {
+                        errorMsg += 'API Key가 유효하지 않습니다.';
+                    } else if (error.message.includes('quota') || error.message.includes('429')) {
+                        errorMsg += 'API 할당량을 초과했습니다. 잠시 후 다시 시도해주세요.';
+                    } else if (error.message.includes('403')) {
+                        errorMsg += 'API 접근이 거부되었습니다. API Key와 권한을 확인해주세요.';
+                    } else if (error.message.includes('토큰 제한') || error.message.includes('MAX_TOKENS')) {
+                        errorMsg += error.message + '\n\n💡 해결 방법: 이미 maxOutputTokens를 8192로 늘렸습니다. 그래도 문제가 지속되면 프롬프트를 간단히 하거나 모델을 변경해보세요.';
+                    } else if (error.message.includes('텍스트를 찾을 수 없습니다') || error.message.includes('parts가 없습니다') || error.message.includes('candidates가 없습니다')) {
+                        errorMsg += error.message + '\n\n💡 개발자 도구(F12) → Console 탭에서 "전체 API 응답"을 확인해주세요.';
+                    } else {
+                        errorMsg += error.message;
+                    }
+                    
+                    responseDiv.innerHTML = `<span class="error-msg">${errorMsg}</span>`;
+                    btn.disabled = false;
+                    btn.innerText = '⚡ AI 검토';
+                    // 오류가 발생해도 다음 카드 계속 진행
+                }
+            }
+            
+            // 완료 처리
+            progressText.textContent = `${total} / ${total}`;
+            progressFill.style.width = '100%';
+            batchBtn.disabled = false;
+            batchBtn.innerHTML = '<span>✅</span><span>일괄 검토 완료</span>';
+            setTimeout(() => {
+                batchBtn.innerHTML = '<span>🚀</span><span>일괄 검토 시작</span>';
+                progressDiv.classList.remove('show');
+                progressFill.style.width = '0%';
+            }, 2000);
+        };
+        
+        // 판정 결과 파싱 함수
+        function parseVerdict(text) {
+            const lowerText = text.toLowerCase();
+            
+            // 첫 줄 또는 처음 200자에서 명확한 판정 이모지 우선 검색
+            const firstLines = text.substring(0, 200).trim();
+            
+            // 첫 줄에서 명확한 판정 이모지 확인 (최우선)
+            if (firstLines.includes('🔴')) {
+                return {
+                    type: 'red',
+                    icon: '🔴',
+                    label: '빨간불 (치명적 오류)',
+                    message: '이대로 출제하면 큰일 납니다! 무조건 수정이 필요합니다.'
+                };
+            }
+            if (firstLines.includes('🟡')) {
+                return {
+                    type: 'yellow',
+                    icon: '🟡',
+                    label: '노란불 (오류 의심 / 점검 필요)',
+                    message: '틀린 건 아닌데... 선생님 확인이 필요합니다.'
+                };
+            }
+            if (firstLines.includes('🟢')) {
+                return {
+                    type: 'green',
+                    icon: '🟢',
+                    label: '초록불 (정상)',
+                    message: '완벽합니다. 안심하고 다음 문제로 넘어가세요.'
+                };
+            }
+            
+            // 첫 줄에서 판정 텍스트 확인 (이모지가 없을 경우)
+            if (firstLines.includes('빨간불') || firstLines.includes('빨강')) {
+                return {
+                    type: 'red',
+                    icon: '🔴',
+                    label: '빨간불 (치명적 오류)',
+                    message: '이대로 출제하면 큰일 납니다! 무조건 수정이 필요합니다.'
+                };
+            }
+            if (firstLines.includes('노란불') || firstLines.includes('노랑')) {
+                return {
+                    type: 'yellow',
+                    icon: '🟡',
+                    label: '노란불 (오류 의심 / 점검 필요)',
+                    message: '틀린 건 아닌데... 선생님 확인이 필요합니다.'
+                };
+            }
+            if (firstLines.includes('초록불') || firstLines.includes('초록')) {
+                return {
+                    type: 'green',
+                    icon: '🟢',
+                    label: '초록불 (정상)',
+                    message: '완벽합니다. 안심하고 다음 문제로 넘어가세요.'
+                };
+            }
+            
+            // 첫 줄에서 판정을 찾지 못한 경우, 전체 텍스트에서 키워드 검색
+            const redKeywords = [
+                '치명적', '재시험', '정답 없음', '복수 정답', '수식 오류', 
+                '계산 오류', '논리적 오류', '문제 성립 불가', '조건 부족',
+                '큰일', '무조건 수정', '심각한 결함'
+            ];
+            
+            const yellowKeywords = [
+                '오류 의심', '점검 필요', '확인 필요', '중의적', '다르게 해석',
+                '오타', '교육과정 위반', '선행 개념', '가독성', '폰트', '그래프',
+                '틀린 건 아닌데', '수정 필요'
+            ];
+            
+            const greenKeywords = [
+                '완벽', '정상', '이상 없음', '문제 없음', '클린', '적합',
+                '모든 면에서', '아무런 문제'
+            ];
+            
+            // 키워드 매칭
+            let redCount = redKeywords.filter(kw => lowerText.includes(kw)).length;
+            let yellowCount = yellowKeywords.filter(kw => lowerText.includes(kw)).length;
+            let greenCount = greenKeywords.filter(kw => lowerText.includes(kw)).length;
+            
+            // 전체 텍스트에서 이모지나 텍스트 직접 검색 (가중치 낮춤)
+            if (text.includes('🔴') || text.includes('빨간불') || text.includes('빨강')) {
+                redCount += 2;
+            }
+            if (text.includes('🟡') || text.includes('노란불') || text.includes('노랑')) {
+                yellowCount += 2;
+            }
+            if (text.includes('🟢') || text.includes('초록불') || text.includes('초록')) {
+                greenCount += 2;
+            }
+            
+            // 판정 결정
+            if (redCount > 0 && redCount >= yellowCount && redCount >= greenCount) {
+                return {
+                    type: 'red',
+                    icon: '🔴',
+                    label: '빨간불 (치명적 오류)',
+                    message: '이대로 출제하면 큰일 납니다! 무조건 수정이 필요합니다.'
+                };
+            } else if (greenCount > 0 && greenCount >= redCount && greenCount >= yellowCount) {
+                return {
+                    type: 'green',
+                    icon: '🟢',
+                    label: '초록불 (정상)',
+                    message: '완벽합니다. 안심하고 다음 문제로 넘어가세요.'
+                };
+            } else if (yellowCount > 0) {
+                return {
+                    type: 'yellow',
+                    icon: '🟡',
+                    label: '노란불 (오류 의심 / 점검 필요)',
+                    message: '틀린 건 아닌데... 선생님 확인이 필요합니다.'
+                };
+            } else {
+                // 기본값: 노란불 (확인 필요)
+                return {
+                    type: 'yellow',
+                    icon: '🟡',
+                    label: '노란불 (점검 필요)',
+                    message: 'AI 분석 결과를 확인해주세요.'
+                };
+            }
+        }
+        
+        // 간단한 설명 추출 함수
+        function extractSummary(text, verdictType) {
+            // 첫 2-3문장 추출
+            const sentences = text.split(/[.!?]\s+/).filter(s => s.trim().length > 10);
+            const summary = sentences.slice(0, 2).join('. ') + (sentences.length > 2 ? '...' : '');
+            
+            // 판정 메시지와 결합
+            const verdictMsg = parseVerdict(text).message;
+            return verdictMsg + ' ' + summary;
+        }
+        
+        // 자세한 설명 포맷팅 함수
+        function formatDetailText(text) {
+            // 번호 제거 (2., 3. 등)
+            let formatted = text
+                // 번호로 시작하는 줄 제거 (2. 3. 등)
+                .replace(/^\d+\.\s+/gm, '')
+                // 번호와 함께 있는 볼드 텍스트 처리
+                .replace(/^\d+\.\s*\*\*(.*?)\*\*/gm, '**$1**');
+            
+            // 단독으로 있는 * 기호 제거 (불필요한 마크다운 기호)
+            formatted = formatted.replace(/^\*\s*$/gm, '');
+            formatted = formatted.replace(/^\*\s*\n/gm, '');
+            // * 뒤에 줄바꿈이 오는 경우 제거
+            formatted = formatted.replace(/\*\s*\n/g, '\n');
+            // * 앞에 줄바꿈이 오는 경우 제거
+            formatted = formatted.replace(/\n\s*\*/g, '\n');
+            
+            // 섹션 헤더 앞뒤의 불필요한 공백 정리
+            formatted = formatted.replace(/\n+\s*<<([^>]+)>>\s*\n+/g, '\n\n<<$1>>\n\n');
+            
+            // <<요약>> 또는 <<자세한 설명>> 섹션 찾기 및 강조 (먼저 처리)
+            formatted = formatted.replace(/<<(요약|간단한 요약|간단한 설명)>>/gi, '<div style="margin: 20px 0 10px 0; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; font-weight: 700; font-size: 1.1em;">&lt;&lt;요약&gt;&gt;</div>');
+            
+            formatted = formatted.replace(/<<(자세한 설명|자세한 분석|상세 설명|상세 분석)>>/gi, '<div style="margin: 20px 0 10px 0; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; font-weight: 700; font-size: 1.1em;">&lt;&lt;자세한 설명&gt;&gt;</div>');
+            
+            // 일반적인 << >> 형식으로 된 섹션 헤더 강조
+            formatted = formatted.replace(/<<([^>]+)>>/g, '<div style="margin: 20px 0 10px 0; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; font-weight: 700; font-size: 1.1em;">&lt;&lt;$1&gt;&gt;</div>');
+            
+            // LaTeX 수식을 임시로 보호 (볼드/이탤릭 처리 전)
+            const latexPlaceholders = [];
+            let latexIndex = 0;
+            formatted = formatted.replace(/\$([^$]+)\$/g, (match, content) => {
+                const placeholder = `___LATEX_${latexIndex}___`;
+                latexPlaceholders[latexIndex] = match;
+                latexIndex++;
+                return placeholder;
+            });
+            
+            // 볼드 텍스트 (LaTeX 보호 후)
+            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // 불릿 목록 (볼드 처리 후)
+            formatted = formatted.replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>');
+            
+            // 이탤릭 (볼드와 불릿 목록 처리 후, LaTeX 제외)
+            formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // LaTeX 수식 복원
+            latexPlaceholders.forEach((latex, index) => {
+                formatted = formatted.replace(`___LATEX_${index}___`, latex);
+            });
+            
+            // 남아있는 단독 * 기호 제거 (이탤릭 처리 후)
+            formatted = formatted.replace(/\*\s*\n/g, '\n');
+            formatted = formatted.replace(/\n\s*\*/g, '\n');
+            formatted = formatted.replace(/^\*\s*$/gm, '');
+            // * 앞뒤로 공백과 줄바꿈이 있는 경우 모두 제거
+            formatted = formatted.replace(/\s*\*\s*\n/g, '\n');
+            formatted = formatted.replace(/\n\s*\*\s*/g, '\n');
+            
+            // 불필요한 연속 줄바꿈 제거 (3개 이상을 2개로, 섹션 헤더 div는 제외)
+            // 섹션 헤더 div를 임시로 보호
+            formatted = formatted.replace(/<div[^>]*>([^<]*)<\/div>/g, (match) => {
+                return match.replace(/\n/g, '___NEWLINE___');
+            });
+            
+            // 빈 줄이 여러 개 연속으로 있는 경우 정리 (3개 이상을 2개로)
+            formatted = formatted.replace(/\n{3,}/g, '\n\n');
+            
+            // 단독으로 있는 * 기호와 그 앞뒤 줄바꿈 제거
+            formatted = formatted.replace(/\n\s*\*\s*\n/g, '\n');
+            formatted = formatted.replace(/\n\s*\*/g, '\n');
+            formatted = formatted.replace(/\*\s*\n/g, '\n');
+            
+            // 섹션 헤더 div의 임시 마커를 다시 줄바꿈으로 복원
+            formatted = formatted.replace(/___NEWLINE___/g, '\n');
+            
+            // 섹션 헤더 div 사이의 과도한 줄바꿈 정리
+            formatted = formatted.replace(/(<\/div>)\s*\n{3,}\s*(<div)/g, '$1\n\n$2');
+            
+            // 제목성 강조 텍스트는 줄바꿈 유지 (해답, 풀이 과정 등)
+            const titleKeywords = ['해답', '풀이 과정', '풀이과정', '오류 내용', '난이도 평가', '개선 제안', '학생용 풀이', '간략한 풀이'];
+            titleKeywords.forEach(keyword => {
+                const regex = new RegExp(`(<strong>.*?${keyword}.*?</strong>)`, 'gi');
+                formatted = formatted.replace(regex, (match) => {
+                    return match.replace(/\n/g, '___TITLE_NEWLINE___');
+                });
+            });
+            
+            // 일반 강조 텍스트(<strong>) 앞뒤의 불필요한 줄바꿈 제거 (제목성 강조 제외)
+            formatted = formatted.replace(/\n\s*<strong>/g, ' <strong>');
+            formatted = formatted.replace(/<\/strong>\s*\n/g, '</strong> ');
+            formatted = formatted.replace(/<strong>\s*\n/g, '<strong>');
+            formatted = formatted.replace(/\n\s*<\/strong>/g, '</strong>');
+            
+            // 제목성 강조의 줄바꿈 복원
+            formatted = formatted.replace(/___TITLE_NEWLINE___/g, '\n');
+            
+            // 일반 텍스트 줄바꿈 처리
+            formatted = formatted.replace(/\n\n+/g, '</p><p>');
+            formatted = formatted.replace(/\n/g, '<br>');
+            
+            // HTML 변환 후 일반 강조 텍스트 주변의 불필요한 <br> 제거 (제목성 강조 제외)
+            // 제목성 강조는 먼저 보호
+            titleKeywords.forEach(keyword => {
+                const regex = new RegExp(`(<strong>.*?${keyword}.*?</strong>)`, 'gi');
+                formatted = formatted.replace(regex, (match) => {
+                    return match.replace(/<br>/g, '___TITLE_BR___');
+                });
+            });
+            
+            formatted = formatted.replace(/<br>\s*<strong>/g, ' <strong>');
+            formatted = formatted.replace(/<\/strong>\s*<br>/g, '</strong> ');
+            formatted = formatted.replace(/<p>\s*<strong>/g, '<p><strong>');
+            formatted = formatted.replace(/<\/strong>\s*<\/p>/g, '</strong></p>');
+            
+            // 제목성 강조의 <br> 복원
+            formatted = formatted.replace(/___TITLE_BR___/g, '<br>');
+            
+            // 목록이 있으면 ul로 감싸기
+            formatted = formatted.replace(/(<li>.*?<\/li>)/gs, (match) => {
+                if (!match.includes('<ul>')) {
+                    return '<ul>' + match + '</ul>';
+                }
+                return match;
+            });
+            
+            // HTML 변환 후 남아있는 단독 * 기호 제거 (모든 패턴)
+            formatted = formatted.replace(/<br>\s*\*\s*<br>/g, '<br>');
+            formatted = formatted.replace(/<p>\s*\*\s*<\/p>/g, '');
+            formatted = formatted.replace(/<p>\s*\*\s*<br>/g, '<p>');
+            formatted = formatted.replace(/<br>\s*\*\s*<\/p>/g, '</p>');
+            formatted = formatted.replace(/\s*\*\s*<br>/g, '<br>');
+            formatted = formatted.replace(/<br>\s*\*\s*/g, '<br>');
+            formatted = formatted.replace(/\s*\*\s*/g, ' ');
+            // 남아있는 단독 * 기호 최종 제거
+            formatted = formatted.replace(/<strong>\*\s*<\/strong>/g, '');
+            formatted = formatted.replace(/<em>\*\s*<\/em>/g, '');
+            
+            if (!formatted.startsWith('<p>') && !formatted.startsWith('<ul>') && !formatted.startsWith('<div')) {
+                formatted = '<p>' + formatted + '</p>';
+            }
+            
+            return formatted;
+        }
+        
+        // 자세히 보기 토글 함수
+        window.toggleDetail = function(detailId, toggleBtnId) {
+            const detailDiv = document.getElementById(detailId);
+            const toggleBtn = document.getElementById(toggleBtnId);
+            
+            if (detailDiv.classList.contains('show')) {
+                detailDiv.classList.remove('show');
+                toggleBtn.classList.remove('active');
+                toggleBtn.querySelector('span:last-child').textContent = '▼';
+            } else {
+                detailDiv.classList.add('show');
+                toggleBtn.classList.add('active');
+                toggleBtn.querySelector('span:last-child').textContent = '▲';
+            }
+        };
+        
+        // 박스 크기 조절 함수
+        function startResize(e, boxDiv, position, canvas, scaleX, scaleY) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const rect = canvas.getBoundingClientRect();
+            const wrapperRect = boxDiv.parentElement.getBoundingClientRect();
+            
+            // 현재 박스 위치와 크기 (화면 좌표)
+            const boxLeft = parseFloat(boxDiv.style.left);
+            const boxTop = parseFloat(boxDiv.style.top);
+            const boxWidth = parseFloat(boxDiv.style.width);
+            const boxHeight = parseFloat(boxDiv.style.height);
+            
+            // 캔버스 좌표로 변환된 현재 값
+            let canvasX = parseFloat(boxDiv.dataset.canvasX);
+            let canvasY = parseFloat(boxDiv.dataset.canvasY);
+            let canvasW = parseFloat(boxDiv.dataset.canvasW);
+            let canvasH = parseFloat(boxDiv.dataset.canvasH);
+            
+            const onMouseMove = (moveEvent) => {
+                const deltaX = (moveEvent.clientX - startX) / scaleX;
+                const deltaY = (moveEvent.clientY - startY) / scaleY;
+                
+                let newX = canvasX;
+                let newY = canvasY;
+                let newW = canvasW;
+                let newH = canvasH;
+                
+                // 위치에 따라 크기 조절
+                if (position === 'nw') {
+                    // 좌상단: x, y, width, height 모두 변경
+                    newX = Math.max(0, canvasX + deltaX);
+                    newY = Math.max(0, canvasY + deltaY);
+                    newW = canvasW - deltaX;
+                    newH = canvasH - deltaY;
+                } else if (position === 'ne') {
+                    // 우상단: y, width, height 변경
+                    newY = Math.max(0, canvasY + deltaY);
+                    newW = canvasW + deltaX;
+                    newH = canvasH - deltaY;
+                } else if (position === 'sw') {
+                    // 좌하단: x, width, height 변경
+                    newX = Math.max(0, canvasX + deltaX);
+                    newW = canvasW - deltaX;
+                    newH = canvasH + deltaY;
+                } else if (position === 'se') {
+                    // 우하단: width, height 변경
+                    newW = canvasW + deltaX;
+                    newH = canvasH + deltaY;
+                }
+                
+                // 최소 크기 체크
+                if (newW < 30) {
+                    newW = 30;
+                    if (position === 'nw' || position === 'sw') {
+                        newX = canvasX + canvasW - 30;
+                    }
+                }
+                if (newH < 30) {
+                    newH = 30;
+                    if (position === 'nw' || position === 'ne') {
+                        newY = canvasY + canvasH - 30;
+                    }
+                }
+                
+                // 캔버스 범위 체크
+                if (newX + newW > canvas.width) {
+                    newW = canvas.width - newX;
+                }
+                if (newY + newH > canvas.height) {
+                    newH = canvas.height - newY;
+                }
+                if (newX < 0) {
+                    newW += newX;
+                    newX = 0;
+                }
+                if (newY < 0) {
+                    newH += newY;
+                    newY = 0;
+                }
+                
+                // 화면 좌표로 변환하여 업데이트
+                boxDiv.style.left = (newX * scaleX) + 'px';
+                boxDiv.style.top = (newY * scaleY) + 'px';
+                boxDiv.style.width = (newW * scaleX) + 'px';
+                boxDiv.style.height = (newH * scaleY) + 'px';
+                
+                // 데이터 업데이트
+                boxDiv.dataset.canvasX = newX;
+                boxDiv.dataset.canvasY = newY;
+                boxDiv.dataset.canvasW = newW;
+                boxDiv.dataset.canvasH = newH;
+                
+                // 클릭 텍스트 글씨 크기 업데이트
+                const clickText = boxDiv.querySelector('.ai-box-click-text');
+                if (clickText) {
+                    const minSize = Math.min(newW * scaleX, newH * scaleY);
+                    const fontSize = Math.max(14, Math.min(32, minSize * 0.12));
+                    clickText.style.fontSize = fontSize + 'px';
+                }
+            };
+            
+            const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+        
+        // 이미지 확대/축소 함수
+        window.toggleImageZoom = function(img) {
+            if (img.style.position === 'fixed') {
+                // 축소
+                img.style.position = 'relative';
+                img.style.top = 'auto';
+                img.style.left = 'auto';
+                img.style.transform = 'scale(1)';
+                img.style.zIndex = '1';
+                img.style.maxWidth = '100%';
+            } else {
+                // 확대
+                img.style.position = 'fixed';
+                img.style.top = '50%';
+                img.style.left = '50%';
+                img.style.transform = 'translate(-50%, -50%) scale(1.8)';
+                img.style.zIndex = '9999';
+                img.style.maxWidth = '90vw';
+                img.style.maxHeight = '90vh';
+                img.style.cursor = 'zoom-out';
+                img.style.boxShadow = '0 10px 40px rgba(0,0,0,0.3)';
+                
+                // 배경 오버레이 추가
+                let overlay = document.getElementById('image-overlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'image-overlay';
+                    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998; cursor: zoom-out;';
+                    overlay.onclick = () => toggleImageZoom(img);
+                    document.body.appendChild(overlay);
+                }
+                
+                // 이미지 클릭 시 축소
+                img.onclick = () => toggleImageZoom(img);
+            }
+            
+            // 오버레이 제거
+            const overlay = document.getElementById('image-overlay');
+            if (overlay && img.style.position !== 'fixed') {
+                overlay.remove();
+            }
+        };
+        
+        // 사용법 모달 토글 함수
+        window.toggleHelp = function() {
+            const modal = document.getElementById('help-modal');
+            if (modal.style.display === 'none' || !modal.style.display) {
+                modal.style.display = 'flex';
+            } else {
+                modal.style.display = 'none';
+            }
+        };
+        
+        // 설정 모달 토글 함수
+        window.toggleSettings = function() {
+            const modal = document.getElementById('settings-modal');
+            if (modal.style.display === 'none' || !modal.style.display) {
+                // 모달을 열 때 현재 설정값 표시
+                const subjectSelect = document.getElementById('subject-select');
+                const analysisLevelSelect = document.getElementById('analysis-level-select');
+                const additionalRequirements = document.getElementById('additional-requirements');
+                if (subjectSelect) subjectSelect.value = settings.subject;
+                if (analysisLevelSelect) analysisLevelSelect.value = settings.analysisLevel;
+                if (additionalRequirements) additionalRequirements.value = settings.additionalRequirements || '';
+                modal.style.display = 'flex';
+            } else {
+                modal.style.display = 'none';
+            }
+        };
+        
+        // 프롬프트 편집기 토글 함수
+        window.togglePromptEditor = function() {
+            const container = document.getElementById('prompt-editor-container');
+            if (container.style.display === 'none' || !container.style.display) {
+                container.style.display = 'block';
+                loadCurrentPrompt();
+            } else {
+                container.style.display = 'none';
+            }
+        };
+        
+        // 현재 프롬프트 불러오기
+        window.loadCurrentPrompt = function() {
+            const promptEditor = document.getElementById('prompt-editor');
+            if (settings.customPrompt && settings.customPrompt.trim()) {
+                promptEditor.value = settings.customPrompt;
+            } else {
+                // 기본 프롬프트 생성하여 표시
+                const tempSettings = { ...settings };
+                settings.customPrompt = '';
+                promptEditor.value = generateReviewPrompt();
+                settings = tempSettings;
+            }
+        };
+        
+        // 프롬프트 기본값으로 복원
+        window.resetPrompt = function() {
+            if (confirm('프롬프트를 기본값으로 복원하시겠습니까? 현재 편집한 내용이 사라집니다.')) {
+                const promptEditor = document.getElementById('prompt-editor');
+                settings.customPrompt = '';
+                promptEditor.value = '';
+                loadCurrentPrompt();
+            }
+        };
+        
+        // 설정 저장 함수
+        window.saveSettings = function() {
+            const subject = document.getElementById('subject-select').value;
+            const analysisLevel = document.getElementById('analysis-level-select').value;
+            const additionalRequirements = document.getElementById('additional-requirements').value;
+            const promptEditor = document.getElementById('prompt-editor');
+            const customPrompt = promptEditor ? promptEditor.value.trim() : '';
+            
+            // settings 객체 업데이트
+            settings.subject = subject;
+            settings.analysisLevel = analysisLevel;
+            settings.additionalRequirements = additionalRequirements || '';
+            settings.customPrompt = customPrompt || '';
+            
+            // 로컬 저장소에 저장
+            localStorage.setItem('exam_review_settings', JSON.stringify(settings));
+            
+            // 디버깅용 로그
+            console.log('설정 저장됨 - 교과목:', subject, '분석 수준:', analysisLevel);
+            console.log('추가 요구사항:', additionalRequirements ? '있음' : '없음');
+            console.log('사용자 정의 프롬프트:', customPrompt ? '있음' : '없음');
+            console.log('현재 settings 객체:', settings);
+            
+            // 모달 닫기
+            toggleSettings();
+            
+            // 성공 메시지
+            const btn = document.getElementById('settings-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `✅ 저장됨 (${analysisLevel})`;
+            btn.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            }, 2000);
+        };
+        
+        // 캐시 삭제 함수
+        window.clearCache = function() {
+            if (confirm('저장된 모든 데이터를 삭제하시겠습니까?\n\n삭제되는 데이터:\n- API 키\n- 검토 설정 (교과목, 분석 수준, 추가 요구사항, 사용자 정의 프롬프트)\n\n이 작업은 되돌릴 수 없습니다.')) {
+                // 로컬 스토리지에서 모든 관련 데이터 삭제
+                localStorage.removeItem('gemini_api_key');
+                localStorage.removeItem('exam_review_settings');
+                
+                // 입력 필드 초기화
+                const apiKeyInput = document.getElementById('api-key');
+                if (apiKeyInput) {
+                    apiKeyInput.value = '';
+                }
+                
+                // 설정값 기본값으로 초기화
+                settings = {
+                    subject: '기타',
+                    analysisLevel: '자세히',
+                    additionalRequirements: '',
+                    customPrompt: ''
+                };
+                
+                // 설정 모달의 입력 필드도 초기화
+                const subjectSelect = document.getElementById('subject-select');
+                const analysisLevelSelect = document.getElementById('analysis-level-select');
+                const additionalRequirements = document.getElementById('additional-requirements');
+                const promptEditor = document.getElementById('prompt-editor');
+                
+                if (subjectSelect) subjectSelect.value = '기타';
+                if (analysisLevelSelect) analysisLevelSelect.value = '자세히';
+                if (additionalRequirements) additionalRequirements.value = '';
+                if (promptEditor) promptEditor.value = '';
+                
+                // 성공 메시지
+                const btn = document.getElementById('clear-cache-btn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ 삭제 완료';
+                btn.style.background = 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)';
+                }, 2000);
+                
+                console.log('초기화 완료');
+            }
+        };
+        
+        // 모달 외부 클릭 시 닫기
+        document.addEventListener('click', (e) => {
+            const settingsModal = document.getElementById('settings-modal');
+            const helpModal = document.getElementById('help-modal');
+            if (e.target === settingsModal) {
+                toggleSettings();
+            }
+            if (e.target === helpModal) {
+                toggleHelp();
+            }
+        });
+    </script>
+</body>
+</html>

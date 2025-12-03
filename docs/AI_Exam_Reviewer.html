@@ -981,6 +981,32 @@
         }
         
         // 동적 프롬프트 생성 함수
+        // 분석 수준에 따른 토큰 제한 및 생성 설정 반환 함수
+        function getGenerationConfig() {
+            const level = settings.analysisLevel;
+            
+            // 분석 수준에 따라 토큰 제한 및 temperature 조정
+            let maxOutputTokens, temperature;
+            
+            if (level === '답만') {
+                maxOutputTokens = 2048;  // 최소 토큰 (답만 필요)
+                temperature = 0.3;        // 낮은 창의성 (정확하고 간결하게)
+            } else if (level === '간략히') {
+                maxOutputTokens = 4096;  // 중간 토큰
+                temperature = 0.5;        // 중간 창의성
+            } else { // '자세히'
+                maxOutputTokens = 8192;  // 최대 토큰 (상세한 분석)
+                temperature = 0.7;       // 높은 창의성 (현재 값)
+            }
+            
+            return {
+                maxOutputTokens,
+                temperature,
+                topP: 0.95,
+                topK: 40
+            };
+        }
+        
         function generateReviewPrompt() {
             // 사용자 정의 프롬프트가 있으면 그것을 사용
             if (settings.customPrompt && settings.customPrompt.trim()) {
@@ -1634,6 +1660,9 @@
                 
                 // 여러 이미지와 함께 프롬프트 구성
                 const parts = [{ text: promptText }, ...imageParts];
+                
+                // 분석 수준에 따른 생성 설정 가져오기
+                const genConfig = getGenerationConfig();
 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
                 const response = await fetch(url, {
@@ -1643,12 +1672,7 @@
                         contents: [{
                             parts: parts
                         }],
-                        generationConfig: {
-                            temperature: 0.7,
-                            maxOutputTokens: 8192,
-                            topP: 0.95,
-                            topK: 40
-                        }
+                        generationConfig: genConfig
                     })
                 });
                 
@@ -1686,8 +1710,25 @@
                 }
                 
                 // finishReason 확인
+                let shouldRetryWithSimplifiedMode = false;
                 if (candidate.finishReason === 'MAX_TOKENS') {
                     console.warn('토큰 제한에 도달했습니다. 응답이 잘렸을 수 있습니다.');
+                    // 실제 토큰 사용량 확인
+                    if (data.usageMetadata) {
+                        const outputTokens = data.usageMetadata.candidatesTokenCount || data.usageMetadata.totalTokenCount - data.usageMetadata.promptTokenCount;
+                        const currentLimit = getGenerationConfig().maxOutputTokens;
+                        console.log('토큰 사용량:', {
+                            입력_토큰: data.usageMetadata.promptTokenCount,
+                            출력_토큰: outputTokens,
+                            총_토큰: data.usageMetadata.totalTokenCount,
+                            최대_출력_제한: currentLimit
+                        });
+                        
+                        // 출력 토큰이 제한의 90% 이상 사용되었고, 현재 "자세히" 모드인 경우 재시도 제안
+                        if (outputTokens >= currentLimit * 0.9 && settings.analysisLevel === '자세히') {
+                            shouldRetryWithSimplifiedMode = true;
+                        }
+                    }
                     // MAX_TOKENS인 경우에도 parts가 있으면 사용
                 } else if (candidate.finishReason === 'SAFETY') {
                     throw new Error('AI 응답이 안전 필터에 의해 차단되었습니다. 다른 이미지로 시도해주세요.');
@@ -1730,7 +1771,62 @@
                     
                     // finishReason에 따른 구체적인 에러 메시지
                     if (candidate.finishReason === 'MAX_TOKENS') {
-                        throw new Error('토큰 제한에 도달하여 응답이 생성되지 않았습니다. maxOutputTokens를 늘렸으니 다시 시도해주세요. (현재: 8192 토큰)');
+                        let tokenInfo = '';
+                        let diagnosis = '';
+                        let retryButton = '';
+                        if (data.usageMetadata) {
+                            const inputTokens = data.usageMetadata.promptTokenCount || 0;
+                            const outputTokens = (data.usageMetadata.candidatesTokenCount || data.usageMetadata.totalTokenCount - inputTokens) || 0;
+                            const totalTokens = data.usageMetadata.totalTokenCount || 0;
+                            const currentLimit = getGenerationConfig().maxOutputTokens;
+                            
+                            tokenInfo = `\n\n📊 실제 토큰 사용량:\n- 입력 토큰: ${inputTokens.toLocaleString()}개 (프롬프트 + 이미지)\n- 출력 토큰: ${outputTokens.toLocaleString()}개 (AI가 생성한 응답)\n- 총 토큰: ${totalTokens.toLocaleString()}개\n- 출력 제한: ${currentLimit.toLocaleString()}개 (현재 설정: "${settings.analysisLevel}")`;
+                            
+                            // 진단 메시지
+                            if (outputTokens >= currentLimit * 0.9) {
+                                // 출력 토큰이 제한에 거의 도달한 경우
+                                diagnosis = `\n\n⚠️ 진단: AI가 거의 ${currentLimit.toLocaleString()}개의 출력 토큰을 모두 사용했습니다.\n이는 AI가 매우 상세하고 긴 응답을 생성하려고 했다는 의미입니다.\n\n가능한 원인:\n1. 프롬프트가 너무 상세한 분석을 요구함 (현재 설정: "${settings.analysisLevel}")\n2. 문제가 매우 복잡하거나 여러 단계의 풀이가 필요함\n3. AI가 모든 가능성을 상세히 설명하려고 시도함`;
+                                
+                                // "자세히" 모드인 경우 간략 모드로 재시도 제안
+                                if (settings.analysisLevel === '자세히') {
+                                    retryButton = `\n\n🔄 자동 재시도 옵션:\n아래 "간략 모드로 재시도" 버튼을 클릭하면 자동으로 "간략히" 모드로 재검토합니다.`;
+                                }
+                            } else if (inputTokens > 20000) {
+                                // 입력 토큰이 너무 많은 경우
+                                diagnosis = `\n\n⚠️ 진단: 입력 토큰이 ${inputTokens.toLocaleString()}개로 매우 많습니다.\n이는 이미지가 많거나 고해상도 이미지를 사용했을 가능성이 있습니다.\n\n가능한 원인:\n1. 여러 이미지를 하나의 문항에 추가함 (${images.length}개 이미지)\n2. 이미지 해상도가 높아서 토큰 소비가 큼\n3. 프롬프트가 길어서 입력 토큰이 많음`;
+                            } else {
+                                diagnosis = `\n\n⚠️ 진단: 출력 토큰 제한에 도달했습니다.\n일반적으로 수학 문제 하나 검토에는 500~1,500 토큰이면 충분합니다.\n${outputTokens.toLocaleString()}개가 사용된 것은 비정상적으로 긴 응답입니다.`;
+                            }
+                        }
+                        
+                        // 재시도 가능한 경우 에러 대신 재시도 UI 표시
+                        if (shouldRetryWithSimplifiedMode && settings.analysisLevel === '자세히') {
+                            responseDiv.innerHTML = `
+                                <div style="text-align: center; padding: 30px; background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 152, 0, 0.1) 100%); border-radius: 12px; border: 2px solid #ff9800;">
+                                    <div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>
+                                    <h3 style="color: #ff9800; margin: 0 0 15px 0; font-size: 18px;">토큰 제한에 도달했습니다</h3>
+                                    <div style="color: #666; margin-bottom: 20px; text-align: left; background: white; padding: 15px; border-radius: 8px; font-size: 13px;">
+                                        ${tokenInfo}${diagnosis}
+                                    </div>
+                                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                        <button onclick="retryWithSimplifiedMode('${cardId}')" style="padding: 12px 24px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                                            ✅ 간략 모드로 재시도
+                                        </button>
+                                        <button onclick="dismissTokenError('${cardId}')" style="padding: 12px 24px; background: #e0e0e0; color: #666; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px;">
+                                            취소
+                                        </button>
+                                    </div>
+                                    <div style="margin-top: 15px; color: #999; font-size: 12px;">
+                                        💡 "간략 모드로 재시도"를 선택하면 "간략히" 설정으로 자동 재검토합니다.
+                                    </div>
+                                </div>
+                            `;
+                            btn.disabled = false;
+                            btn.innerText = '⚡ AI 검토';
+                            return; // 에러를 던지지 않고 UI만 표시
+                        }
+                        
+                        throw new Error(`AI가 응답을 생성하는 중 출력 토큰 제한(${getGenerationConfig().maxOutputTokens.toLocaleString()}개)에 도달했습니다.${tokenInfo}${diagnosis}${retryButton}\n\n💡 해결 방법:\n1. 설정 → "분석 수준"을 "간략히" 또는 "답만"으로 변경 (가장 효과적)\n2. 여러 이미지를 사용한 경우, 이미지 해상도 낮추기\n3. 더 강력한 모델(Gemini 3.0 Pro 등) 사용\n4. 문제를 더 작은 단위로 나누어 검토`);
                     } else if (candidate.finishReason === 'SAFETY') {
                         throw new Error('AI 응답이 안전 필터에 의해 차단되었습니다.');
                     } else if (candidate.finishReason === 'RECITATION') {
@@ -1846,8 +1942,9 @@
                     errorMsg += 'API 접근이 거부되었습니다. API Key와 권한을 확인해주세요.';
                 } else if (error.message.includes('not found') || error.message.includes('not supported') || error.message.includes('not available')) {
                     errorMsg += `모델 "${selectedModel}"을 찾을 수 없거나 지원되지 않습니다. 다른 모델을 선택해주세요.`;
-                } else if (error.message.includes('토큰 제한') || error.message.includes('MAX_TOKENS')) {
-                    errorMsg += error.message + '\n\n💡 해결 방법: 이미 maxOutputTokens를 8192로 늘렸습니다. 그래도 문제가 지속되면 프롬프트를 간단히 하거나 모델을 변경해보세요.';
+                } else if (error.message.includes('토큰 제한') || error.message.includes('MAX_TOKENS') || error.message.includes('출력 토큰 제한')) {
+                    // 에러 메시지에 이미 상세한 설명이 포함되어 있으면 그대로 사용
+                    errorMsg += error.message;
                 } else if (error.message.includes('텍스트를 찾을 수 없습니다') || error.message.includes('parts가 없습니다') || error.message.includes('candidates가 없습니다')) {
                     errorMsg += error.message + '\n\n💡 개발자 도구(F12) → Console 탭에서 "전체 API 응답"을 확인해주세요.';
                 } else {
@@ -1862,6 +1959,38 @@
                 responseDiv.innerHTML = `<span class="error-msg">${errorMsg}</span>`;
                 btn.disabled = false;
                 btn.innerText = '⚡ AI 검토';
+            }
+        };
+        
+        // 간략 모드로 재시도 함수
+        window.retryWithSimplifiedMode = async function(cardId) {
+            // 임시로 설정을 "간략히"로 변경
+            const originalLevel = settings.analysisLevel;
+            settings.analysisLevel = '간략히';
+            
+            // 재검토 실행
+            const card = document.getElementById(cardId);
+            if (card) {
+                const btn = card.querySelector('.btn-analyze');
+                if (btn) {
+                    // 설정을 임시로 변경한 상태에서 재검토
+                    await analyzeImage(btn, cardId);
+                    // 원래 설정으로 복원
+                    settings.analysisLevel = originalLevel;
+                }
+            }
+        };
+        
+        // 토큰 에러 무시 함수
+        window.dismissTokenError = function(cardId) {
+            const responseDiv = document.getElementById(`response-${cardId}`);
+            if (responseDiv) {
+                responseDiv.innerHTML = `
+                    <div style="text-align: center; color: #999; padding: 20px;">
+                        <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+                        <div>AI 검토를 시작하려면 버튼을 클릭하세요</div>
+                    </div>
+                `;
             }
         };
         
@@ -1958,11 +2087,14 @@
                         return { inline_data: { mime_type: "image/png", data: imageData } };
                     });
                     
-                    // 동적 프롬프트 생성
+                    // 동적 프롬프트 생성 (설정값 반영)
                     const promptText = generateReviewPrompt();
                     
                     // 여러 이미지와 함께 프롬프트 구성
                     const parts = [{ text: promptText }, ...imageParts];
+                    
+                    // 분석 수준에 따른 생성 설정 가져오기
+                    const genConfig = getGenerationConfig();
                     
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${apiKey}`;
                     const response = await fetch(url, {
@@ -1972,12 +2104,7 @@
                             contents: [{
                                 parts: parts
                             }],
-                            generationConfig: {
-                                temperature: 0.7,
-                                maxOutputTokens: 4096,
-                                topP: 0.95,
-                                topK: 40
-                            }
+                            generationConfig: genConfig
                         })
                     });
                     
@@ -2009,8 +2136,25 @@
                     }
                     
                     // finishReason 확인
+                    let shouldRetryBatch = false;
                     if (candidate.finishReason === 'MAX_TOKENS') {
                         console.warn(`[일괄 검토 ${i + 1}/${total}] 토큰 제한에 도달했습니다. 응답이 잘렸을 수 있습니다.`);
+                        // 실제 토큰 사용량 확인
+                        if (data.usageMetadata) {
+                            const outputTokens = data.usageMetadata.candidatesTokenCount || data.usageMetadata.totalTokenCount - data.usageMetadata.promptTokenCount;
+                            const currentLimit = getGenerationConfig().maxOutputTokens;
+                            console.log(`[일괄 검토 ${i + 1}/${total}] 토큰 사용량:`, {
+                                입력_토큰: data.usageMetadata.promptTokenCount,
+                                출력_토큰: outputTokens,
+                                총_토큰: data.usageMetadata.totalTokenCount,
+                                최대_출력_제한: currentLimit
+                            });
+                            
+                            // 출력 토큰이 제한의 90% 이상 사용되었고, 현재 "자세히" 모드인 경우 재시도
+                            if (outputTokens >= currentLimit * 0.9 && settings.analysisLevel === '자세히') {
+                                shouldRetryBatch = true;
+                            }
+                        }
                     } else if (candidate.finishReason === 'SAFETY') {
                         throw new Error('AI 응답이 안전 필터에 의해 차단되었습니다. 다른 이미지로 시도해주세요.');
                     } else if (candidate.finishReason === 'RECITATION') {
@@ -2052,7 +2196,63 @@
                         
                         // finishReason에 따른 구체적인 에러 메시지
                         if (candidate.finishReason === 'MAX_TOKENS') {
-                            throw new Error('토큰 제한에 도달하여 응답이 생성되지 않았습니다. maxOutputTokens를 늘렸으니 다시 시도해주세요. (현재: 8192 토큰)');
+                            // 일괄 검토에서 재시도 가능한 경우 자동으로 간략 모드로 재시도
+                            if (shouldRetryBatch && settings.analysisLevel === '자세히') {
+                                console.log(`[일괄 검토 ${i + 1}/${total}] 간략 모드로 자동 재시도합니다...`);
+                                const originalLevel = settings.analysisLevel;
+                                settings.analysisLevel = '간략히';
+                                
+                                // 간략 모드로 재시도
+                                const retryPromptText = generateReviewPrompt();
+                                const retryParts = [{ text: retryPromptText }, ...imageParts];
+                                const retryGenConfig = getGenerationConfig();
+                                
+                                const retryResponse = await fetch(url, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        contents: [{
+                                            parts: retryParts
+                                        }],
+                                        generationConfig: retryGenConfig
+                                    })
+                                });
+                                
+                                if (retryResponse.ok) {
+                                    const retryData = await retryResponse.json();
+                                    if (retryData.candidates && retryData.candidates[0] && retryData.candidates[0].content && retryData.candidates[0].content.parts && retryData.candidates[0].content.parts[0] && retryData.candidates[0].content.parts[0].text) {
+                                        resultText = retryData.candidates[0].content.parts[0].text;
+                                        console.log(`[일괄 검토 ${i + 1}/${total}] 간략 모드로 재시도 성공!`);
+                                    }
+                                }
+                                
+                                // 원래 설정으로 복원
+                                settings.analysisLevel = originalLevel;
+                            }
+                            
+                            // 재시도 후에도 결과가 없으면 에러 표시
+                            if (!resultText) {
+                                let tokenInfo = '';
+                                let diagnosis = '';
+                                if (data.usageMetadata) {
+                                    const inputTokens = data.usageMetadata.promptTokenCount || 0;
+                                    const outputTokens = (data.usageMetadata.candidatesTokenCount || data.usageMetadata.totalTokenCount - inputTokens) || 0;
+                                    const totalTokens = data.usageMetadata.totalTokenCount || 0;
+                                    const currentLimit = getGenerationConfig().maxOutputTokens;
+                                    
+                                    tokenInfo = `\n\n📊 실제 토큰 사용량:\n- 입력 토큰: ${inputTokens.toLocaleString()}개 (프롬프트 + 이미지)\n- 출력 토큰: ${outputTokens.toLocaleString()}개 (AI가 생성한 응답)\n- 총 토큰: ${totalTokens.toLocaleString()}개\n- 출력 제한: ${currentLimit.toLocaleString()}개 (현재 설정: "${settings.analysisLevel}")`;
+                                    
+                                    // 진단 메시지
+                                    if (outputTokens >= currentLimit * 0.9) {
+                                        diagnosis = `\n\n⚠️ 진단: AI가 거의 ${currentLimit.toLocaleString()}개의 출력 토큰을 모두 사용했습니다.\n이는 AI가 매우 상세하고 긴 응답을 생성하려고 했다는 의미입니다.\n\n가능한 원인:\n1. 프롬프트가 너무 상세한 분석을 요구함 (현재 설정: "${settings.analysisLevel}")\n2. 문제가 매우 복잡하거나 여러 단계의 풀이가 필요함\n3. AI가 모든 가능성을 상세히 설명하려고 시도함`;
+                                    } else if (inputTokens > 20000) {
+                                        diagnosis = `\n\n⚠️ 진단: 입력 토큰이 ${inputTokens.toLocaleString()}개로 매우 많습니다.\n이는 이미지가 많거나 고해상도 이미지를 사용했을 가능성이 있습니다.\n\n가능한 원인:\n1. 여러 이미지를 하나의 문항에 추가함 (${images.length}개 이미지)\n2. 이미지 해상도가 높아서 토큰 소비가 큼\n3. 프롬프트가 길어서 입력 토큰이 많음`;
+                                    } else {
+                                        diagnosis = `\n\n⚠️ 진단: 출력 토큰 제한에 도달했습니다.\n일반적으로 수학 문제 하나 검토에는 500~1,500 토큰이면 충분합니다.\n${outputTokens.toLocaleString()}개가 사용된 것은 비정상적으로 긴 응답입니다.`;
+                                    }
+                                }
+                                throw new Error(`AI가 응답을 생성하는 중 출력 토큰 제한(${getGenerationConfig().maxOutputTokens.toLocaleString()}개)에 도달했습니다.${tokenInfo}${diagnosis}\n\n💡 해결 방법:\n1. 설정 → "분석 수준"을 "간략히" 또는 "답만"으로 변경 (가장 효과적)\n2. 여러 이미지를 사용한 경우, 이미지 해상도 낮추기\n3. 더 강력한 모델(Gemini 3.0 Pro 등) 사용\n4. 문제를 더 작은 단위로 나누어 검토`);
+                            }
                         } else if (candidate.finishReason === 'SAFETY') {
                             throw new Error('AI 응답이 안전 필터에 의해 차단되었습니다.');
                         } else if (candidate.finishReason === 'RECITATION') {
@@ -2139,8 +2339,9 @@
                         errorMsg += 'API 할당량을 초과했습니다. 잠시 후 다시 시도해주세요.';
                     } else if (error.message.includes('403')) {
                         errorMsg += 'API 접근이 거부되었습니다. API Key와 권한을 확인해주세요.';
-                    } else if (error.message.includes('토큰 제한') || error.message.includes('MAX_TOKENS')) {
-                        errorMsg += error.message + '\n\n💡 해결 방법: 이미 maxOutputTokens를 8192로 늘렸습니다. 그래도 문제가 지속되면 프롬프트를 간단히 하거나 모델을 변경해보세요.';
+                    } else if (error.message.includes('토큰 제한') || error.message.includes('MAX_TOKENS') || error.message.includes('출력 토큰 제한')) {
+                        // 에러 메시지에 이미 상세한 설명이 포함되어 있으면 그대로 사용
+                        errorMsg += error.message;
                     } else if (error.message.includes('텍스트를 찾을 수 없습니다') || error.message.includes('parts가 없습니다') || error.message.includes('candidates가 없습니다')) {
                         errorMsg += error.message + '\n\n💡 개발자 도구(F12) → Console 탭에서 "전체 API 응답"을 확인해주세요.';
                     } else {
@@ -2383,37 +2584,43 @@
             // 섹션 헤더 div 사이의 과도한 줄바꿈 정리
             formatted = formatted.replace(/(<\/div>)\s*\n{3,}\s*(<div)/g, '$1\n\n$2');
             
-            // 제목성 강조만 보호 (실제 제목 역할: "해답:", "풀이 과정:" 등 콜론 포함)
-            const titlePattern = /(<strong>.*?(?:해답|풀이\s*과정|오류\s*내용|난이도\s*평가|개선\s*제안|학생용\s*풀이|간략한\s*풀이)[:：]\s*<\/strong>)/gi;
-            formatted = formatted.replace(titlePattern, (match) => {
-                return match.replace(/\n/g, '___TITLE_NL___');
+            // 제목성 강조 텍스트는 줄바꿈 유지 (해답, 풀이 과정 등)
+            const titleKeywords = ['해답', '풀이 과정', '풀이과정', '오류 내용', '난이도 평가', '개선 제안', '학생용 풀이', '간략한 풀이'];
+            titleKeywords.forEach(keyword => {
+                const regex = new RegExp(`(<strong>.*?${keyword}.*?</strong>)`, 'gi');
+                formatted = formatted.replace(regex, (match) => {
+                    return match.replace(/\n/g, '___TITLE_NEWLINE___');
+                });
             });
             
-            // 일반 강조 텍스트는 무조건 인라인 처리 (줄바꿈 제거)
+            // 일반 강조 텍스트(<strong>) 앞뒤의 불필요한 줄바꿈 제거 (제목성 강조 제외)
             formatted = formatted.replace(/\n\s*<strong>/g, ' <strong>');
             formatted = formatted.replace(/<\/strong>\s*\n/g, '</strong> ');
             formatted = formatted.replace(/<strong>\s*\n/g, '<strong>');
             formatted = formatted.replace(/\n\s*<\/strong>/g, '</strong>');
             
-            // 제목성 강조 복원
-            formatted = formatted.replace(/___TITLE_NL___/g, '\n');
+            // 제목성 강조의 줄바꿈 복원
+            formatted = formatted.replace(/___TITLE_NEWLINE___/g, '\n');
             
-            // HTML 변환
+            // 일반 텍스트 줄바꿈 처리
             formatted = formatted.replace(/\n\n+/g, '</p><p>');
             formatted = formatted.replace(/\n/g, '<br>');
             
-            // 제목성 강조 보호 (HTML 변환 후)
-            formatted = formatted.replace(titlePattern, (match) => {
-                return match.replace(/<br>/g, '___TITLE_BR___');
+            // HTML 변환 후 일반 강조 텍스트 주변의 불필요한 <br> 제거 (제목성 강조 제외)
+            // 제목성 강조는 먼저 보호
+            titleKeywords.forEach(keyword => {
+                const regex = new RegExp(`(<strong>.*?${keyword}.*?</strong>)`, 'gi');
+                formatted = formatted.replace(regex, (match) => {
+                    return match.replace(/<br>/g, '___TITLE_BR___');
+                });
             });
             
-            // 일반 강조 텍스트 주변의 <br> 제거 (인라인 처리)
             formatted = formatted.replace(/<br>\s*<strong>/g, ' <strong>');
             formatted = formatted.replace(/<\/strong>\s*<br>/g, '</strong> ');
             formatted = formatted.replace(/<p>\s*<strong>/g, '<p><strong>');
             formatted = formatted.replace(/<\/strong>\s*<\/p>/g, '</strong></p>');
             
-            // 제목성 강조 복원
+            // 제목성 강조의 <br> 복원
             formatted = formatted.replace(/___TITLE_BR___/g, '<br>');
             
             // 목록이 있으면 ul로 감싸기

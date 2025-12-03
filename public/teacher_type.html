@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선생님 유형 진단 테스트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One:wght@400&family=Pretendard:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ff85a1; /* Pink */
+            --secondary-color: #5b9bf8; /* Blue */
+            --background-color: #f7f9fc; /* Light Gray */
+            --text-color: #1f2937; /* Dark Gray */
+            --main-bg-color: #a8d5f0; /* Light Blue */
+        }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        .main-title {
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .sub-title {
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+        .fun-text {
+            font-family: 'Pretendard', sans-serif;
+            font-weight: 600;
+        }
+        @keyframes typing {
+            from { width: 0; }
+            to { width: 100%; }
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        .typing-effect {
+            overflow: hidden;
+            white-space: nowrap;
+            animation: typing 1.5s steps(20, end);
+        }
+        .question-mark {
+            animation: blink 1s infinite;
+        }
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .main-screen {
+            background: #ffffff;
+            border: 4px solid #1a1a1a;
+            border-radius: 20px;
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .quiz-container {
+            max-width: 420px;
+            width: 100%;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        #content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .keyword-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin: 20px 0;
+            min-height: 300px;
+            position: relative;
+            background-color: transparent;
+        }
+        .tree-row {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .keyword-bubble {
+            padding: 12px 16px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+            animation: fadeInScale 0.5s ease-out;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            color: white;
+        }
+        /* 각 유형별 메인 색상 */
+        .keyword-bubble.type1 { background-color: #e63946; } /* 빨강 - 규칙 준수 캡틴 */
+        .keyword-bubble.type2 { background-color: #ff85a1; } /* 분홍 - 화합형 코디네이터 */
+        .keyword-bubble.type3 { background-color: #5b9bf8; } /* 파랑 - 현장형 혁신가 */
+        .keyword-bubble.type4 { background-color: #ff6b9d; } /* 핑크 - 인싸 소통왕 */
+        .keyword-bubble.type5 { background-color: #4a90e2; } /* 진파랑 - 연구실의 현자 */
+        .keyword-bubble.type6 { background-color: #ffb3d1; } /* 연분홍 - 따뜻한 멘토 */
+        .keyword-bubble.type7 { background-color: #6c5ce7; } /* 보라 - 효율 추구 프로 */
+        .keyword-bubble.type8 { background-color: #fd79a8; } /* 로즈 - 자유로운 영혼 */
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        @keyframes glitter {
+            0%, 90%, 100% {
+                color: #374151;
+                text-shadow: 0 0 0px rgba(255, 215, 0, 0);
+            }
+            5% {
+                color: #374151;
+                text-shadow: 0 0 3px rgba(255, 215, 0, 0.6), 0 0 6px rgba(255, 215, 0, 0.4), 0 0 9px rgba(255, 215, 0, 0.2);
+            }
+            10% {
+                color: #374151;
+                text-shadow: 0 0 2px rgba(255, 215, 0, 0.4), 0 0 4px rgba(255, 215, 0, 0.3);
+            }
+            45% {
+                color: #374151;
+                text-shadow: 0 0 0px rgba(255, 215, 0, 0);
+            }
+            50% {
+                color: #374151;
+                text-shadow: 0 0 3px rgba(255, 215, 0, 0.6), 0 0 6px rgba(255, 215, 0, 0.4), 0 0 9px rgba(255, 215, 0, 0.2);
+            }
+            55% {
+                color: #374151;
+                text-shadow: 0 0 2px rgba(255, 215, 0, 0.4), 0 0 4px rgba(255, 215, 0, 0.3);
+            }
+        }
+        .course-7 {
+            background: white;
+            border: 1px solid #e5e7eb;
+        }
+        .course-7-text {
+            color: #374151;
+            animation: glitter 3s ease-in-out infinite;
+        }
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+        .keyword-tree.fade-out {
+            animation: fadeOut 0.5s ease-out;
+        }
+        @media (max-width: 480px) {
+            .quiz-container {
+                padding: 10px;
+            }
+            .main-screen {
+                padding: 30px 15px;
+            }
+            .main-title {
+                font-size: 2rem !important;
+            }
+            .keyword-bubble {
+                font-size: 0.85rem;
+                padding: 10px 14px;
+            }
+        }
+        .main-screen {
+            background: #ffffff;
+            border: 4px solid #1a1a1a;
+            border-radius: 20px;
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .decorative-element {
+            position: absolute;
+            opacity: 0.6;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        .animal-emoji {
+            font-size: 3rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .start-button {
+            background: linear-gradient(135deg, #87ceeb 0%, #5b9bf8 100%);
+            border: 3px solid #1a1a1a;
+            box-shadow: 0 4px 0 #1a1a1a;
+            transition: all 0.2s;
+        }
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #1a1a1a;
+        }
+        .start-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1a1a1a;
+        }
+        .choice-button {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .choice-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .choice-button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        .progress-bar-fill {
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    
+    <!-- Header -->
+    <header class="text-center mb-8 hidden">
+        <h1 class="text-2xl font-bold text-gray-800">🏫 선생님 유형 진단 테스트</h1>
+        <p class="text-sm text-gray-500 mt-1">학교에서 당신은 어떤 선생님일까요?</p>
+    </header>
+
+    <!-- Quiz/Result Content Area -->
+    <main id="content-area" class="flex-grow flex flex-col">
+        <!-- Main Screen (Landing Page) -->
+        <div id="main-screen" class="main-screen">
+            <!-- Decorative Elements -->
+            <div class="decorative-element" style="top: 10px; left: 20px; font-size: 1.5rem;">⭐</div>
+            <div class="decorative-element" style="top: 30px; right: 30px; font-size: 1.2rem; animation-delay: 0.5s;">💛</div>
+            <div class="decorative-element" style="top: 60px; left: 50px; font-size: 1rem; animation-delay: 1s;">🌸</div>
+            <div class="decorative-element" style="top: 80px; right: 50px; font-size: 1.3rem; animation-delay: 1.5s;">💖</div>
+            <div class="decorative-element" style="bottom: 100px; left: 30px; font-size: 1.1rem; animation-delay: 0.8s;">✨</div>
+            <div class="decorative-element" style="bottom: 80px; right: 40px; font-size: 1.4rem; animation-delay: 1.2s;">🌺</div>
+            <div class="decorative-element" style="bottom: 120px; left: 60px; font-size: 1rem; animation-delay: 0.3s;">⭐</div>
+            <div class="decorative-element" style="top: 120px; left: 80px; font-size: 1.2rem; animation-delay: 0.7s;">💝</div>
+            
+            <!-- Title -->
+            <div class="text-center mb-8 flex-grow flex flex-col justify-center">
+                <h1 class="main-title text-3xl mb-2" style="color: #1a1a1a; text-shadow: 2px 2px 0px rgba(255,255,255,0.8), 4px 4px 8px rgba(0,0,0,0.2);">
+                    🏫 선생님 유형 테스트
+                </h1>
+                <p class="fun-text text-base mb-4" style="color: #4a5568; text-shadow: 1px 1px 2px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1);">
+                    학교에서 당신은 어떤 선생님일까요?
+                </p>
+            </div>
+            
+            <!-- Keyword Tree -->
+            <div id="keyword-tree-container" class="flex-grow flex items-center justify-center relative z-10">
+                <div id="keyword-tree" class="keyword-tree"></div>
+            </div>
+            
+            <!-- More Decorative Elements -->
+            <div class="decorative-element" style="top: 200px; left: 10px; font-size: 1.2rem; animation-delay: 0.4s;">⭐</div>
+            <div class="decorative-element" style="top: 180px; right: 20px; font-size: 1rem; animation-delay: 0.9s;">✨</div>
+            <div class="decorative-element" style="bottom: 200px; left: 15px; font-size: 1.3rem; animation-delay: 1.1s;">🌞</div>
+            <div class="decorative-element" style="bottom: 180px; right: 15px; font-size: 1.1rem; animation-delay: 0.6s;">💐</div>
+            
+            <!-- Start Button -->
+            <div class="text-center mt-auto relative z-10">
+                <button 
+                    onclick="startQuiz()"
+                    class="start-button w-full py-4 text-white fun-text text-xl rounded-xl"
+                >
+                    시작하기
+                </button>
+            </div>
+            
+            <!-- Footer -->
+            <div class="text-center mt-2 mb-0 relative z-5">
+                <p class="text-xs text-gray-600" style="font-family: 'Pretendard', sans-serif; margin: 0;">
+                    <span style="color: #9ca3af;">©</span> 
+                    <span style="color: #9ca3af;">행복한윤쌤 | </span>
+                    <a href="https://blog.naver.com/happy_yoonssam" target="_blank" class="text-blue-500 hover:text-blue-600 transition-colors" style="text-decoration: none;">
+                        blog.naver.com/happy_yoonssam
+                    </a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Content will be injected here -->
+        <div id="quiz-screen" class="hidden"></div>
+        <div id="result-screen" class="hidden"></div>
+    </main>
+
+    <!-- Navigation/Progress Area -->
+    <footer id="progress-area" class="mt-8 hidden">
+        <!-- Progress Bar -->
+        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1">
+            <div id="progress-bar" class="bg-[var(--primary-color)] h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
+        </div>
+        <p id="question-counter" class="text-xs text-right text-gray-500">0/12</p>
+    </footer>
+
+</div>
+
+<script>
+    // Constants
+    const NUM_QUESTIONS = 12;
+
+    // A simple, single-session state object
+    const quizState = {
+        currentQIndex: 0,
+        // E/I (외향/내향), P/J (유연/계획), T/F (사고/감정)
+        // Score: E, P, T side gets +1. I, J, F side gets 0.
+        scores: { E: 0, P: 0, T: 0 },
+        isFinished: false,
+    };
+
+    // 12 Questions (4 per axis: E/I, P/J, T/F)
+    const questions = [
+        // --- E/I (4 questions) ---
+        // E: 동료와 협력, I: 혼자 해결
+        {
+            id: 1, text: "새학기 복잡한 학교 업무 분장을 맡게 되었다면?", axis: 'E',
+            choices: [
+                { text: "함께 할 동료 선생님들과 머리를 맞대고 논의한다.", value: 1, code: 'E' },
+                { text: "나만의 기준에 따라 조용히 분석하고 초안을 만든다.", value: 0, code: 'I' }
+            ]
+        },
+        {
+            id: 2, text: "쉬는 시간에 학생 무리가 선생님을 찾아와 시끌벅적하게 질문한다면?", axis: 'E',
+            choices: [
+                { text: "반갑게 맞아주며 여러 학생의 질문에 동시에 답한다.", value: 1, code: 'E' },
+                { text: "차분하게 한 명씩 줄 서서 조용히 질문하라고 안내한다.", value: 0, code: 'I' }
+            ]
+        },
+        {
+            id: 3, text: "학생들이 쉬는 시간에 선생님 주변에 모여서 왁자지껄 떠들며 웃고 있다면?", axis: 'E',
+            choices: [
+                { text: "학생들 사이에 끼어들어 함께 웃으며 이야기를 나눈다.", value: 1, code: 'E' },
+                { text: "옆에서 지켜보며 가끔 미소를 짓거나 조용히 관찰한다.", value: 0, code: 'I' }
+            ]
+        },
+        {
+            id: 4, text: "학교 축제 기획 팀에 합류하게 되었다. 어떤 역할을 선호하는가?", axis: 'E',
+            choices: [
+                { text: "전체 회의를 주도하고 외부 협력을 맡는 역할.", value: 1, code: 'E' },
+                { text: "필요한 자료 조사, 내부 문서 정리 등 지원 역할.", value: 0, code: 'I' }
+            ]
+        },
+
+        // --- P/J (4 questions) ---
+        // P: 유연, 임기응변, J: 계획, 규칙
+        {
+            id: 5, text: "갑자기 교육과정 설명회 일정이 3일 앞으로 당겨졌다!", axis: 'P',
+            choices: [
+                { text: "상황을 빠르게 파악하고, 핵심 내용만으로 유연하게 일정을 재조정한다.", value: 1, code: 'P' },
+                { text: "일단 원래 계획대로 필요한 자료를 모두 준비하려 노력하며 밤을 샌다.", value: 0, code: 'J' }
+            ]
+        },
+        {
+            id: 6, text: "수업 중 갑자기 학생들이 예상치 못한 질문을 쏟아낸다면?", axis: 'P',
+            choices: [
+                { text: "수업 흐름을 잠시 멈추고 학생들의 질문에 맞춰 즉흥적인 토론을 진행한다.", value: 1, code: 'P' },
+                { text: "일단 질문은 기록해두고, 원래 계획했던 수업 내용부터 완벽히 마친다.", value: 0, code: 'J' }
+            ]
+        },
+        {
+            id: 7, text: "새 학년 학급 경영 계획을 짤 때, 당신은 주로?", axis: 'P',
+            choices: [
+                { text: "대략적인 틀만 잡아두고 학생들과 함께 디테일을 채워나간다.", value: 1, code: 'P' },
+                { text: "월별, 주별 계획까지 꼼꼼하게 정리된 매뉴얼을 미리 만든다.", value: 0, code: 'J' }
+            ]
+        },
+        {
+            id: 8, text: "당신에게 보고서 제출 기한이 임박했다면?", axis: 'P',
+            choices: [
+                { text: "완벽하지 않아도 일단 제출하고 나중에 수정 보완할 생각을 한다.", value: 1, code: 'P' },
+                { text: "마지막 순간까지 검토하며 계획된 수준에 도달할 때까지 붙잡고 있는다.", value: 0, code: 'J' }
+            ]
+        },
+
+        // --- T/F (4 questions) ---
+        // T: 논리, 원칙, F: 감정, 관계
+        {
+            id: 9, text: "학생이 억울함을 호소하며 규칙 위반에 대해 눈물로 선처를 부탁한다면?", axis: 'T',
+            choices: [
+                { text: "규칙은 규칙이다. 모두에게 공정하게 원칙대로 처리한다.", value: 1, code: 'T' },
+                { text: "학생의 상황과 감정을 고려하여 최대한 선처할 방법을 찾아본다.", value: 0, code: 'F' }
+            ]
+        },
+        {
+            id: 10, text: "교무실에서 동료 선생님들 간의 의견 충돌이 발생했다.", axis: 'T',
+            choices: [
+                { text: "객관적인 데이터와 논리를 통해 가장 합리적인 해결책을 제시한다.", value: 1, code: 'T' },
+                { text: "모두의 감정을 상하지 않도록 부드러운 분위기를 만들고 중재한다.", value: 0, code: 'F' }
+            ]
+        },
+        {
+            id: 11, text: "학생을 칭찬할 일이 생겼다면?", axis: 'T',
+            choices: [
+                { text: "구체적인 성과나 논리적 과정(예: '오답 분석이 훌륭했어')을 칭찬한다.", value: 1, code: 'T' },
+                { text: "학생의 노력, 인성 등 태도(예: '친구를 돕는 마음이 예쁘네')를 칭찬한다.", value: 0, code: 'F' }
+            ]
+        },
+        {
+            id: 12, text: "학교 평가를 위한 자료를 만들 때, 당신의 기준은?", axis: 'T',
+            choices: [
+                { text: "평가 항목에 맞추어 성과를 명확히 보여주는 데이터와 결과 중심.", value: 1, code: 'T' },
+                { text: "학교의 긍정적인 분위기, 교육 공동체의 화합 노력 등을 강조.", value: 0, code: 'F' }
+            ]
+        }
+    ];
+
+    // 8 Teacher Types (2x2x2) and Recommendations
+    // E/I(1/0) | P/J(1/0) | T/F(1/0)
+    // 1: E (E=1) | 1: P (P=1) | 1: T (T=1) -> E P T
+    const teacherTypes = [
+        // Type 1: E-J-T (1-0-1) - 규칙 준수 캡틴 (EJ-T)
+        {
+            code: 'EJ-T', score: '101', name: '⚓ 규칙 준수 캡틴', 
+            description: '원칙과 논리를 중요시하는 카리스마 넘치는 리더입니다. 명확한 목표를 세우고 동료들과 함께 효율적인 시스템을 구축하는 데 능숙합니다. 계획이 틀어지는 것을 싫어하지만, 목표 달성을 위해선 누구보다 열정적으로 참여합니다.',
+            courses: [4, 7]
+        },
+        // Type 2: E-J-F (1-0-0) - 화합형 코디네이터 (EJ-F)
+        {
+            code: 'EJ-F', score: '100', name: '🤝 화합형 코디네이터',
+            description: '따뜻한 마음으로 모두의 의견을 조율하는 조화의 상징입니다. 계획을 세우지만, 그 계획이 사람들에게 미칠 영향을 우선 고려합니다. 공동체의 안정과 긍정적인 분위기를 만드는 데 탁월한 능력을 발휘합니다.',
+            courses: [2, 5]
+        },
+        // Type 3: E-P-T (1-1-1) - 현장형 혁신가 (EP-T)
+        {
+            code: 'EP-T', score: '111', name: '🚀 현장형 혁신가',
+            description: '새로운 시도에 거리낌이 없고, 즉각적인 문제 해결 능력이 뛰어난 활동가입니다. 복잡한 상황에서도 논리적으로 핵심을 파악하고 유연하게 대처합니다. 결과와 효율을 중요시하며 변화를 즐깁니다.',
+            courses: [3, 6]
+        },
+        // Type 4: E-P-F (1-1-0) - 인싸 소통왕 (EP-F)
+        {
+            code: 'EP-F', score: '110', name: '🎉 인싸 소통왕',
+            description: '학생, 동료 누구와도 스스럼없이 소통하는 에너지 넘치는 교사입니다. 정해진 틀보다는 인간적인 관계를 통해 문제를 해결합니다. 사람들의 행복과 자유로운 분위기를 만드는 데 재능이 있습니다.',
+            courses: [5, 7]
+        },
+        // Type 5: I-J-T (0-0-1) - 연구실의 현자 (IJ-T)
+        {
+            code: 'IJ-T', score: '001', name: '🔬 연구실의 현자',
+            description: '조용히 자신의 업무를 계획하고 깊이 있게 분석하는 전문가입니다. 비효율적인 것을 가장 싫어하며, 혼자만의 시간을 통해 최적의 교수법을 끊임없이 연구합니다. 논리적이고 체계적인 보고서 작성을 잘합니다.',
+            courses: [2, 4]
+        },
+        // Type 6: I-J-F (0-0-0) - 따뜻한 멘토 (IJ-F)
+        {
+            code: 'IJ-F', score: '000', name: '🤗 따뜻한 멘토',
+            description: '말없이 학생들을 챙기는 속 깊은 배려형 관리자입니다. 조용하지만 맡은 일은 꼼꼼히 처리하며, 학생 한 명 한 명의 성장을 계획적으로 지원합니다. 감정을 이해하고 공감하는 능력이 뛰어납니다.',
+            courses: [6, 7]
+        },
+        // Type 7: I-P-T (0-1-1) - 효율 추구 프로 (IP-T)
+        {
+            code: 'IP-T', score: '011', name: '💼 업무 배테랑',
+            description: '실용성과 효율성을 최우선으로 생각하는 실력파 교사입니다. 복잡한 규정보다는 실질적인 해결책을 찾아 유연하게 업무를 처리합니다. 불필요한 형식적인 절차를 최소화하고 성과에 집중합니다.',
+            courses: [3, 7]
+        },
+        // Type 8: I-P-F (0-1-0) - 자유로운 영혼 (IP-F)
+        {
+            code: 'IP-F', score: '010', name: '🎨 자유로운 영혼',
+            description: '틀에 얽매이지 않고 개인의 가치와 감수성을 중시하는 교사입니다. 학생들의 창의성을 존중하며, 비규칙적인 상황에서도 흥미로운 교육 기회를 발견합니다. 편안하고 자유로운 학급 분위기를 조성합니다.',
+            courses: [2, 7]
+        }
+    ];
+
+    // Training Courses from the uploaded image (2번부터 7번까지)
+    const allCourses = {
+        2: '디지털 기반 수업 활성화 연수 (중등)',
+        3: '글로벌 에듀테크 마스터 인증 연수',
+        4: '학습자 맞춤형 소프트웨어 활용 역량 강화 연수',
+        5: '스마트 기기 활용 연수',
+        6: '생성형 AI 활용 역량 강화 연수 (심화)',
+        7: 'SW-AI 역량 정보화 연수 (바이브코딩)'
+    };
+
+    // Keywords for each teacher type (5줄 구조)
+    const typeKeywords = {
+        'EJ-T': [
+            ['카리스마', '원칙주의', '리더십'],
+            ['계획성', '효율성', '목표지향'],
+            ['책임감', '논리적', '체계적', '결단력'],
+            ['추진력', '완벽주의', '독립적'],
+            ['나만의 목표가 확실함', '뼈 때리는 팩폭 머신']
+        ],
+        'EJ-F': [
+            ['따뜻함', '조화', '배려'],
+            ['계획성', '공동체', '긍정적'],
+            ['공감능력', '협력', '안정추구', '다정함'],
+            ['인내심', '세심함', '화합'],
+            ['모두를 위한 계획', '따뜻한 리더십']
+        ],
+        'EP-T': [
+            ['혁신', '문제해결', '논리적'],
+            ['유연성', '효율성', '변화추구'],
+            ['실용성', '결과중시', '적응력', '추진력'],
+            ['카리스마', '갓생', '책임감'],
+            ['과정보단 결과가 중요함', '하지 말라는 건 잘 안 함']
+        ],
+        'EP-F': [
+            ['소통', '에너지', '관계중시'],
+            ['자유로움', '행복추구', '유연성'],
+            ['창의성', '공감', '열정', '낙천적'],
+            ['인싸', '자유로움', '행복'],
+            ['관계가 최우선', '자유로운 영혼']
+        ],
+        'IJ-T': [
+            ['전문성', '분석력', '계획성'],
+            ['논리적', '체계적', '효율성'],
+            ['깊이있는연구', '완벽주의', '독립적'],
+            ['자기관리', '체계적', '연구'],
+            ['나만의 연구실', '완벽한 계획']
+        ],
+        'IJ-F': [
+            ['배려', '계획성', '공감'],
+            ['꼼꼼함', '성장지원', '감정이해'],
+            ['인내심', '세심함', '안정추구', '따뜻함'],
+            ['배려', '공감', '지원'],
+            ['학생 한 명 한 명', '따뜻한 멘토']
+        ],
+        'IP-T': [
+            ['효율성', '실용성', '유연성'],
+            ['성과지향', '실력파', '최소화'],
+            ['독립적', '자기관리', '결과중시', '실용주의'],
+            ['효율', '성과', '프로'],
+            ['효율이 우선', '실용주의자']
+        ],
+        'IP-F': [
+            ['창의성', '자유로움', '감수성'],
+            ['개인가치', '편안함', '유연성'],
+            ['개방적', '낭만주의', '양보', '자유추구'],
+            ['창의', '감수성', '자유'],
+            ['나는야 낭만주의자', '양보가 습관처럼 됨']
+        ]
+    };
+
+    // 각 유형별 메인 색상 클래스
+    const typeColorClass = {
+        'EJ-T': 'type1',
+        'EJ-F': 'type2',
+        'EP-T': 'type3',
+        'EP-F': 'type4',
+        'IJ-T': 'type5',
+        'IJ-F': 'type6',
+        'IP-T': 'type7',
+        'IP-F': 'type8'
+    };
+
+    // --- UI Update Functions ---
+
+    /** 메인 화면에서 퀴즈를 시작합니다. */
+    function startQuiz() {
+        const mainScreen = document.getElementById('main-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const header = document.querySelector('header');
+        const progressArea = document.getElementById('progress-area');
+        
+        // 키워드 트리 전환 중지
+        stopKeywordTreeRotation();
+        
+        mainScreen.classList.add('hidden');
+        quizScreen.classList.remove('hidden');
+        header.classList.remove('hidden');
+        progressArea.classList.remove('hidden');
+        
+        renderQuestion();
+    }
+
+    /** 현재 질문을 화면에 렌더링합니다. */
+    function renderQuestion() {
+        const quizScreen = document.getElementById('quiz-screen');
+        const progressArea = document.getElementById('progress-area');
+        const currentQuestion = questions[quizState.currentQIndex];
+
+        if (!currentQuestion) {
+            calculateResult();
+            return;
+        }
+
+        progressArea.classList.remove('hidden');
+
+        const total = questions.length;
+        const current = quizState.currentQIndex + 1;
+        document.getElementById('question-counter').textContent = `${current}/${total}`;
+        document.getElementById('progress-bar').style.width = `${(current / total) * 100}%`;
+
+        quizScreen.innerHTML = `
+            <div class="text-center mb-8">
+                <p class="text-lg font-semibold text-[var(--primary-color)]">${current}/${total} 질문</p>
+            </div>
+            <div class="p-6 bg-white rounded-xl shadow-lg border-2 border-gray-100 mb-8">
+                <p class="text-xl font-bold text-gray-800">${currentQuestion.text}</p>
+            </div>
+            <div class="space-y-4">
+                ${currentQuestion.choices.map((choice, index) => `
+                    <button 
+                        class="choice-button w-full p-4 bg-white border border-gray-200 rounded-xl text-lg font-medium text-gray-700 shadow-sm hover:bg-gray-50 hover:border-[var(--secondary-color)]" 
+                        onclick="handleAnswer(${choice.value}, '${currentQuestion.axis}')"
+                    >
+                        ${choice.text}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    /** 사용자의 답변을 처리하고 다음 질문으로 넘어갑니다. */
+    function handleAnswer(value, axis) {
+        // 점수 업데이트
+        if (axis === 'E') {
+            quizState.scores.E += value;
+        } else if (axis === 'P') {
+            quizState.scores.P += value;
+        } else if (axis === 'T') {
+            quizState.scores.T += value;
+        }
+        
+        // 다음 질문으로 이동
+        quizState.currentQIndex++;
+        
+        // 마지막 질문인지 확인
+        if (quizState.currentQIndex < NUM_QUESTIONS) {
+            renderQuestion();
+        } else {
+            quizState.isFinished = true;
+            calculateResult();
+        }
+    }
+
+    /** 최종 결과를 계산하고 렌더링합니다. */
+    function calculateResult() {
+        // 1. 점수 기반 코드 생성 (4점 이상이면 1, 아니면 0)
+        // E/I axis: E score >= 2 (4 questions total) -> E (1), otherwise I (0)
+        // P/J axis: P score >= 2 (4 questions total) -> P (1), otherwise J (0)
+        // T/F axis: T score >= 2 (4 questions total) -> T (1), otherwise F (0)
+        
+        const E_score = quizState.scores.E >= 2 ? '1' : '0'; // E (1) or I (0)
+        const P_score = quizState.scores.P >= 2 ? '1' : '0'; // P (1) or J (0)
+        const T_score = quizState.scores.T >= 2 ? '1' : '0'; // T (1) or F (0)
+        
+        const finalScoreCode = E_score + P_score + T_score; // e.g., '101' (E J T)
+
+        // 2. 해당 코드에 맞는 유형 찾기
+        const resultType = teacherTypes.find(type => type.score === finalScoreCode);
+
+        // 3. 결과 화면 렌더링
+        renderResult(resultType);
+    }
+
+    /** 최종 결과 화면을 렌더링합니다. */
+    function renderResult(resultType) {
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const progressArea = document.getElementById('progress-area');
+        const header = document.querySelector('header');
+
+        quizScreen.classList.add('hidden');
+        progressArea.classList.add('hidden');
+        header.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+
+        // 코스 목록 생성
+        const courseListHTML = resultType.courses.map(courseNum => {
+            const isCourse7 = courseNum === 7;
+            return `
+            <li class="flex items-start text-left p-3 rounded-lg shadow-sm ${isCourse7 ? 'course-7' : 'bg-white border border-gray-100'}">
+                <span class="inline-block text-xl font-bold mr-3 text-[var(--secondary-color)]">#${courseNum}</span>
+                <span class="flex-grow ${isCourse7 ? 'course-7-text font-semibold' : 'text-gray-700'}">${allCourses[courseNum]}</span>
+            </li>
+            `;
+        }).join('');
+
+        // 결과 화면용 키워드 트리 생성
+        const resultKeywords = typeKeywords[resultType.code];
+        const resultColorClass = typeColorClass[resultType.code];
+        let resultKeywordTreeHTML = '';
+        if (resultKeywords && resultColorClass) {
+            resultKeywords.forEach((row) => {
+                resultKeywordTreeHTML += '<div class="tree-row">';
+                row.forEach((keyword) => {
+                    resultKeywordTreeHTML += `<div class="keyword-bubble ${resultColorClass}">${keyword}</div>`;
+                });
+                resultKeywordTreeHTML += '</div>';
+            });
+        }
+
+        resultScreen.innerHTML = `
+            <div class="text-center mb-6 mt-4">
+                <h2 class="text-3xl font-extrabold text-[var(--primary-color)] mb-2">🎉 당신의 선생님 유형은?</h2>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-2xl p-6 mb-6 border-4 border-[var(--primary-color)]">
+                <h3 class="text-3xl font-bold text-gray-800 mb-4">${resultType.name}</h3>
+                <p class="text-base text-gray-600 leading-relaxed">${resultType.description}</p>
+            </div>
+
+            <!-- 키워드 트리 -->
+            <div class="keyword-tree mb-1">
+                ${resultKeywordTreeHTML}
+            </div>
+
+            <!-- 추천 연수 -->
+            <div class="mb-8">
+                <h4 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4 flex items-center">
+                    <span class="mr-2 text-2xl">💡</span> 당신에게 추천하는 연수
+                </h4>
+                <ul class="space-y-3">
+                    ${courseListHTML}
+                </ul>
+            </div>
+
+            <!-- 다시하기 버튼 -->
+            <div class="mt-8 text-center space-y-3">
+                <button 
+                    class="w-full py-3 bg-[var(--secondary-color)] text-white font-bold text-lg rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+                    onclick="resetQuiz()"
+                >
+                    다시 테스트하기
+                </button>
+            </div>
+            
+            <!-- 연수 들으러가기 링크 -->
+            <div class="mt-6 text-center">
+                <a href="#" class="text-2xl font-bold text-[var(--primary-color)] hover:text-pink-600 transition-colors underline decoration-2 underline-offset-4">
+                    연수 들으러가기! Click!
+                </a>
+            </div>
+        `;
+    }
+
+    /** 퀴즈를 초기화하고 첫 화면으로 돌아갑니다. */
+    function resetQuiz() {
+        quizState.currentQIndex = 0;
+        quizState.scores = { E: 0, P: 0, T: 0 };
+        quizState.isFinished = false;
+
+        const mainScreen = document.getElementById('main-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const header = document.querySelector('header');
+        const progressArea = document.getElementById('progress-area');
+        
+        // 모든 화면 숨기기
+        quizScreen.classList.add('hidden');
+        resultScreen.classList.add('hidden');
+        progressArea.classList.add('hidden');
+        
+        // 메인 화면 표시
+        mainScreen.classList.remove('hidden');
+        header.classList.add('hidden');
+        
+        // 키워드 트리 자동 전환 다시 시작
+        currentTypeIndex = 0;
+        startKeywordTreeRotation();
+    }
+
+    // --- Keyword Tree Functions ---
+    let currentTypeIndex = 0;
+    let treeInterval = null;
+
+    /** 키워드 트리를 렌더링합니다. */
+    function renderKeywordTree(typeCode) {
+        const treeContainer = document.getElementById('keyword-tree');
+        const keywords = typeKeywords[typeCode];
+        const colorClass = typeColorClass[typeCode];
+        
+        if (!keywords || !colorClass) return;
+        
+        let html = '';
+        
+        // 각 행 렌더링 (모든 버블이 같은 색상 사용, 5줄)
+        keywords.forEach((row, rowIndex) => {
+            html += '<div class="tree-row">';
+            row.forEach((keyword, keywordIndex) => {
+                html += `<div class="keyword-bubble ${colorClass}">${keyword}</div>`;
+            });
+            html += '</div>';
+        });
+        
+        treeContainer.innerHTML = html;
+    }
+
+    /** 다음 유형으로 전환합니다. */
+    function switchToNextType() {
+        const treeContainer = document.getElementById('keyword-tree');
+        treeContainer.classList.add('fade-out');
+        
+        setTimeout(() => {
+            currentTypeIndex = (currentTypeIndex + 1) % teacherTypes.length;
+            const currentType = teacherTypes[currentTypeIndex];
+            renderKeywordTree(currentType.code);
+            treeContainer.classList.remove('fade-out');
+        }, 500);
+    }
+
+    /** 키워드 트리 자동 전환을 시작합니다. */
+    function startKeywordTreeRotation() {
+        // 초기 트리 렌더링
+        if (teacherTypes.length > 0) {
+            renderKeywordTree(teacherTypes[0].code);
+        }
+        
+        // 3초마다 전환
+        treeInterval = setInterval(switchToNextType, 3000);
+    }
+
+    /** 키워드 트리 자동 전환을 중지합니다. */
+    function stopKeywordTreeRotation() {
+        if (treeInterval) {
+            clearInterval(treeInterval);
+            treeInterval = null;
+        }
+    }
+
+    // --- Initialization ---
+    // Show main screen when the window loads
+    window.onload = function() {
+        const header = document.querySelector('header');
+        const progressArea = document.getElementById('progress-area');
+        header.classList.add('hidden');
+        progressArea.classList.add('hidden');
+        
+        // 키워드 트리 자동 전환 시작
+        startKeywordTreeRotation();
+    };
+
+    // Firebase Setup (Required boilerplate - not fully implemented for this single-session quiz logic)
+    // const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    // const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+    
+    // if (firebaseConfig) {
+    //     // import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    //     // import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    //     // const app = initializeApp(firebaseConfig);
+    //     // const auth = getAuth(app);
+    //     // const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    //     // if (token) {
+    //     //     signInWithCustomToken(auth, token).catch(e => console.error("Firebase Auth Error:", e));
+    //     // } else {
+    //     //     signInAnonymously(auth).catch(e => console.error("Firebase Anon Auth Error:", e));
+    //     // }
+    // }
+
+</script>
+
+</body>
+</html>

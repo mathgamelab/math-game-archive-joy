@@ -115,7 +115,7 @@
             color: white;
         }
         /* 각 유형별 메인 색상 */
-        .keyword-bubble.type1 { background-color: #e63946; } /* 빨강 - 규칙 준수 캡틴 */
+        .keyword-bubble.type1 { background-color: #e63946; } /* 빨강 - 원칙주의 캡틴 */
         .keyword-bubble.type2 { background-color: #ff85a1; } /* 분홍 - 화합형 코디네이터 */
         .keyword-bubble.type3 { background-color: #5b9bf8; } /* 파랑 - 현장형 혁신가 */
         .keyword-bubble.type4 { background-color: #ff6b9d; } /* 핑크 - 인싸 소통왕 */
@@ -261,7 +261,7 @@
     <!-- Header -->
     <header class="text-center mb-8 hidden">
         <h1 class="text-2xl font-bold text-gray-800">🏫 선생님 유형 진단 테스트</h1>
-        <p class="text-sm text-gray-500 mt-1">학교에서 당신은 어떤 선생님일까요?</p>
+        <p class="text-sm text-gray-500 mt-1">학교에서 나는 어떤 선생님일까요?</p>
     </header>
 
     <!-- Quiz/Result Content Area -->
@@ -284,7 +284,7 @@
                     🏫 선생님 유형 테스트
                 </h1>
                 <p class="fun-text text-base mb-4" style="color: #4a5568; text-shadow: 1px 1px 2px rgba(255,255,255,0.9), 2px 2px 4px rgba(0,0,0,0.1);">
-                    학교에서 당신은 어떤 선생님일까요?
+                    학교에서 나는 어떤 선생님일까요?
                 </p>
             </div>
             
@@ -332,14 +332,14 @@
         <div class="w-full bg-gray-200 rounded-full h-2.5 mb-1">
             <div id="progress-bar" class="bg-[var(--primary-color)] h-2.5 rounded-full progress-bar-fill" style="width: 0%"></div>
         </div>
-        <p id="question-counter" class="text-xs text-right text-gray-500">0/12</p>
+        <p id="question-counter" class="text-xs text-right text-gray-500">0/16</p>
     </footer>
 
 </div>
 
 <script>
     // Constants
-    const NUM_QUESTIONS = 12;
+    const NUM_QUESTIONS = 16;
 
     // A simple, single-session state object
     const quizState = {
@@ -347,6 +347,7 @@
         // E/I (외향/내향), P/J (유연/계획), T/F (사고/감정)
         // Score: E, P, T side gets +1. I, J, F side gets 0.
         scores: { E: 0, P: 0, T: 0 },
+        courseAnswers: [], // 연수 과정 관련 질문 답변 저장
         isFinished: false,
     };
 
@@ -400,14 +401,14 @@
             ]
         },
         {
-            id: 7, text: "새 학년 학급 경영 계획을 짤 때, 당신은 주로?", axis: 'P',
+            id: 7, text: "새 학년 학급 경영 계획을 짤 때, 나는 주로?", axis: 'P',
             choices: [
                 { text: "대략적인 틀만 잡아두고 학생들과 함께 디테일을 채워나간다.", value: 1, code: 'P' },
                 { text: "월별, 주별 계획까지 꼼꼼하게 정리된 매뉴얼을 미리 만든다.", value: 0, code: 'J' }
             ]
         },
         {
-            id: 8, text: "당신에게 보고서 제출 기한이 임박했다면?", axis: 'P',
+            id: 8, text: "이런 깜빡했다! 보고서 제출 기한이 임박했다면?", axis: 'P',
             choices: [
                 { text: "완벽하지 않아도 일단 제출하고 나중에 수정 보완할 생각을 한다.", value: 1, code: 'P' },
                 { text: "마지막 순간까지 검토하며 계획된 수준에 도달할 때까지 붙잡고 있는다.", value: 0, code: 'J' }
@@ -438,10 +439,40 @@
             ]
         },
         {
-            id: 12, text: "학교 평가를 위한 자료를 만들 때, 당신의 기준은?", axis: 'T',
+            id: 12, text: "학교 평가를 위한 자료를 만들 때, 나의 기준은?", axis: 'T',
             choices: [
                 { text: "평가 항목에 맞추어 성과를 명확히 보여주는 데이터와 결과 중심.", value: 1, code: 'T' },
                 { text: "학교의 긍정적인 분위기, 교육 공동체의 화합 노력 등을 강조.", value: 0, code: 'F' }
+            ]
+        },
+
+        // --- 연수 과정 관련 질문 (3개) ---
+        {
+            id: 13, text: "디지털 도구를 수업에 활용하는 것에 대해 어떻게 생각하시나요?", axis: 'C',
+            choices: [
+                { text: "새로운 기술을 배워서 학생들의 참여도를 높이고 싶다.", value: 1, code: 'C' },
+                { text: "기존 방식이 편하긴하지만 필요하다면 배울 의향이 있다.", value: 0, code: 'C' }
+            ]
+        },
+        {
+            id: 14, text: "연수에 참여할 때 가장 중요하게 생각하는 것은?", axis: 'C',
+            choices: [
+                { text: "실제 수업에 바로 적용할 수 있는 실용적인 도구와 방법.", value: 1, code: 'C' },
+                { text: "교육 철학과 이론적 배경을 이해하고 깊이 있게 학습.", value: 0, code: 'C' }
+            ]
+        },
+        {
+            id: 15, text: "인공지능을 활용한 수업에 대한 나의 관심도는?", axis: 'C',
+            choices: [
+                { text: "매우 관심이 많고, 학생들에게 미래 역량을 기르고 싶다.", value: 1, code: 'C' },
+                { text: "관심은 있지만, 어떻게 시작해야 할지 막막하다.", value: 0, code: 'C' }
+            ]
+        },
+        {
+            id: 16, text: "연수를 들을 때 어떤 학습 방식을 선호하시나요?", axis: 'C',
+            choices: [
+                { text: "동료들과 함께 협력하며 토론하고 실습하는 그룹 학습.", value: 1, code: 'C' },
+                { text: "나만의 속도로 차근차근 따라하며 익히는 자기주도 학습.", value: 0, code: 'C' }
             ]
         }
     ];
@@ -450,53 +481,61 @@
     // E/I(1/0) | P/J(1/0) | T/F(1/0)
     // 1: E (E=1) | 1: P (P=1) | 1: T (T=1) -> E P T
     const teacherTypes = [
-        // Type 1: E-J-T (1-0-1) - 규칙 준수 캡틴 (EJ-T)
+        // Type 1: E-J-T (1-0-1) - 원칙주의 캡틴 (EJ-T)
         {
-            code: 'EJ-T', score: '101', name: '⚓ 규칙 준수 캡틴', 
+            code: 'EJ-T', score: '101', name: '⚓ 원칙주의 캡틴', 
             description: '원칙과 논리를 중요시하는 카리스마 넘치는 리더입니다. 명확한 목표를 세우고 동료들과 함께 효율적인 시스템을 구축하는 데 능숙합니다. 계획이 틀어지는 것을 싫어하지만, 목표 달성을 위해선 누구보다 열정적으로 참여합니다.',
-            courses: [4, 7]
+            courses: [4, 7],
+            courseAnalysis: '선생님은 체계적이고 목표 지향적인 성향을 가지고 있어, 학습자 맞춤형 소프트웨어와 SW-AI 역량 연수를 통해 체계적인 디지털 교육 시스템을 구축할 수 있습니다. 이 연수들을 통해 명확한 교육 목표를 달성하고, 논리적이고 효율적인 수업 설계 역량을 강화할 수 있습니다.'
         },
         // Type 2: E-J-F (1-0-0) - 화합형 코디네이터 (EJ-F)
         {
             code: 'EJ-F', score: '100', name: '🤝 화합형 코디네이터',
             description: '따뜻한 마음으로 모두의 의견을 조율하는 조화의 상징입니다. 계획을 세우지만, 그 계획이 사람들에게 미칠 영향을 우선 고려합니다. 공동체의 안정과 긍정적인 분위기를 만드는 데 탁월한 능력을 발휘합니다.',
-            courses: [2, 5]
+            courses: [2, 5],
+            courseAnalysis: '선생님의 따뜻하고 협력적인 성향은 디지털 기반 수업 활성화와 스마트 기기 활용 연수와 잘 맞습니다. 이 연수들을 통해 학생들과의 소통을 강화하고, 공동체의 긍정적인 분위기를 만들어가는 디지털 교육 역량을 기를 수 있습니다. 협력적이고 화합적인 수업 환경을 조성할 수 있습니다.'
         },
         // Type 3: E-P-T (1-1-1) - 현장형 혁신가 (EP-T)
         {
             code: 'EP-T', score: '111', name: '🚀 현장형 혁신가',
             description: '새로운 시도에 거리낌이 없고, 즉각적인 문제 해결 능력이 뛰어난 활동가입니다. 복잡한 상황에서도 논리적으로 핵심을 파악하고 유연하게 대처합니다. 결과와 효율을 중요시하며 변화를 즐깁니다.',
-            courses: [3, 6]
+            courses: [3, 6],
+            courseAnalysis: '선생님의 혁신적이고 유연한 성향은 글로벌 에듀테크 마스터 인증과 생성형 AI 활용 연수와 완벽하게 맞습니다. 이 연수들을 통해 최신 교육 기술을 빠르게 습득하고, 즉시 수업 현장에 적용하여 학생들의 학습 효과를 극대화할 수 있습니다. 변화를 주도하는 선도 교사가 될 수 있습니다.'
         },
         // Type 4: E-P-F (1-1-0) - 인싸 소통왕 (EP-F)
         {
             code: 'EP-F', score: '110', name: '🎉 인싸 소통왕',
             description: '학생, 동료 누구와도 스스럼없이 소통하는 에너지 넘치는 교사입니다. 정해진 틀보다는 인간적인 관계를 통해 문제를 해결합니다. 사람들의 행복과 자유로운 분위기를 만드는 데 재능이 있습니다.',
-            courses: [5, 7]
+            courses: [5, 7],
+            courseAnalysis: '선생님의 소통 능력과 자유로운 성향은 스마트 기기 활용과 SW-AI 역량 연수를 통해 더욱 빛을 발할 수 있습니다. 이 연수들을 통해 학생들과의 상호작용을 강화하고, 즐겁고 자유로운 분위기의 디지털 수업을 만들 수 있습니다. 관계 중심의 따뜻한 디지털 교육 환경을 구축할 수 있습니다.'
         },
         // Type 5: I-J-T (0-0-1) - 연구실의 현자 (IJ-T)
         {
             code: 'IJ-T', score: '001', name: '🔬 연구실의 현자',
             description: '조용히 자신의 업무를 계획하고 깊이 있게 분석하는 전문가입니다. 비효율적인 것을 가장 싫어하며, 혼자만의 시간을 통해 최적의 교수법을 끊임없이 연구합니다. 논리적이고 체계적인 보고서 작성을 잘합니다.',
-            courses: [2, 4]
+            courses: [2, 4],
+            courseAnalysis: '선생님의 깊이 있는 연구 성향과 체계적인 접근 방식은 디지털 기반 수업 활성화와 학습자 맞춤형 소프트웨어 활용 연수와 잘 맞습니다. 이 연수들을 통해 디지털 교육의 이론적 배경을 깊이 이해하고, 체계적이고 효율적인 수업 설계 역량을 강화할 수 있습니다. 완벽한 디지털 교육 전문가가 될 수 있습니다.'
         },
         // Type 6: I-J-F (0-0-0) - 따뜻한 멘토 (IJ-F)
         {
             code: 'IJ-F', score: '000', name: '🤗 따뜻한 멘토',
             description: '말없이 학생들을 챙기는 속 깊은 배려형 관리자입니다. 조용하지만 맡은 일은 꼼꼼히 처리하며, 학생 한 명 한 명의 성장을 계획적으로 지원합니다. 감정을 이해하고 공감하는 능력이 뛰어납니다.',
-            courses: [6, 7]
+            courses: [6, 7],
+            courseAnalysis: '선생님의 배려심과 계획적인 성향은 생성형 AI 활용과 SW-AI 역량 연수를 통해 학생 개별 맞춤형 교육을 실현할 수 있습니다. 이 연수들을 통해 각 학생의 성장을 세심하게 지원하고, 따뜻하고 개인화된 디지털 교육 환경을 만들 수 있습니다. 학생 중심의 배려형 디지털 교육을 실현할 수 있습니다.'
         },
         // Type 7: I-P-T (0-1-1) - 효율 추구 프로 (IP-T)
         {
             code: 'IP-T', score: '011', name: '💼 업무 배테랑',
             description: '실용성과 효율성을 최우선으로 생각하는 실력파 교사입니다. 복잡한 규정보다는 실질적인 해결책을 찾아 유연하게 업무를 처리합니다. 불필요한 형식적인 절차를 최소화하고 성과에 집중합니다.',
-            courses: [3, 7]
+            courses: [3, 7],
+            courseAnalysis: '선생님의 실용적이고 효율적인 성향은 글로벌 에듀테크 마스터 인증과 SW-AI 역량 연수를 통해 즉시 활용 가능한 실전 도구를 습득할 수 있습니다. 이 연수들을 통해 복잡한 절차 없이 핵심 기능만 빠르게 익혀 수업에 바로 적용할 수 있습니다. 효율적인 디지털 교육 실무 전문가가 될 수 있습니다.'
         },
         // Type 8: I-P-F (0-1-0) - 자유로운 영혼 (IP-F)
         {
             code: 'IP-F', score: '010', name: '🎨 자유로운 영혼',
             description: '틀에 얽매이지 않고 개인의 가치와 감수성을 중시하는 교사입니다. 학생들의 창의성을 존중하며, 비규칙적인 상황에서도 흥미로운 교육 기회를 발견합니다. 편안하고 자유로운 학급 분위기를 조성합니다.',
-            courses: [2, 7]
+            courses: [2, 7],
+            courseAnalysis: '선생님의 자유롭고 창의적인 성향은 디지털 기반 수업 활성화와 SW-AI 역량 연수를 통해 유연하고 창의적인 수업을 만들 수 있습니다. 이 연수들을 통해 학생들의 개성을 존중하고, 자유롭고 창의적인 디지털 교육 환경을 조성할 수 있습니다. 틀에 얽매이지 않는 혁신적인 디지털 교육을 실현할 수 있습니다.'
         }
     ];
 
@@ -649,6 +688,9 @@
             quizState.scores.P += value;
         } else if (axis === 'T') {
             quizState.scores.T += value;
+        } else if (axis === 'C') {
+            // 연수 과정 관련 질문 답변 저장
+            quizState.courseAnswers.push(value);
         }
         
         // 다음 질문으로 이동
@@ -678,9 +720,224 @@
 
         // 2. 해당 코드에 맞는 유형 찾기
         const resultType = teacherTypes.find(type => type.score === finalScoreCode);
+        
+        // 3. 마지막 4개 질문 답변을 종합적으로 분석하여 연수 추천 조정
+        const recommendedCourses = adjustCoursesByAnswers(resultType.courses, quizState.courseAnswers);
+        
+        // 4. 조정된 연수 목록을 resultType에 추가
+        resultType.recommendedCourses = recommendedCourses;
+        
+        // 5. 추천된 연수에 맞는 분석 문구 동적 생성
+        resultType.courseAnalysis = generateCourseAnalysis(resultType, recommendedCourses, quizState.courseAnswers);
 
-        // 3. 결과 화면 렌더링
+        // 6. 결과 화면 렌더링
         renderResult(resultType);
+    }
+
+    /** 추천된 연수와 답변을 기반으로 분석 문구를 생성합니다. */
+    function generateCourseAnalysis(resultType, recommendedCourses, courseAnswers) {
+        const digitalInterest = courseAnswers[0] || 0;
+        const practicalPreference = courseAnswers[1] || 0;
+        const aiInterest = courseAnswers[2] || 0;
+        const collaborativeStyle = courseAnswers[3] || 0;
+        
+        // 추천된 연수 이름 가져오기
+        const courseNames = recommendedCourses.map(num => allCourses[num]);
+        
+        // 유형별 기본 특성 문구
+        const typeTraits = {
+            'EJ-T': '체계적이고 목표 지향적인',
+            'EJ-F': '따뜻하고 협력적인',
+            'EP-T': '혁신적이고 유연한',
+            'EP-F': '소통 능력이 뛰어나고 자유로운',
+            'IJ-T': '깊이 있게 연구하고 체계적인',
+            'IJ-F': '배려심이 깊고 계획적인',
+            'IP-T': '실용적이고 효율적인',
+            'IP-F': '자유롭고 창의적인'
+        };
+        
+        const trait = typeTraits[resultType.code] || '특별한';
+        
+        // 연수 특성 분석
+        const hasAICourses = recommendedCourses.some(c => [6, 7].includes(c));
+        const hasBasicCourses = recommendedCourses.some(c => [2, 5].includes(c));
+        const hasPracticalCourses = recommendedCourses.some(c => [3, 4].includes(c));
+        
+        // 연수 목록 문구 생성
+        let courseListText = '';
+        if (courseNames.length === 1) {
+            courseListText = `"${courseNames[0]}"`;
+        } else if (courseNames.length === 2) {
+            courseListText = `"${courseNames[0]}"과 "${courseNames[1]}"`;
+        } else {
+            courseListText = `"${courseNames[0]}", "${courseNames[1]}", "${courseNames[2]}"`;
+        }
+        
+        // 첫 번째 문장: 선생님 특성과 추천 이유
+        let analysis = `선생님은 ${trait} 성향을 가지고 있어 ${courseListText} 연수가 적합합니다. `;
+        
+        // 두 번째 문장: 답변 기반 맞춤 설명
+        const benefits = [];
+        
+        if (hasAICourses && aiInterest === 1) {
+            benefits.push('미래 교육을 선도하는 AI 활용 역량을 강화');
+        }
+        
+        if (hasBasicCourses && digitalInterest === 0) {
+            benefits.push('디지털 교육의 기초를 탄탄히 다지기');
+        }
+        
+        if (hasPracticalCourses && practicalPreference === 1) {
+            benefits.push('실제 수업에 바로 적용할 수 있는 실전 도구 습득');
+        } else if (practicalPreference === 0 && !hasAICourses) {
+            benefits.push('교육 철학과 이론적 배경을 깊이 이해하기');
+        }
+        
+        if (benefits.length > 0) {
+            if (benefits.length === 1) {
+                analysis += `이 연수를 통해 ${benefits[0]}할 수 있습니다. `;
+            } else if (benefits.length === 2) {
+                analysis += `이 연수를 통해 ${benefits[0]}하고, ${benefits[1]}할 수 있습니다. `;
+            } else {
+                analysis += `이 연수를 통해 ${benefits[0]}하고, ${benefits[1]}하며, ${benefits[2]}할 수 있습니다. `;
+            }
+        }
+        
+        // 세 번째 문장: 학습 방식과 기대 효과
+        if (collaborativeStyle === 1) {
+            analysis += '동료들과 협력하며 함께 성장하는 과정에서 ';
+        } else {
+            analysis += '나만의 속도로 차근차근 학습하는 과정에서 ';
+        }
+        
+        // 최종 목표 문구
+        if (hasAICourses) {
+            analysis += '학생들에게 미래 역량을 기르고 혁신적인 디지털 교육을 실현할 수 있습니다.';
+        } else if (hasPracticalCourses) {
+            analysis += '효율적이고 효과적인 수업 설계 역량을 강화할 수 있습니다.';
+        } else {
+            analysis += '체계적이고 전문적인 디지털 교육 역량을 기를 수 있습니다.';
+        }
+        
+        return analysis;
+    }
+
+    /** 마지막 4개 질문 답변을 종합적으로 분석하여 연수 추천을 조정합니다. */
+    function adjustCoursesByAnswers(baseCourses, courseAnswers) {
+        // courseAnswers: [13번 답변, 14번 답변, 15번 답변, 16번 답변]
+        // 13번: 디지털 도구 관심도 (1: 높음, 0: 낮음)
+        // 14번: 실용성 vs 이론 (1: 실용, 0: 이론)
+        // 15번: AI 관심도 (1: 높음, 0: 낮음)
+        // 16번: 학습 방식 (1: 협력적, 0: 독립적)
+        
+        const digitalInterest = courseAnswers[0] || 0; // 13번
+        const practicalPreference = courseAnswers[1] || 0; // 14번
+        const aiInterest = courseAnswers[2] || 0; // 15번
+        const collaborativeStyle = courseAnswers[3] || 0; // 16번
+        
+        // 연수 분류
+        const basicCourses = [2, 5]; // 디지털 기반 수업 활성화, 스마트 기기 활용
+        const practicalCourses = [3, 4]; // 글로벌 에듀테크 마스터, 학습자 맞춤형 소프트웨어
+        const aiCourses = [6, 7]; // 생성형 AI 활용, SW-AI 역량 정보화
+        const theoryCourses = [4, 6]; // 학습자 맞춤형 소프트웨어, 생성형 AI 활용 (심화)
+        const collaborativeCourses = [2, 3, 5]; // 협력적 학습에 적합한 연수
+        const independentCourses = [4, 6, 7]; // 자기주도 학습에 적합한 연수
+        
+        // 점수 기반 추천 시스템
+        const courseScores = {};
+        
+        // 기본 유형의 연수에 가중치 부여
+        baseCourses.forEach(course => {
+            courseScores[course] = (courseScores[course] || 0) + 3;
+        });
+        
+        // 13번: 디지털 도구 관심도 분석
+        if (digitalInterest === 0) {
+            // 관심도가 낮으면 기초 연수에 높은 점수
+            basicCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 2;
+            });
+        } else {
+            // 관심도가 높으면 고급 연수에 점수 추가
+            practicalCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 1;
+            });
+            aiCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 1;
+            });
+        }
+        
+        // 14번: 실용성 vs 이론 선호도 분석
+        if (practicalPreference === 1) {
+            // 실용 선호 시 실전 연수에 높은 점수
+            practicalCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 2;
+            });
+        } else {
+            // 이론 선호 시 심화 연수에 높은 점수
+            theoryCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 2;
+            });
+        }
+        
+        // 15번: AI 관심도 분석
+        if (aiInterest === 1) {
+            // AI 관심도가 높으면 AI 관련 연수에 높은 점수
+            aiCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 3;
+            });
+        } else {
+            // AI 관심도가 낮으면 기초/일반 연수에 점수 추가
+            basicCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 1;
+            });
+            practicalCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 1;
+            });
+        }
+        
+        // 16번: 학습 방식 선호도 분석
+        if (collaborativeStyle === 1) {
+            // 협력적 학습 선호 시 그룹 활동이 많은 연수에 점수 추가
+            collaborativeCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 1.5;
+            });
+        } else {
+            // 독립적 학습 선호 시 자기주도형 연수에 점수 추가
+            independentCourses.forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 1.5;
+            });
+        }
+        
+        // 종합 분석: 특정 조합에 대한 보너스 점수
+        // 디지털 관심도 높음 + 실용 선호 + AI 관심 높음 = 고급 실전 연수
+        if (digitalInterest === 1 && practicalPreference === 1 && aiInterest === 1) {
+            [3, 6, 7].forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 1;
+            });
+        }
+        
+        // 디지털 관심도 낮음 + 이론 선호 = 기초 이론 연수
+        if (digitalInterest === 0 && practicalPreference === 0) {
+            [2, 4].forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 1;
+            });
+        }
+        
+        // AI 관심 높음 + 협력적 = AI 협력 연수
+        if (aiInterest === 1 && collaborativeStyle === 1) {
+            [6, 7].forEach(course => {
+                courseScores[course] = (courseScores[course] || 0) + 0.5;
+            });
+        }
+        
+        // 점수 순으로 정렬하여 상위 3개 선택
+        const sortedCourses = Object.entries(courseScores)
+            .sort((a, b) => b[1] - a[1])
+            .map(([course]) => parseInt(course));
+        
+        // 최대 3개 반환 (점수가 0보다 큰 것만)
+        return sortedCourses.filter(course => courseScores[course] > 0).slice(0, 3);
     }
 
     /** 최종 결과 화면을 렌더링합니다. */
@@ -695,8 +952,9 @@
         header.classList.add('hidden');
         resultScreen.classList.remove('hidden');
 
-        // 코스 목록 생성
-        const courseListHTML = resultType.courses.map(courseNum => {
+        // 코스 목록 생성 (조정된 연수 목록 사용)
+        const coursesToShow = resultType.recommendedCourses || resultType.courses;
+        const courseListHTML = coursesToShow.map(courseNum => {
             const isCourse7 = courseNum === 7;
             return `
             <li class="flex items-start text-left p-3 rounded-lg shadow-sm ${isCourse7 ? 'course-7' : 'bg-white border border-gray-100'}">
@@ -722,7 +980,7 @@
 
         resultScreen.innerHTML = `
             <div class="text-center mb-6 mt-4">
-                <h2 class="text-3xl font-extrabold text-[var(--primary-color)] mb-2">🎉 당신의 선생님 유형은?</h2>
+                <h2 class="text-3xl font-extrabold text-[var(--primary-color)] mb-2">🎉 나의 선생님 유형은?</h2>
             </div>
             
             <div class="bg-white rounded-2xl shadow-2xl p-6 mb-6 border-4 border-[var(--primary-color)]">
@@ -738,11 +996,17 @@
             <!-- 추천 연수 -->
             <div class="mb-8">
                 <h4 class="text-xl font-bold text-gray-800 border-b pb-2 mb-4 flex items-center">
-                    <span class="mr-2 text-2xl">💡</span> 당신에게 추천하는 연수
+                    <span class="mr-2 text-2xl">💡</span> 선생님께 추천하는 디지털 교육혁신 연수
                 </h4>
-                <ul class="space-y-3">
+                <ul class="space-y-3 mb-4">
                     ${courseListHTML}
                 </ul>
+                <!-- 연수 추천 분석 -->
+                <div class="mt-6 p-4 bg-gradient-to-r from-blue-50 to-pink-50 rounded-xl border-l-4 border-[var(--primary-color)]">
+                    <p class="text-base text-gray-700 leading-relaxed">
+                        ${resultType.courseAnalysis || '선생님의 특성에 맞는 디지털 교육혁신 연수를 추천합니다.'}
+                    </p>
+                </div>
             </div>
 
             <!-- 다시하기 버튼 -->
@@ -768,6 +1032,7 @@
     function resetQuiz() {
         quizState.currentQIndex = 0;
         quizState.scores = { E: 0, P: 0, T: 0 };
+        quizState.courseAnswers = [];
         quizState.isFinished = false;
 
         const mainScreen = document.getElementById('main-screen');

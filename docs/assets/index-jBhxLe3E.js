@@ -195,7 +195,17 @@ Error generating stack: `+o.message+`
 [7수01-01-02] 정수의 곱셈과 나눗셈을 할 수 있다.
 [7수01-01-03] 정수의 사칙연산의 혼합계산을 할 수 있다.
 📚 학습 유형 : 연산 게임
-🔥 난이도 : ★★☆☆☆`,icon:"💧",status:"playable",difficulty:"초급",estimatedTime:"10분",category:"수와 연산",content:"정수의 혼합계산",terms:"양수, 음수, 절댓값, 혼합계산",standard:"7수01-01",type:"연산 게임",summary:"넘버 플로우의 숫자 카드 대신 정수의 혼합계산이 등장하는 연산 게임",url:"/number_flow_integer.html",mobile:"지원"}],middle2:[{id:"rational-numbers",title:"유리수 어드벤처",description:`🎮게임명 : 유리수 어드벤처
+🔥 난이도 : ★★☆☆☆`,icon:"💧",status:"playable",difficulty:"초급",estimatedTime:"10분",category:"수와 연산",content:"정수의 혼합계산",terms:"양수, 음수, 절댓값, 혼합계산",standard:"7수01-01",type:"연산 게임",summary:"넘버 플로우의 숫자 카드 대신 정수의 혼합계산이 등장하는 연산 게임",url:"/number_flow_integer.html",mobile:"지원"},{id:"shape-scanner",title:"도형 탐지기",description:`🎮게임명 : 도형 탐지기
+📘 교과명 : 중학교 1학년/기하
+📂 내용범주 : 입체도형
+📌 내용요소 : 입체도형의 단면, 입체도형의 인식
+✏️ 학습 가능 용어 : 정육면체, 구, 원기둥, 원뿔, 사각뿔, 삼각기둥, 육각기둥, 육각뿔, 정사면체, 정팔면체, 정십이면체, 정이십면체, 단면
+🎯 성취기준 :
+[7수04-01-01] 입체도형을 이해하고, 입체도형의 구성 요소를 알 수 있다.
+[7수04-01-02] 입체도형의 전개도를 이해하고 그릴 수 있다.
+[7수04-01-03] 입체도형의 단면을 이해하고, 단면의 모양을 알 수 있다.
+📚 학습 유형 : 탐지 게임
+🔥 난이도 : ★★★☆☆`,icon:"🔍",status:"playable",difficulty:"중급",estimatedTime:"15분",category:"기하",content:"입체도형의 단면",terms:"입체도형, 단면, 정육면체, 구, 원기둥, 원뿔",standard:"7수04-01",type:"탐지 게임",summary:"단면의 변화를 관찰하고 숨겨진 입체도형을 맞추는 탐지 게임",url:"/shape_scanner.html",mobile:"제한"}],middle2:[{id:"rational-numbers",title:"유리수 어드벤처",description:`🎮게임명 : 유리수 어드벤처
 📘 교과명 : 중학교 2학년/수와 연산
 📂 내용범주 : 유리수와 순환소수
 📌 내용요소 : 유리수의 덧셈, 뺄셈, 곱셈, 나눗셈

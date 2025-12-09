@@ -132,33 +132,68 @@
         }
         
         .slider-container {
-            padding: 20px;
-            background: rgba(255,255,255,0.95);
-            border-radius: 16px;
-            margin: 0 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            min-width: 400px;
+            max-width: 600px;
+            margin-right: 20px;
+        }
+        
+        .slider-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
         }
         
         .slider-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
+            font-size: 1.2rem;
+            font-weight: 600;
             color: #475569;
+            white-space: nowrap;
         }
         
-        .slider-value {
-            font-weight: 600;
-            color: #2563eb;
+        .auto-play-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+        }
+        
+        .auto-play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+        }
+        
+        .auto-play-btn.playing {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+        
+        .auto-play-btn.playing::before {
+            content: '⏸';
+        }
+        
+        .auto-play-btn:not(.playing)::before {
+            content: '▶';
         }
         
         .slider {
             width: 100%;
-            height: 8px;
+            height: 6px;
             border-radius: 4px;
             background: #e2e8f0;
             outline: none;
             -webkit-appearance: none;
+            appearance: none;
         }
         
         .slider::-webkit-slider-thumb {
@@ -177,7 +212,14 @@
             border-top: 1px solid rgba(0,0,0,0.08);
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .bottom-left {
+            display: flex;
+            align-items: center;
+            flex: 1;
             gap: 20px;
         }
         
@@ -191,6 +233,7 @@
             font-weight: 600;
             color: #475569;
             margin-bottom: 10px;
+            white-space: nowrap;
         }
         
         .answer-buttons {
@@ -333,6 +376,24 @@
         }
         
         @media (max-width: 900px) {
+            .bottom-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .bottom-left {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .slider-container {
+                width: 100%;
+                max-width: 100%;
+                min-width: 100%;
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+            
             .viewer-container {
                 flex-direction: column;
             }
@@ -370,7 +431,7 @@
                         <span class="view-badge">힌트</span>
                     </div>
                     <div class="canvas-wrapper" id="container-2d">
-                        <div class="instructions">슬라이더로 절단 높이를 조절하세요</div>
+                        <div class="instructions">슬라이더를 조정해서 단면을 탐지하세요</div>
                     </div>
                 </div>
                 
@@ -387,18 +448,19 @@
             </div>
         </div>
         
-        <div class="slider-container">
-            <div class="slider-label">
-                <span>절단 높이</span>
-                <span class="slider-value" id="height-value">0.00</span>
-            </div>
-            <input type="range" class="slider" id="height-slider" min="-2" max="2" step="0.05" value="-2">
-        </div>
-        
         <div class="bottom-panel">
-            <div class="answer-section">
-                <div class="answer-label">이 도형은 무엇일까요?</div>
-                <div class="answer-buttons" id="answer-buttons">
+            <div class="bottom-left">
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span class="slider-label">단면 스캔하기</span>
+                        <button class="auto-play-btn" id="auto-play-btn" title="자동 스캔"></button>
+                    </div>
+                    <input type="range" class="slider" id="height-slider" min="-2" max="2" step="0.05" value="-2">
+                </div>
+                <div class="answer-section">
+                    <div class="answer-label">이 도형은 무엇일까요?</div>
+                    <div class="answer-buttons" id="answer-buttons">
+                    </div>
                 </div>
             </div>
             <div class="action-buttons">
@@ -445,6 +507,7 @@
         let round = 1;
         let answered = false;
         let currentRotation = { x: 0, y: 0, z: 0 };
+        let attemptCount = 0; // 현재 문제의 시도 횟수
         
         // ============ 3D 뷰 설정 ============
         const container3D = document.getElementById('container-3d');
@@ -710,8 +773,17 @@
         
         // 난이도에 따른 회전 각도 생성 함수
         function generateRotationByDifficulty(round) {
-            // 처음 5문제: 0도 포함, 90도/180도/270도는 제외 (stencil 렌더링 문제 방지)
-            if (round <= 5) {
+            // 1-3라운드: 매우 쉬운 난이도 - 회전 없음 (렌더링 버그 방지)
+            if (round <= 3) {
+                // 0도만 사용 (회전 없음)
+                return {
+                    x: 0,
+                    y: 0,
+                    z: 0
+                };
+            }
+            // 4-5라운드: 쉬운 난이도 - 0도 포함, 90도/180도/270도는 제외 (stencil 렌더링 문제 방지)
+            else if (round <= 5) {
                 // 0도 포함, 90도/180도/270도 제외
                 const angles = [0, Math.PI / 4, Math.PI * 3 / 4, Math.PI * 5 / 4, Math.PI * 7 / 4];
                 // 30도 단위 각도
@@ -854,6 +926,12 @@
             // 상태 초기화
             selectedAnswer = null;
             answered = false;
+            attemptCount = 0; // 시도 횟수 초기화
+            
+            // 자동 재생 정지
+            if (isAutoPlaying) {
+                startAutoPlay(); // 토글하여 정지
+            }
             
             document.getElementById('height-slider').value = -2;
             updateClipPlane(-2);
@@ -932,6 +1010,8 @@
             
             // 오답인 경우
             if (!isCorrect) {
+                attemptCount++; // 시도 횟수 증가
+                
                 // 오답 피드백 표시
                 const overlay = document.getElementById('result-overlay');
                 overlay.style.display = 'block';
@@ -967,14 +1047,26 @@
             
             // 정답인 경우
             answered = true;
-            score += 10;
+            attemptCount++; // 정답 시도도 카운트에 포함
+            
+            // 시도 횟수에 따른 점수 계산
+            let pointsEarned = 0;
+            if (attemptCount === 1) {
+                pointsEarned = 10;
+            } else if (attemptCount === 2) {
+                pointsEarned = 7;
+            } else if (attemptCount >= 3) {
+                pointsEarned = 5;
+            }
+            
+            score += pointsEarned;
             document.getElementById('current-score').textContent = score;
             
             const overlay = document.getElementById('result-overlay');
             overlay.style.display = 'block';
             overlay.classList.remove('fade-out');
             overlay.className = 'result-overlay correct';
-            overlay.innerHTML = '🎉 정답!<br><small>+10점</small>';
+            overlay.innerHTML = `🎉 정답!<br><small>+${pointsEarned}점</small>`;
             
             // 2초 후 오버레이 페이드아웃
             setTimeout(() => {
@@ -1068,13 +1160,56 @@
                 }
             }
             
-            document.getElementById('height-value').textContent = height.toFixed(2);
+        }
+        
+        // 자동 재생 관련 변수
+        let autoPlayInterval = null;
+        let isAutoPlaying = false;
+        let autoPlayDirection = 1; // 1: 증가, -1: 감소
+        
+        // 자동 재생 함수
+        function startAutoPlay() {
+            if (isAutoPlaying) {
+                // 정지
+                if (autoPlayInterval) {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = null;
+                }
+                isAutoPlaying = false;
+                document.getElementById('auto-play-btn').classList.remove('playing');
+            } else {
+                // 시작
+                isAutoPlaying = true;
+                document.getElementById('auto-play-btn').classList.add('playing');
+                
+                const slider = document.getElementById('height-slider');
+                let currentValue = parseFloat(slider.value);
+                autoPlayDirection = 1; // 처음엔 증가 방향
+                
+                autoPlayInterval = setInterval(() => {
+                    currentValue += 0.05 * autoPlayDirection;
+                    
+                    // 범위 체크
+                    if (currentValue >= 2) {
+                        currentValue = 2;
+                        autoPlayDirection = -1; // 방향 전환
+                    } else if (currentValue <= -2) {
+                        currentValue = -2;
+                        autoPlayDirection = 1; // 방향 전환
+                    }
+                    
+                    slider.value = currentValue;
+                    updateClipPlane(currentValue);
+                }, 50); // 50ms마다 업데이트 (부드러운 애니메이션)
+            }
         }
         
         // 이벤트 리스너
         document.getElementById('height-slider').addEventListener('input', (e) => {
             updateClipPlane(parseFloat(e.target.value));
         });
+        
+        document.getElementById('auto-play-btn').addEventListener('click', startAutoPlay);
         
         document.getElementById('submit-btn').addEventListener('click', checkAnswer);
         document.getElementById('next-btn').addEventListener('click', nextRound);

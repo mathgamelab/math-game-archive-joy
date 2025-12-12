@@ -22,7 +22,7 @@ export const ContactModal: React.FC<ContactModalProps> = ({ isOpen, onClose, onE
         웹 페이지 기능 개선<br/>
         게임 버그 신고 등<br/>
         의견을 남겨주세요!<br/>
-        오픈채팅 코드: mathgame<br/>
+        오픈채팅 코드: vibe<br/>
       </div>
       <Button
         className="w-full mb-3 bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold border border-yellow-400 shadow-lg text-lg rounded-full py-3"

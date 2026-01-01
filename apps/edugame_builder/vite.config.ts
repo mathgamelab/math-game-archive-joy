@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '../../', '');
     return {
       root: __dirname,
+      base: '/edugame_builder/',
       server: {
         port: 3000,
         host: '0.0.0.0',

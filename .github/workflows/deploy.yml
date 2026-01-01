@@ -24,13 +24,15 @@ jobs:
         with:
           node-version: '18.x'
 
-      # 3) 의존성 설치
+      # 3) 의존성 설치 (workspace 자동 처리)
       - name: Install dependencies
         run: npm ci
 
-      # 4) 프로덕션 빌드 (dist/ 생성)
-      - name: Build site
-        run: npm run build
+      # 4) 모든 앱 빌드
+      # - edugame_builder 빌드 (public/edugame_builder/에 출력)
+      # - main 빌드 (dist/에 출력, public/ 내용 포함)
+      - name: Build all apps
+        run: npm run build:all
 
       # 5) 기존 docs/ 삭제 후 dist/을 docs/로 이동
       - name: Prepare docs folder

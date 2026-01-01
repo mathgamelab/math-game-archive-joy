@@ -18,13 +18,12 @@
             background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
             min-height: 100vh;
             color: #1e293b;
-            overflow: hidden;
         }
         
         .container {
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            min-height: 100vh;
         }
         
         header {
@@ -80,6 +79,7 @@
         .main-content {
             display: flex;
             flex: 1;
+            min-height: 0;
             overflow: hidden;
         }
         
@@ -123,6 +123,7 @@
         .canvas-wrapper {
             flex: 1;
             position: relative;
+            max-height: 90%;
         }
         
         .canvas-wrapper canvas {
@@ -214,6 +215,7 @@
             justify-content: space-between;
             align-items: center;
             gap: 20px;
+            flex-shrink: 0;
         }
         
         .bottom-left {
@@ -376,6 +378,14 @@
         }
         
         @media (max-width: 900px) {
+            .container {
+                height: auto;
+            }
+            
+            .main-content {
+                flex: none;
+            }
+            
             .bottom-panel {
                 flex-direction: column;
                 align-items: stretch;

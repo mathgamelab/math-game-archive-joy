@@ -354,7 +354,8 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
             type="learningGoal" 
             toolType={formData.subject} 
             currentValue={formData.learningGoal} 
-            onApply={(v) => updateField('learningGoal', v)} 
+            onApply={(v) => updateField('learningGoal', v)}
+            curriculumStandard={formData.curriculumStandard}
           />
         </div>
       </div>

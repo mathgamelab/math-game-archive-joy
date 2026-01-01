@@ -12,7 +12,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField }) => {
   return (
     <div className="space-y-8 animate-in">
       <div className="text-center space-y-4 mb-10">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">게임 로직 구성 <span className="text-purple-600">(Logic)</span></h2>
+        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">게임 세부 사항 <span className="text-purple-600">(Details)</span></h2>
         <p className="text-slate-600 text-lg">AI가 구조화한 게임 데이터입니다. 개발을 위해 세부 사항을 다듬어보세요.</p>
       </div>
 
@@ -30,7 +30,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField }) => {
               <p className="text-slate-800 mt-2 text-sm font-bold">{formData.gameConcept}</p>
             </div>
             <div className="border-t border-slate-200 pt-6">
-              <span className="text-xs font-bold text-slate-400">MECHANICS</span>
+              <span className="text-xs font-bold text-slate-400">게임 설계</span>
               <p className="text-slate-800 mt-2 text-sm whitespace-pre-wrap">{formData.mechanics}</p>
             </div>
           </div>

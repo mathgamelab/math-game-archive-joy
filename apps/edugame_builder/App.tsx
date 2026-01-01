@@ -30,7 +30,9 @@ const App: React.FC = () => {
       rules: ''
     },
     geminiPrompt: '',
-    editedPrompt: ''
+    editedPrompt: '',
+    frontendPrompt: '',
+    backendPrompt: ''
   });
 
   const updateField = (field: string, value: any) => {
@@ -77,7 +79,7 @@ const App: React.FC = () => {
     switch (currentStep) {
       case 1: return <Step1 formData={formData} setSubject={(s) => { updateField('subject', s); nextStep(); }} />;
       case 2: return <Step2 formData={formData} updateField={updateField} />;
-      case 3: return <Step3 formData={formData} updateField={updateField} />;
+      case 3: return <Step3 formData={formData} updateField={updateField} onNext={nextStep} />;
       case 4: return <Step4 formData={formData} updateField={updateField} />;
       case 5: return <Step5 formData={formData} updateField={updateField} />;
       case 6: return <Step6 formData={formData} updateField={updateField} />;
@@ -101,10 +103,16 @@ const App: React.FC = () => {
 
       {currentStep >= 3 && currentStep <= 5 && (
         <IdeaBooster 
-          currentStep={currentStep} 
+          currentStep={currentStep}
+          formData={formData}
           onApply={(idea) => {
-            if (currentStep === 3) updateField('gameConcept', `${formData.gameConcept} (아이디어: ${idea})`.trim());
-            if (currentStep === 4) updateField('mechanics', `${formData.mechanics}\n- ${idea}`.trim());
+            if (currentStep === 3) {
+              updateField('gameConcept', `${formData.gameConcept}\n\n💡 ${idea}`.trim());
+            } else if (currentStep === 4) {
+              updateField('mechanics', `${formData.mechanics}\n- ${idea}`.trim());
+            } else if (currentStep === 5) {
+              updateField('structuredData.gameLogic', `${formData.structuredData.gameLogic}\n\n💡 ${idea}`.trim());
+            }
           }} 
         />
       )}

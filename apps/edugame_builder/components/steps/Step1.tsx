@@ -20,7 +20,7 @@ const Step1: React.FC<Step1Props> = ({ formData, setSubject }) => {
     { type: '기술가정', label: '기술가정', icon: '🏠', color: 'bg-stone-100 text-stone-600 border-stone-200' },
     { type: '정보', label: '정보', icon: '💻', color: 'bg-cyan-100 text-cyan-600 border-cyan-200' },
     { type: '제2외국어', label: '제2외국어', icon: '🏮', color: 'bg-amber-100 text-amber-600 border-amber-200' },
-    { type: '기타', label: '기타/창체', icon: '🎡', color: 'bg-purple-100 text-purple-600 border-purple-200' },
+    { type: '기타', label: '기타', icon: '💭', color: 'bg-purple-100 text-purple-600 border-purple-200' },
   ];
 
   return (

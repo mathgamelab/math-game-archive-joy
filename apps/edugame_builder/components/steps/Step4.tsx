@@ -15,7 +15,7 @@ const Step4: React.FC<Step4Props> = ({ formData, updateField }) => {
   return (
     <div className="space-y-8 animate-in">
       <div className="text-center space-y-4 mb-8">
-        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">규칙 및 메카닉 설계 <span className="text-indigo-600">(Mechanics)</span></h2>
+        <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">게임 설계 <span className="text-indigo-600">(Design)</span></h2>
         <p className="text-slate-600 text-lg">게임이 어떻게 작동하고 상호작용할지 정의합니다.</p>
       </div>
 
@@ -25,7 +25,7 @@ const Step4: React.FC<Step4Props> = ({ formData, updateField }) => {
           <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-xl relative">
             <label className="block text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
               <span className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm">✨</span>
-              핵심 게임 메카닉
+              핵심 기능
             </label>
             <div className="relative">
               <textarea 
@@ -34,7 +34,13 @@ const Step4: React.FC<Step4Props> = ({ formData, updateField }) => {
                 value={formData.mechanics}
                 onChange={(e) => updateField('mechanics', e.target.value)}
               />
-              <AICoach type="mechanics" toolType={formData.subject} currentValue={formData.mechanics} onApply={(v) => updateField('mechanics', v)} />
+              <AICoach 
+                type="mechanics" 
+                toolType={formData.subject} 
+                currentValue={formData.mechanics} 
+                onApply={(v) => updateField('mechanics', v)}
+                gameConcept={formData.gameConcept}
+              />
             </div>
           </div>
 
@@ -51,7 +57,13 @@ const Step4: React.FC<Step4Props> = ({ formData, updateField }) => {
                 value={formData.vibe}
                 onChange={(e) => updateField('vibe', e.target.value)}
               />
-              <AICoach type="vibe" toolType={formData.subject} currentValue={formData.vibe} onApply={(v) => updateField('vibe', v)} />
+              <AICoach 
+                type="vibe" 
+                toolType={formData.subject} 
+                currentValue={formData.vibe} 
+                onApply={(v) => updateField('vibe', v)}
+                gameConcept={formData.gameConcept}
+              />
             </div>
           </div>
         </div>

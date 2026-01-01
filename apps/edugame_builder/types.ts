@@ -20,6 +20,8 @@ export interface FormData {
   structuredData: StructuredData;
   geminiPrompt: string;
   editedPrompt: string;
+  frontendPrompt?: string;
+  backendPrompt?: string;
 }
 
 export interface GameExample {

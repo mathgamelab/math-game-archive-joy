@@ -11,10 +11,10 @@ const Header: React.FC<HeaderProps> = ({ currentStep }) => {
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
       <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center shadow-lg text-white">
-            <Icons.Joystick className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center shadow-lg text-2xl">
+            🎮
           </div>
-          <span className="font-bold text-xl tracking-tight text-slate-900 hidden sm:block">EduGame Builder Pro</span>
+          <span className="font-bold text-xl tracking-tight text-slate-900 hidden sm:block">EduGame Builder</span>
         </div>
         <div className="text-sm font-semibold text-slate-700 bg-slate-100 px-4 py-1.5 rounded-full">
           Step <span className="text-orange-600">{currentStep}</span> of 6

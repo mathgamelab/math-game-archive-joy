@@ -380,7 +380,7 @@ const Main = () => {
             행복한 수학, 함께 만들어요 😊
           </p>
           <p className="text-sm text-gray-400 leading-none">
-            © 세종특별자치시교육청 | 디지털기반 교육혁신 역량강화 연수 {' '}
+             © 행복한윤쌤 | <a href="https://blog.naver.com/happy_yoonssam" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 transition-colors">https://blog.naver.com/happy_yoonssam</a> {' '}
           </p>
         </div>
       </footer>

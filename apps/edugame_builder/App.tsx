@@ -125,6 +125,18 @@ const App: React.FC = () => {
         <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-orange-200/20 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-yellow-200/20 rounded-full blur-[100px]" />
       </div>
+
+      {/* Footer */}
+      <footer className="bg-white border-t-2 border-slate-200 py-6 mt-auto">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-2">
+          <p className="text-sm text-slate-600">
+            행복한 수학, 함께 만들어요 😊
+          </p>
+          <p className="text-xs text-slate-500">
+            © 행복한윤쌤 | MAXX쌤
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };

@@ -129,11 +129,17 @@ const App: React.FC = () => {
       {/* Footer */}
       <footer className="bg-white border-t-2 border-slate-200 py-6 mt-auto">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-2">
-          <p className="text-sm text-slate-600">
-            행복한 수학, 함께 만들어요 😊
-          </p>
-          <p className="text-xs text-slate-500">
-            © 행복한윤쌤 | MAXX쌤
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+            <p className="text-sm text-slate-600">
+              행복한 수학, 함께 만들어요 😊
+            </p>
+            <span className="hidden sm:inline text-slate-300">|</span>
+            <p className="text-sm text-slate-600">
+              MATH쌤, 열정은 MAX, 야근은 X
+            </p>
+          </div>
+          <p className="text-xs text-slate-500 sm:translate-x-[-1rem]">
+            © 행복한윤쌤 & MAXX쌤
           </p>
         </div>
       </footer>

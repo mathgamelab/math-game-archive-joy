@@ -50,7 +50,7 @@ const App: React.FC = () => {
     }
   };
 
-  const nextStep = () => {
+  const nextStep = (level?: 'beginner' | 'advanced') => {
     if (currentStep < 6) {
       if (currentStep === 4) {
         setFormData(prev => ({
@@ -62,6 +62,9 @@ const App: React.FC = () => {
             rules: prev.rules || "프레임워크 최적화 및 학습 데이터 무결성 유지"
           }
         }));
+      }
+      if (level) {
+        setFormData(prev => ({ ...prev, promptLevel: level }));
       }
       setCurrentStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -81,7 +84,7 @@ const App: React.FC = () => {
       case 2: return <Step2 formData={formData} updateField={updateField} />;
       case 3: return <Step3 formData={formData} updateField={updateField} onNext={nextStep} />;
       case 4: return <Step4 formData={formData} updateField={updateField} />;
-      case 5: return <Step5 formData={formData} updateField={updateField} />;
+      case 5: return <Step5 formData={formData} updateField={updateField} onNext={nextStep} />;
       case 6: return <Step6 formData={formData} updateField={updateField} />;
       default: return null;
     }
@@ -96,7 +99,8 @@ const App: React.FC = () => {
       </main>
 
       <FooterNav 
-        currentStep={currentStep} 
+        currentStep={currentStep}
+        formData={formData}
         onNext={nextStep} 
         onPrev={prevStep} 
       />

@@ -22,6 +22,7 @@ export interface FormData {
   editedPrompt: string;
   frontendPrompt?: string;
   backendPrompt?: string;
+  promptLevel?: 'beginner' | 'advanced';
 }
 
 export interface GameExample {

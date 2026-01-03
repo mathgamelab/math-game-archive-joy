@@ -7,9 +7,10 @@ import { Icons } from '../../constants';
 interface Step6Props {
   formData: FormData;
   updateField: (field: string, value: any) => void;
+  apiKey?: string; // Gemini API key
 }
 
-const Step6: React.FC<Step6Props> = ({ formData, updateField }) => {
+const Step6: React.FC<Step6Props> = ({ formData, updateField, apiKey }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [lastPromptLevel, setLastPromptLevel] = useState<string | undefined>(undefined);
@@ -19,7 +20,7 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField }) => {
     if (formData.promptLevel && formData.promptLevel !== lastPromptLevel && !loading && !formData.geminiPrompt) {
       setLastPromptLevel(formData.promptLevel);
       setLoading(true);
-      generateFinalPromptWithAI(formData).then((result) => {
+      generateFinalPromptWithAI(apiKey, formData).then((result) => {
         if (result) {
           updateField('geminiPrompt', result);
           updateField('editedPrompt', result);

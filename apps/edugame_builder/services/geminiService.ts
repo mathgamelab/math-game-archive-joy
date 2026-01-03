@@ -2,32 +2,16 @@
 import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import { FormData } from "../types";
 
-// Vite의 define으로 주입된 환경변수 접근
-const getApiKey = (): string | undefined => {
-  // Vite define으로 주입된 process.env 값 사용 (빌드 타임에 실제 값으로 치환됨)
-  // @ts-ignore - Vite define으로 주입됨
-  const key1 = typeof process !== 'undefined' ? process.env?.API_KEY : undefined;
-  // @ts-ignore
-  const key2 = typeof process !== 'undefined' ? process.env?.GEMINI_API_KEY : undefined;
-  // @ts-ignore - import.meta.env는 Vite에서 주입됨
-  const key3 = (import.meta as any).env?.API_KEY;
-  // @ts-ignore
-  const key4 = (import.meta as any).env?.GEMINI_API_KEY;
-  
-  return key1 || key2 || key3 || key4 || undefined;
-};
-
-const getAI = () => {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    console.warn('Gemini API key not found. Check .env.local file and restart dev server.');
+const getAI = (apiKey?: string) => {
+  if (!apiKey || apiKey.trim() === '') {
+    console.warn('Gemini API key is not set. Please enter your API key in settings.');
     return null;
   }
   return new GoogleGenAI({ apiKey });
 };
 
-export const improveContentWithAI = async (type: string, toolType: string, currentValue: string, curriculumStandard?: string, gameConcept?: string): Promise<string | null> => {
-  const ai = getAI();
+export const improveContentWithAI = async (apiKey: string | undefined, type: string, toolType: string, currentValue: string, curriculumStandard?: string, gameConcept?: string): Promise<string | null> => {
+  const ai = getAI(apiKey);
   if (!ai) {
     console.warn('Gemini API key is not set. AI features are disabled.');
     return null;
@@ -93,7 +77,18 @@ export const improveContentWithAI = async (type: string, toolType: string, curre
 
     return response.text?.trim() || null;
   } catch (error: any) {
+    // 현재 도메인 감지
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '알 수 없음';
+    const currentUrl = typeof window !== 'undefined' ? `${window.location.origin}/*` : '';
+    
     console.error('AI improvement failed:', error);
+    console.error('Error details:', {
+      status: error?.status,
+      code: error?.code,
+      message: error?.message,
+      response: error?.response,
+      currentOrigin
+    });
     
     // API_KEY_HTTP_REFERRER_BLOCKED 에러인 경우 사용자에게 안내
     if (error?.status === 403 || error?.code === 403) {
@@ -102,6 +97,8 @@ export const improveContentWithAI = async (type: string, toolType: string, curre
         console.error(`
 ⚠️ API 키 HTTP referrer 제한 문제입니다.
 
+현재 도메인: ${currentOrigin}}
+
 해결 방법:
 1. Google Cloud Console (https://console.cloud.google.com/) 접속
 2. "API 및 서비스" > "사용자 인증 정보" 이동
@@ -109,14 +106,60 @@ export const improveContentWithAI = async (type: string, toolType: string, curre
 4. "애플리케이션 제한사항" 섹션에서:
    - "HTTP 리퍼러(웹사이트)" 선택
    - "웹사이트 제한사항"에 다음 추가:
+     * ${currentUrl}
+     * ${currentOrigin}/*
+     * ${currentOrigin}
      * http://localhost:3000/*
      * http://localhost:3000
      * http://127.0.0.1:3000/*
 5. 저장 후 페이지 새로고침
 
-또는 개발용으로 제한 없는 API 키를 별도로 생성하세요.
+또는 "제한 없음"으로 설정하세요.
+        `);
+      } else {
+        console.error(`
+⚠️ API 키 인증 실패 (403 에러)
+
+에러 메시지: ${errorMessage}
+현재 도메인: ${currentOrigin}
+
+가능한 원인:
+1. API 키가 유효하지 않음
+2. API 키에 필요한 권한이 없음
+3. API 키 사용량 초과
+4. API 키가 비활성화됨
+
+해결 방법:
+1. Google Cloud Console에서 API 키 상태 확인
+2. Gemini API가 활성화되어 있는지 확인
+3. API 키를 재생성해보세요
         `);
       }
+    } else if (error?.status === 401 || error?.code === 401) {
+      console.error(`
+⚠️ API 키 인증 실패 (401 에러)
+
+에러 메시지: ${error?.message || '알 수 없는 에러'}
+
+가능한 원인:
+1. API 키가 잘못되었거나 만료됨
+2. API 키가 삭제됨
+
+해결 방법:
+1. .env 파일에서 GEMINI_API_KEY 확인
+2. Google Cloud Console에서 API 키 재생성
+      `);
+    } else {
+      console.error(`
+⚠️ AI 개선 요청 실패
+
+에러 코드: ${error?.status || error?.code || '알 수 없음'}
+에러 메시지: ${error?.message || '알 수 없는 에러'}
+현재 도메인: ${currentOrigin}
+
+전체 에러 정보:
+${JSON.stringify(error, null, 2)}
+      `);
     }
     
     return null;
@@ -129,8 +172,8 @@ export interface GameIdea {
   keyFeatures: string[];
 }
 
-export const generateGameIdeas = async (learningGoal: string, subject: string, curriculumStandard?: string): Promise<GameIdea[] | null> => {
-  const ai = getAI();
+export const generateGameIdeas = async (apiKey: string | undefined, learningGoal: string, subject: string, curriculumStandard?: string): Promise<GameIdea[] | null> => {
+  const ai = getAI(apiKey);
   if (!ai) {
     console.warn('Gemini API key is not set. AI features are disabled.');
     return null;
@@ -197,8 +240,8 @@ JSON 형식만 반환하고, 다른 설명은 포함하지 마세요.`;
   }
 };
 
-export const generateImprovementIdeas = async (formData: FormData, currentStep: number): Promise<string[] | null> => {
-  const ai = getAI();
+export const generateImprovementIdeas = async (apiKey: string | undefined, formData: FormData, currentStep: number): Promise<string[] | null> => {
+  const ai = getAI(apiKey);
   if (!ai) {
     console.warn('Gemini API key is not set. AI features are disabled.');
     return null;
@@ -283,8 +326,8 @@ JSON 배열 형식으로만 반환해주세요: ["아이디어1", "아이디어2
   }
 };
 
-export const generateFrontendPrompt = async (formData: FormData): Promise<string | null> => {
-  const ai = getAI();
+export const generateFrontendPrompt = async (apiKey: string | undefined, formData: FormData): Promise<string | null> => {
+  const ai = getAI(apiKey);
   if (!ai) {
     console.warn('Gemini API key is not set. AI features are disabled.');
     return null;
@@ -331,8 +374,8 @@ UI 에셋: ${formData.structuredData.uiAssets}
   }
 };
 
-export const generateBackendPrompt = async (formData: FormData): Promise<string | null> => {
-  const ai = getAI();
+export const generateBackendPrompt = async (apiKey: string | undefined, formData: FormData): Promise<string | null> => {
+  const ai = getAI(apiKey);
   if (!ai) {
     console.warn('Gemini API key is not set. AI features are disabled.');
     return null;
@@ -376,8 +419,8 @@ export const generateBackendPrompt = async (formData: FormData): Promise<string 
   }
 };
 
-export const generateFinalPromptWithAI = async (formData: FormData): Promise<string | null> => {
-  const ai = getAI();
+export const generateFinalPromptWithAI = async (apiKey: string | undefined, formData: FormData): Promise<string | null> => {
+  const ai = getAI(apiKey);
   if (!ai) {
     console.warn('Gemini API key is not set. AI features are disabled.');
     return null;
@@ -514,7 +557,18 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
 
     return response.text?.trim() || null;
   } catch (error: any) {
+    // 현재 도메인 감지
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '알 수 없음';
+    const currentUrl = typeof window !== 'undefined' ? `${window.location.origin}/*` : '';
+    
     console.error('Final prompt generation failed:', error);
+    console.error('Error details:', {
+      status: error?.status,
+      code: error?.code,
+      message: error?.message,
+      response: error?.response,
+      currentOrigin
+    });
     
     // API_KEY_HTTP_REFERRER_BLOCKED 에러인 경우 사용자에게 안내
     if (error?.status === 403 || error?.code === 403) {
@@ -523,6 +577,8 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
         console.error(`
 ⚠️ API 키 HTTP referrer 제한 문제입니다.
 
+현재 도메인: ${currentOrigin}
+
 해결 방법:
 1. Google Cloud Console (https://console.cloud.google.com/) 접속
 2. "API 및 서비스" > "사용자 인증 정보" 이동
@@ -530,14 +586,60 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
 4. "애플리케이션 제한사항" 섹션에서:
    - "HTTP 리퍼러(웹사이트)" 선택
    - "웹사이트 제한사항"에 다음 추가:
+     * ${currentUrl}
+     * ${currentOrigin}/*
+     * ${currentOrigin}
      * http://localhost:3000/*
      * http://localhost:3000
      * http://127.0.0.1:3000/*
 5. 저장 후 페이지 새로고침
 
-또는 개발용으로 제한 없는 API 키를 별도로 생성하세요.
+또는 "제한 없음"으로 설정하세요.
+        `);
+      } else {
+        console.error(`
+⚠️ API 키 인증 실패 (403 에러)
+
+에러 메시지: ${errorMessage}
+현재 도메인: ${currentOrigin}
+
+가능한 원인:
+1. API 키가 유효하지 않음
+2. API 키에 필요한 권한이 없음
+3. API 키 사용량 초과
+4. API 키가 비활성화됨
+
+해결 방법:
+1. Google Cloud Console에서 API 키 상태 확인
+2. Gemini API가 활성화되어 있는지 확인
+3. API 키를 재생성해보세요
         `);
       }
+    } else if (error?.status === 401 || error?.code === 401) {
+      console.error(`
+⚠️ API 키 인증 실패 (401 에러)
+
+에러 메시지: ${error?.message || '알 수 없는 에러'}
+
+가능한 원인:
+1. API 키가 잘못되었거나 만료됨
+2. API 키가 삭제됨
+
+해결 방법:
+1. .env 파일에서 GEMINI_API_KEY 확인
+2. Google Cloud Console에서 API 키 재생성
+      `);
+    } else {
+      console.error(`
+⚠️ 프롬프트 생성 실패
+
+에러 코드: ${error?.status || error?.code || '알 수 없음'}
+에러 메시지: ${error?.message || '알 수 없는 에러'}
+현재 도메인: ${currentOrigin}
+
+전체 에러 정보:
+${JSON.stringify(error, null, 2)}
+      `);
     }
     
     return null;

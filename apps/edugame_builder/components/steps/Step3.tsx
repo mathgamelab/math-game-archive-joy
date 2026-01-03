@@ -8,9 +8,10 @@ interface Step3Props {
   formData: FormData;
   updateField: (field: string, value: any) => void;
   onNext: () => void;
+  apiKey?: string; // Gemini API key
 }
 
-const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
+const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) => {
   const [ideas, setIdeas] = useState<GameIdea[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -71,6 +72,7 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
     setSelectedIndex(null);
 
     const result = await generateGameIdeas(
+      apiKey,
       formData.learningGoal,
       formData.subject,
       formData.curriculumStandard

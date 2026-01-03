@@ -10,9 +10,10 @@ interface AICoachProps {
   onApply: (improved: string) => void;
   curriculumStandard?: string; // Step 2에서 선택한 성취기준
   gameConcept?: string; // Step 3에서 선택한 게임 컨셉
+  apiKey?: string; // Gemini API key
 }
 
-const AICoach: React.FC<AICoachProps> = ({ type, toolType, currentValue, onApply, curriculumStandard, gameConcept }) => {
+const AICoach: React.FC<AICoachProps> = ({ type, toolType, currentValue, onApply, curriculumStandard, gameConcept, apiKey }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [improvedText, setImprovedText] = useState<string | null>(null);
@@ -32,13 +33,14 @@ const AICoach: React.FC<AICoachProps> = ({ type, toolType, currentValue, onApply
     setLoading(true);
     setIsOpen(true);
     setError(null);
-    const result = await improveContentWithAI(type, toolType, currentValue, curriculumStandard, gameConcept);
+    const result = await improveContentWithAI(apiKey, type, toolType, currentValue, curriculumStandard, gameConcept);
     setImprovedText(result);
     setLoading(false);
     
     // 결과가 없으면 에러로 간주 (콘솔에 자세한 에러가 이미 출력됨)
     if (!result) {
-      setError('API 키 HTTP referrer 제한 문제일 수 있습니다. 콘솔을 확인하세요.');
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '알 수 없음';
+      setError(`AI 요청이 실패했습니다. 브라우저 콘솔을 확인하세요. (현재 도메인: ${currentOrigin})`);
     }
   };
 
@@ -91,7 +93,10 @@ const AICoach: React.FC<AICoachProps> = ({ type, toolType, currentValue, onApply
                 <div className="p-3 bg-red-50 rounded-lg border border-red-200">
                   <p className="text-xs text-red-700 leading-relaxed">{error}</p>
                   <p className="text-xs text-red-600 mt-2">
-                    💡 해결: Google Cloud Console에서 API 키의 HTTP referrer 제한에 <code className="bg-red-100 px-1 rounded">http://localhost:3000/*</code> 추가
+                    💡 해결: 브라우저 개발자 도구(F12)의 콘솔 탭에서 자세한 에러 메시지를 확인하세요. 
+                    {typeof window !== 'undefined' && (
+                      <> 현재 도메인: <code className="bg-red-100 px-1 rounded">{window.location.origin}</code></>
+                    )}
                   </p>
                 </div>
               )}

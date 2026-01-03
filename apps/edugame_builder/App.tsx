@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { STEP_NAMES, Icons } from './constants';
 import { FormData, SubjectType } from './types';
 import Step1 from './components/steps/Step1';
@@ -11,9 +11,12 @@ import Step6 from './components/steps/Step6';
 import Header from './components/Header';
 import FooterNav from './components/FooterNav';
 import IdeaBooster from './components/IdeaBooster';
+import SettingsModal from './components/SettingsModal';
 
 const App: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [apiKey, setApiKey] = useState<string>('');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     subject: '',
     grade: '',
@@ -34,6 +37,21 @@ const App: React.FC = () => {
     frontendPrompt: '',
     backendPrompt: ''
   });
+
+  // localStorage에서 API key 불러오기
+  useEffect(() => {
+    const savedKey = localStorage.getItem('geminiApiKey');
+    if (savedKey) {
+      setApiKey(savedKey);
+    }
+  }, []);
+
+  // API key 저장
+  const handleApiKeySave = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem('geminiApiKey', key);
+    setIsSettingsOpen(false);
+  };
 
   const updateField = (field: string, value: any) => {
     if (field.includes('.')) {
@@ -81,18 +99,18 @@ const App: React.FC = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1: return <Step1 formData={formData} setSubject={(s) => { updateField('subject', s); nextStep(); }} />;
-      case 2: return <Step2 formData={formData} updateField={updateField} />;
-      case 3: return <Step3 formData={formData} updateField={updateField} onNext={nextStep} />;
-      case 4: return <Step4 formData={formData} updateField={updateField} />;
+      case 2: return <Step2 formData={formData} updateField={updateField} apiKey={apiKey} />;
+      case 3: return <Step3 formData={formData} updateField={updateField} onNext={nextStep} apiKey={apiKey} />;
+      case 4: return <Step4 formData={formData} updateField={updateField} apiKey={apiKey} />;
       case 5: return <Step5 formData={formData} updateField={updateField} onNext={nextStep} />;
-      case 6: return <Step6 formData={formData} updateField={updateField} />;
+      case 6: return <Step6 formData={formData} updateField={updateField} apiKey={apiKey} />;
       default: return null;
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-x-hidden">
-      <Header currentStep={currentStep} />
+      <Header currentStep={currentStep} onSettingsClick={() => setIsSettingsOpen(true)} />
       
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 md:py-12 pb-32">
         {renderStepContent()}
@@ -109,6 +127,7 @@ const App: React.FC = () => {
         <IdeaBooster 
           currentStep={currentStep}
           formData={formData}
+          apiKey={apiKey}
           onApply={(idea) => {
             if (currentStep === 3) {
               updateField('gameConcept', `${formData.gameConcept}\n\n💡 ${idea}`.trim());
@@ -120,6 +139,13 @@ const App: React.FC = () => {
           }} 
         />
       )}
+
+      <SettingsModal 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        apiKey={apiKey}
+        onSave={handleApiKeySave}
+      />
 
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-[-1]">
         <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-orange-200/20 rounded-full blur-[100px]" />

@@ -8,6 +8,7 @@ import AICoach from '../AICoach';
 interface Step2Props {
   formData: FormData;
   updateField: (field: string, value: any) => void;
+  apiKey?: string; // Gemini API key
 }
 
 type StandardWithMeta = Standard & { schoolLevel: string; grade: string; subject: string };
@@ -18,7 +19,7 @@ const MAIN_SUBJECTS: Set<string> = new Set([
   '기술가정', '정보', '제2외국어', '기타'
 ]);
 
-const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
+const Step2: React.FC<Step2Props> = ({ formData, updateField, apiKey }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStandard, setSelectedStandard] = useState<StandardWithMeta | null>(null);
   const [selectedGrades, setSelectedGrades] = useState<Set<string>>(new Set());
@@ -356,6 +357,7 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
             currentValue={formData.learningGoal} 
             onApply={(v) => updateField('learningGoal', v)}
             curriculumStandard={formData.curriculumStandard}
+            apiKey={apiKey}
           />
         </div>
       </div>

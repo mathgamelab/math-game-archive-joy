@@ -1108,7 +1108,7 @@
                         continue;
                     }
                     // 조커(★) 처리
-                    // 조커의 왼쪽 스트림 길이 계산
+                    // 조커의 왼쪽 스트림 계산
                     let left = i - 1;
                     let leftStream = [];
                     while (left >= 0 && sequence[left] && sequence[left] !== null) {
@@ -1118,7 +1118,7 @@
                         if (leftStream.length > 1 && Number(leftStream[0].value) < Number(leftStream[1].value)) break;
                         left--;
                     }
-                    // 조커의 오른쪽 스트림 길이 계산
+                    // 조커의 오른쪽 스트림 계산
                     let right = i + 1;
                     let rightStream = [];
                     while (right < sequence.length && sequence[right] && sequence[right] !== null) {
@@ -1135,23 +1135,56 @@
                         }
                         right++;
                     }
-                    // 더 긴 쪽에 조커를 붙임 (같으면 왼쪽)
-                    if (leftStream.length >= rightStream.length) {
-                        // 왼쪽 스트림에 조커 포함
-                        if (currentStream.length === 0) {
-                            currentStream.push(currentCard);
-                        } else {
-                            currentStream.push(currentCard);
+                    
+                    // 왼쪽과 오른쪽을 조커로 연결할 수 있는지 확인
+                    const canConnect = leftStream.length > 0 && rightStream.length > 0 && 
+                                      Number(leftStream[leftStream.length - 1].value) <= Number(rightStream[0].value);
+                    
+                    if (canConnect) {
+                        // 양쪽을 모두 연결: 왼쪽 스트림 + 조커 + 오른쪽 스트림을 하나의 스트림으로
+                        // 왼쪽 스트림의 마지막 카드가 currentStream에 포함되어 있는지 확인
+                        const leftLastCard = leftStream.length > 0 ? leftStream[leftStream.length - 1] : null;
+                        const leftLastInCurrent = leftLastCard && currentStream.some(c => 
+                            c.level === leftLastCard.level && c.index === leftLastCard.index);
+                        
+                        // 왼쪽 스트림이 currentStream에 없으면, 현재 스트림을 저장하고 새로 시작
+                        if (!leftLastInCurrent && currentStream.length > 1) {
+                            streams.push([...currentStream]);
+                            currentStream = [];
                         }
+                        
+                        // 왼쪽 스트림 추가 (아직 currentStream에 없으면)
+                        if (!leftLastInCurrent) {
+                            leftStream.forEach(card => currentStream.push(card));
+                        }
+                        
+                        // 조커 추가
+                        currentStream.push(currentCard);
                         i++;
-                    } else {
-                        // 오른쪽 스트림에 조커 포함: 현재 스트림 종료, 조커+오른쪽 스트림 새로 시작
-                        if (currentStream.length > 1) streams.push([...currentStream]);
-                        currentStream = [currentCard];
-                        i++;
-                        // 오른쪽 스트림도 같이 붙임
+                        
+                        // 오른쪽 스트림 추가
                         for (let j = 0; j < rightStream.length; j++, i++) {
                             currentStream.push(sequence[i]);
+                        }
+                    } else {
+                        // 연결할 수 없으면 더 긴 쪽에 조커를 붙임 (같으면 왼쪽)
+                        if (leftStream.length >= rightStream.length) {
+                            // 왼쪽 스트림에 조커 포함
+                            if (currentStream.length === 0) {
+                                currentStream.push(currentCard);
+                            } else {
+                                currentStream.push(currentCard);
+                            }
+                            i++;
+                        } else {
+                            // 오른쪽 스트림에 조커 포함: 현재 스트림 종료, 조커+오른쪽 스트림 새로 시작
+                            if (currentStream.length > 1) streams.push([...currentStream]);
+                            currentStream = [currentCard];
+                            i++;
+                            // 오른쪽 스트림도 같이 붙임
+                            for (let j = 0; j < rightStream.length; j++, i++) {
+                                currentStream.push(sequence[i]);
+                            }
                         }
                     }
                 }

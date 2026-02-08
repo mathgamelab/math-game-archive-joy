@@ -1,0 +1,7 @@
+{
+  "name": "Airing",
+  "description": "An immersive AI-powered English conversation app that simulates a phone call with various tutor personas, providing real-time feedback and voice interaction.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

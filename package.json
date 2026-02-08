@@ -10,10 +10,12 @@
     "dev": "npm run dev --workspace=apps/main",
     "dev:main": "npm run dev --workspace=apps/main",
     "dev:edugame-builder": "npm run dev --workspace=apps/edugame_builder",
+    "dev:airing": "npm run dev --workspace=apps/airing",
     "build": "npm run build:all",
-    "build:all": "npm run build --workspace=apps/edugame_builder && npm run build --workspace=apps/main",
+    "build:all": "npm run build --workspace=apps/edugame_builder && npm run build --workspace=apps/main && npm run build --workspace=apps/airing",
     "build:main": "npm run build --workspace=apps/main",
     "build:edugame-builder": "npm run build --workspace=apps/edugame_builder",
+    "build:airing": "npm run build --workspace=apps/airing",
     "lint": "npm run lint --workspace=apps/main",
     "parse-pdf": "node scripts/parse-pdf.js"
   },

@@ -14,11 +14,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) 레포를 체크아웃 (전체 히스토리 포함)
+      # 1) 레포를 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # 전체 히스토리 가져오기
 
       # 2) 노드 환경 설정
       - name: Setup Node.js
@@ -35,91 +33,40 @@ jobs:
         working-directory: apps/airing/main
         run: npm install
 
-      # 4) public/ 폴더의 정적 파일들을 먼저 dist/로 복사 (main 빌드 전에)
-      - name: Copy public static files to dist
-        run: |
-          mkdir -p dist
-          # public/의 HTML 파일들과 기타 정적 파일들 복사 (airing, edugame_builder 제외)
-          cp -r public/*.html dist/ 2>/dev/null || true
-          cp -r public/images dist/ 2>/dev/null || true
-          cp -r public/videos dist/ 2>/dev/null || true
-          cp public/robots.txt dist/ 2>/dev/null || true
-          cp public/placeholder.svg dist/ 2>/dev/null || true
-          echo "✓ Copied public static files to dist/"
-
-      # 5) 모든 앱 빌드
+      # 4) 모든 앱 빌드
       # - edugame_builder 빌드 (public/edugame_builder/에 출력)
       # - main 빌드 (dist/에 출력, public/ 내용 포함)
       # - airing 빌드 (public/airing/에 출력)
       - name: Build edugame_builder
         run: npm run build:edugame-builder
       
-      # main 빌드 일시 비활성화 (index.html 덮어쓰기 방지)
-      # - name: Build main (airing/main)
-      #   working-directory: apps/airing/main
-      #   run: npm run build
+      - name: Build main (airing/main)
+        working-directory: apps/airing/main
+        run: npm run build
       
       - name: Build airing
         run: npm run build:airing
 
-      # 6) 빌드 결과 확인
-      - name: Check build outputs
-        run: |
-          echo "Checking dist/ contents:"
-          ls -la dist/ || echo "dist/ does not exist"
-          echo "Checking public/ contents:"
-          ls -la public/ || echo "public/ does not exist"
-
-      # 7) public/ 폴더의 빌드 결과를 dist/로 복사
+      # 5) public/ 폴더의 빌드 결과를 dist/로 복사
       - name: Copy public builds to dist
         run: |
-          echo "Checking public/airing:"
-          ls -la public/airing/ || echo "public/airing does not exist"
-          echo "Checking public/edugame_builder:"
-          ls -la public/edugame_builder/ || echo "public/edugame_builder does not exist"
-          
           if [ -d "public/airing" ]; then
             cp -r public/airing dist/
             echo "✓ Copied public/airing to dist/"
-            ls -la dist/airing/ || echo "Failed to verify dist/airing"
-          else
-            echo "✗ ERROR: public/airing does not exist - build may have failed"
-            exit 1
           fi
-          
           if [ -d "public/edugame_builder" ]; then
             cp -r public/edugame_builder dist/
             echo "✓ Copied public/edugame_builder to dist/"
-          else
-            echo "✗ ERROR: public/edugame_builder does not exist - build may have failed"
-            exit 1
           fi
-          
-          echo "Final dist/ contents:"
-          ls -la dist/
 
-      # 8) 특정 커밋(fd5df19)의 docs/ 폴더 복구
-      - name: Restore docs folder from commit fd5df19
+      # 6) 기존 docs/ 삭제 후 dist/을 docs/로 이동
+      - name: Prepare docs folder
         run: |
-          echo "✓ 커밋 fd5df19의 docs/ 폴더 복구 중..."
-          git checkout fd5df19 -- docs/
-          echo "✓ docs/ 폴더 복구 완료"
-
-      # 9) dist 내용을 docs에 병합 (airing, edugame_builder만 추가)
-      - name: Merge dist into docs
-        run: |
-          # dist의 airing과 edugame_builder만 docs에 추가
-          if [ -d "dist/airing" ]; then
-            cp -r dist/airing docs/ 2>/dev/null || true
-            echo "✓ dist/airing을 docs에 추가"
-          fi
-          if [ -d "dist/edugame_builder" ]; then
-            cp -r dist/edugame_builder docs/ 2>/dev/null || true
-            echo "✓ dist/edugame_builder를 docs에 추가"
-          fi
+          rm -rf docs
+          mv dist docs
           cp CNAME docs/CNAME
 
-      # 10) 변경된 docs/를 커밋·푸시
+      # 7) 변경된 docs/를 커밋·푸시
       - name: Commit and Push docs
         uses: stefanzweifel/git-auto-commit-action@v4
         with:

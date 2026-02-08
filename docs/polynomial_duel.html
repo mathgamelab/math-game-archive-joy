@@ -1,0 +1,660 @@
+
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>다항식 결투 - 다항식 연산을 게임으로 배우는 고등수학 | Math Game Archive</title>
+    <meta name="description" content="다항식의 연산과 개념을 게임으로 익히는 고등수학 콘텐츠! 재미와 학습을 동시에 잡는 무료 수학 게임, 지금 바로 도전해보세요.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes cardFlip {
+            0% { transform: scale(1) rotateY(0deg); }
+            50% { transform: scale(1.1) rotateY(180deg); }
+            100% { transform: scale(1) rotateY(0deg); }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+        }
+        
+        .card-flip { animation: cardFlip 0.6s ease-in-out; }
+        .bounce { animation: bounce 0.6s ease-in-out; }
+        .glow { animation: glow 1s ease-in-out infinite; }
+        
+        .selected-card {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+        
+        .player-turn {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <!-- 게임 제목 -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-2">
+                Polynomial Duel
+            </h1>
+            <p class="text-xl text-gray-700 font-semibold">다항식 카드 배틀</p>
+            
+            <!-- 게임 룰 설명 -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mt-6 max-w-4xl mx-auto">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">🎮 게임 룰</h3>
+                <div class="grid md:grid-cols-2 gap-6 text-left">
+                    <div>
+                        <h4 class="font-bold text-blue-600 mb-2">📋 기본 규칙</h4>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• 각 플레이어는 3장의 카드를 선택</li>
+                            <li>• 선택한 카드들로 다항식을 완성</li>
+                            <li>• 높은 점수를 얻은 플레이어가 라운드 승리</li>
+                            <li>• 3라운드 중 2승을 먼저 달성하면 최종 승리</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-purple-600 mb-2">🏆 점수 계산</h4>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• 기본 점수: 차수 × |계수|</li>
+                            <li>• 동류항 보너스: +2점</li>
+                            <li>• 예시: 2x² + 3x → (2×2) + (1×3) = 7점</li>
+                            <li>• 동류항 예시: x² + 2x² → 3x² = 6점 + 2점 = 8점</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 라운드 및 점수판 -->
+        <div class="flex justify-center mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="text-center mb-4">
+                    <h3 class="text-xl font-bold text-purple-600 mb-2">라운드 <span id="currentRound">1</span>/3</h3>
+                    <div class="flex justify-center space-x-4 mb-4">
+                        <div class="text-center">
+                            <div class="text-sm text-gray-600">Player 1 승수</div>
+                            <div class="text-2xl font-bold text-blue-600" id="player1Wins">0</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-sm text-gray-600">Player 2 승수</div>
+                            <div class="text-2xl font-bold text-red-600" id="player2Wins">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex space-x-12">
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-blue-600 mb-2">Player 1</h3>
+                        <div class="text-3xl font-bold text-blue-800" id="player1Score">0</div>
+                        <div class="text-sm text-gray-600 mt-1" id="player1Polynomial">다항식 대기중...</div>
+                    </div>
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-red-600 mb-2">Player 2</h3>
+                        <div class="text-3xl font-bold text-red-800" id="player2Score">0</div>
+                        <div class="text-sm text-gray-600 mt-1" id="player2Polynomial">다항식 대기중...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 현재 플레이어 표시 -->
+        <div class="text-center mb-6">
+            <div id="currentPlayerDisplay" class="inline-block px-6 py-3 rounded-full text-white font-bold text-lg player-turn">
+                Player 1의 차례
+            </div>
+        </div>
+
+        <!-- 선택된 카드 표시 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">카드 선택</h3>
+            <div id="selectedCards" class="flex justify-center space-x-4 mb-4 min-h-[60px] items-center">
+                <div class="text-gray-500">카드를 선택해주세요 (3장)</div>
+            </div>
+            <div class="text-center">
+                <button id="completePolynomial" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                    다항식 완성
+                </button>
+            </div>
+        </div>
+
+        <!-- 카드 선택 영역 -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 text-center">다항식 항 카드</h3>
+            <div id="cardGrid" class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <!-- 카드들이 여기에 동적으로 생성됩니다 -->
+            </div>
+        </div>
+
+        <!-- 게임 컨트롤 -->
+        <div class="text-center space-x-4">
+            <button id="nextRound" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                다음 라운드
+            </button>
+            <button id="newGame" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300">
+                새 게임 시작
+            </button>
+        </div>
+
+        <!-- 결과 모달 -->
+        <div id="resultModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+            <div class="bg-white rounded-xl p-8 max-w-md mx-4 text-center">
+                <h2 class="text-2xl font-bold mb-4" id="resultTitle">게임 결과</h2>
+                <div id="resultContent" class="mb-6">
+                    <!-- 결과 내용 -->
+                </div>
+                <button id="closeResult" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg">
+                    확인
+                </button>
+            </div>
+        </div>
+
+        <!-- 제작자 서명 -->
+        <div class="mt-16 mb-8 text-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 max-w-md mx-auto border-2 border-gray-200">
+                <div class="text-lg font-bold text-gray-800 mb-2">
+                    행복한 수학, 함께 만들어요 😊
+                </div>
+                <div class="text-sm text-gray-600">
+                    © 행복한윤쌤 | 
+                    <a href="https://blog.naver.com/happy_yoonssam" 
+                       target="_blank" 
+                       class="text-gray-700 hover:text-black underline transition-colors duration-300">
+                        https://blog.naver.com/happy_yoonssam
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PolynomialDuel {
+            constructor() {
+                // 게임 시작 시 랜덤하게 시작 플레이어 결정
+                this.currentPlayer = Math.random() < 0.5 ? 1 : 2;
+                this.selectedCards = [];
+                this.player1Cards = [];
+                this.player2Cards = [];
+                this.player1Score = 0;
+                this.player2Score = 0;
+                this.gamePhase = 'selecting'; // selecting, completed
+                this.currentRound = 1;
+                this.player1Wins = 0;
+                this.player2Wins = 0;
+                this.usedCardIndices = new Set(); // 사용된 카드 인덱스 추적
+                
+                // 다항식 조합 카드들 (2개 이상의 항으로 구성)
+                this.cards = [
+                    { 
+                        display: '2x² + 3x', 
+                        terms: [
+                            { coefficient: 2, degree: 2 },
+                            { coefficient: 3, degree: 1 }
+                        ]
+                    },
+                    { 
+                        display: '5x - 4', 
+                        terms: [
+                            { coefficient: 5, degree: 1 },
+                            { coefficient: -4, degree: 0 }
+                        ]
+                    },
+                    { 
+                        display: 'x³ - 2x²', 
+                        terms: [
+                            { coefficient: 1, degree: 3 },
+                            { coefficient: -2, degree: 2 }
+                        ]
+                    },
+                    { 
+                        display: '3x² + 7', 
+                        terms: [
+                            { coefficient: 3, degree: 2 },
+                            { coefficient: 7, degree: 0 }
+                        ]
+                    },
+                    { 
+                        display: '-x² + 4x', 
+                        terms: [
+                            { coefficient: -1, degree: 2 },
+                            { coefficient: 4, degree: 1 }
+                        ]
+                    },
+                    { 
+                        display: '6x + 2', 
+                        terms: [
+                            { coefficient: 6, degree: 1 },
+                            { coefficient: 2, degree: 0 }
+                        ]
+                    },
+                    { 
+                        display: '4x³ - x', 
+                        terms: [
+                            { coefficient: 4, degree: 3 },
+                            { coefficient: -1, degree: 1 }
+                        ]
+                    },
+                    { 
+                        display: '-3x² - 5', 
+                        terms: [
+                            { coefficient: -3, degree: 2 },
+                            { coefficient: -5, degree: 0 }
+                        ]
+                    },
+                    { 
+                        display: '2x³ + x²', 
+                        terms: [
+                            { coefficient: 2, degree: 3 },
+                            { coefficient: 1, degree: 2 }
+                        ]
+                    },
+                    { 
+                        display: '8x - 3x²', 
+                        terms: [
+                            { coefficient: 8, degree: 1 },
+                            { coefficient: -3, degree: 2 }
+                        ]
+                    }
+                ];
+                
+                this.init();
+            }
+            
+            init() {
+                this.createCardGrid();
+                this.bindEvents();
+                this.updateDisplay();
+            }
+            
+            createCardGrid() {
+                const cardGrid = document.getElementById('cardGrid');
+                cardGrid.innerHTML = '';
+                
+                this.cards.forEach((card, index) => {
+                    // 사용된 카드는 아예 표시하지 않음
+                    if (this.usedCardIndices.has(index)) {
+                        return;
+                    }
+                    
+                    const cardElement = document.createElement('div');
+                    cardElement.className = 'bg-gradient-to-br from-blue-400 to-blue-600 text-white p-4 rounded-lg cursor-pointer text-center font-bold text-sm card-hover transition-all duration-300';
+                    cardElement.textContent = card.display;
+                    cardElement.dataset.index = index;
+                    cardElement.addEventListener('click', () => this.selectCard(index, cardElement));
+                    
+                    cardGrid.appendChild(cardElement);
+                });
+            }
+            
+            selectCard(index, element) {
+                if (this.usedCardIndices.has(index)) return;
+                
+                // 이미 선택된 카드인지 확인
+                const selectedIndex = this.selectedCards.findIndex(card => card.originalIndex === index);
+                
+                if (selectedIndex !== -1) {
+                    // 카드 선택 취소
+                    this.selectedCards.splice(selectedIndex, 1);
+                    element.classList.remove('selected-card');
+                    element.classList.add('card-flip');
+                    setTimeout(() => element.classList.remove('card-flip'), 600);
+                } else {
+                    // 새 카드 선택 (3장 제한)
+                    if (this.selectedCards.length >= 3) return;
+                    
+                    // 애니메이션 효과
+                    element.classList.add('card-flip');
+                    setTimeout(() => element.classList.remove('card-flip'), 600);
+                    
+                    // 카드 선택
+                    this.selectedCards.push({...this.cards[index], originalIndex: index});
+                    element.classList.add('selected-card');
+                }
+                
+                this.updateSelectedCardsDisplay();
+                
+                // 효과음 시뮬레이션 (시각적 피드백)
+                element.classList.add('glow');
+                setTimeout(() => element.classList.remove('glow'), 1000);
+            }
+            
+            updateSelectedCardsDisplay() {
+                const selectedCardsDiv = document.getElementById('selectedCards');
+                
+                if (this.selectedCards.length === 0) {
+                    selectedCardsDiv.innerHTML = '<div class="text-gray-500">3장의 카드를 선택해주세요</div>';
+                } else {
+                    const remainingCards = 3 - this.selectedCards.length;
+                    const cardsHtml = this.selectedCards.map(card => 
+                        `<div class="bg-blue-100 px-4 py-2 rounded-lg font-bold text-blue-800">${card.display}</div>`
+                    ).join('');
+                    
+                    if (remainingCards > 0) {
+                        selectedCardsDiv.innerHTML = cardsHtml + `<div class="text-gray-500 text-sm">앞으로 ${remainingCards}장 더 선택하세요</div>`;
+                    } else {
+                        selectedCardsDiv.innerHTML = cardsHtml;
+                    }
+                }
+                
+                // 다항식 완성 버튼 활성화
+                const completeBtn = document.getElementById('completePolynomial');
+                completeBtn.disabled = this.selectedCards.length !== 3;
+            }
+            
+            completePolynomial() {
+                if (this.selectedCards.length !== 3) return;
+                
+                // 선택된 카드들을 사용됨으로 표시
+                this.selectedCards.forEach(card => {
+                    this.usedCardIndices.add(card.originalIndex);
+                });
+                
+                // 현재 플레이어의 카드 저장
+                if (this.currentPlayer === 1) {
+                    this.player1Cards = [...this.selectedCards];
+                    this.player1Score = this.calculateScore(this.selectedCards);
+                    document.getElementById('player1Score').textContent = this.player1Score;
+                    document.getElementById('player1Polynomial').textContent = this.formatPolynomial(this.selectedCards);
+                } else {
+                    this.player2Cards = [...this.selectedCards];
+                    this.player2Score = this.calculateScore(this.selectedCards);
+                    document.getElementById('player2Score').textContent = this.player2Score;
+                    document.getElementById('player2Polynomial').textContent = this.formatPolynomial(this.selectedCards);
+                }
+                
+                // 다음 플레이어로 전환 또는 라운드 완료
+                if (this.player1Cards.length === 0 || this.player2Cards.length === 0) {
+                    // 아직 한 플레이어만 완료한 경우 - 다음 플레이어로 전환
+                    this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
+                    this.resetForNextPlayer();
+                } else {
+                    // 두 플레이어 모두 완료한 경우 - 라운드 완료
+                    this.gamePhase = 'completed';
+                    this.checkRoundComplete();
+                }
+                
+                this.updateDisplay();
+            }
+            
+            calculateScore(cards) {
+                let score = 0;
+                const termsByDegree = {};
+                
+                // 모든 카드의 모든 항을 수집하여 동류항 그룹화
+                cards.forEach(card => {
+                    card.terms.forEach(term => {
+                        if (!termsByDegree[term.degree]) {
+                            termsByDegree[term.degree] = [];
+                        }
+                        termsByDegree[term.degree].push(term);
+                    });
+                });
+                
+                // 점수 계산
+                Object.keys(termsByDegree).forEach(degree => {
+                    const terms = termsByDegree[degree];
+                    const totalCoeff = terms.reduce((sum, term) => sum + term.coefficient, 0);
+                    
+                    // 기본 점수: 차수 × 계수의 절댓값
+                    score += parseInt(degree) * Math.abs(totalCoeff);
+                    
+                    // 동류항 보너스 (2개 이상의 같은 차수 항이 있을 때)
+                    if (terms.length > 1) {
+                        score += 2;
+                    }
+                });
+                
+                return score;
+            }
+            
+            formatPolynomial(cards) {
+                const termsByDegree = {};
+                
+                // 모든 카드의 모든 항을 수집하여 동류항 그룹화
+                cards.forEach(card => {
+                    card.terms.forEach(term => {
+                        if (!termsByDegree[term.degree]) {
+                            termsByDegree[term.degree] = 0;
+                        }
+                        termsByDegree[term.degree] += term.coefficient;
+                    });
+                });
+                
+                // 차수 순으로 정렬 (내림차순)
+                const sortedDegrees = Object.keys(termsByDegree).sort((a, b) => b - a);
+                
+                let polynomial = '';
+                sortedDegrees.forEach((degree, index) => {
+                    const coeff = termsByDegree[degree];
+                    if (coeff === 0) return;
+                    
+                    let term = '';
+                    if (index > 0 && coeff > 0) term += '+';
+                    
+                    if (degree == 0) {
+                        term += coeff;
+                    } else if (degree == 1) {
+                        if (coeff === 1) term += 'x';
+                        else if (coeff === -1) term += '-x';
+                        else term += coeff + 'x';
+                    } else {
+                        if (coeff === 1) term += 'x²³⁴⁵⁶⁷⁸⁹'[degree - 2] || 'x^' + degree;
+                        else if (coeff === -1) term += '-x²³⁴⁵⁶⁷⁸⁹'[degree - 2] || '-x^' + degree;
+                        else term += coeff + 'x²³⁴⁵⁶⁷⁸⁹'[degree - 2] || coeff + 'x^' + degree;
+                    }
+                    
+                    polynomial += term;
+                });
+                
+                return polynomial || '0';
+            }
+            
+            resetForNextPlayer() {
+                this.selectedCards = [];
+                this.updateSelectedCardsDisplay();
+                
+                // 카드 그리드 다시 생성 (사용된 카드 상태 반영)
+                this.createCardGrid();
+                
+                document.getElementById('completePolynomial').disabled = true;
+            }
+            
+            checkRoundComplete() {
+                // 라운드 승자 결정
+                if (this.player1Score > this.player2Score) {
+                    this.player1Wins++;
+                } else if (this.player2Score > this.player1Score) {
+                    this.player2Wins++;
+                }
+                
+                // 승수 업데이트
+                document.getElementById('player1Wins').textContent = this.player1Wins;
+                document.getElementById('player2Wins').textContent = this.player2Wins;
+                
+                // 게임 종료 조건 확인 (2승 먼저) 또는 3라운드 완료
+                if (this.player1Wins >= 2 || this.player2Wins >= 2 || this.currentRound >= 3) {
+                    this.showFinalResult();
+                } else {
+                    // 다음 라운드 버튼 활성화
+                    document.getElementById('nextRound').disabled = false;
+                }
+            }
+            
+            updateDisplay() {
+                const currentPlayerDisplay = document.getElementById('currentPlayerDisplay');
+                
+                if (this.gamePhase === 'completed') {
+                    // 라운드 승자 표시
+                    let roundWinner = '';
+                    let winnerClass = '';
+                    if (this.player1Score > this.player2Score) {
+                        roundWinner = 'Player 1 승리!';
+                        winnerClass = 'bg-blue-500';
+                    } else if (this.player2Score > this.player1Score) {
+                        roundWinner = 'Player 2 승리!';
+                        winnerClass = 'bg-red-500';
+                    } else {
+                        roundWinner = '무승부!';
+                        winnerClass = 'bg-purple-500';
+                    }
+                    currentPlayerDisplay.textContent = roundWinner;
+                    currentPlayerDisplay.className = `inline-block px-6 py-3 rounded-full text-white font-bold text-lg ${winnerClass}`;
+                } else {
+                    currentPlayerDisplay.textContent = `Player ${this.currentPlayer}의 차례`;
+                    currentPlayerDisplay.className = `inline-block px-6 py-3 rounded-full text-white font-bold text-lg ${this.currentPlayer === 1 ? 'bg-blue-500' : 'bg-red-500'}`;
+                }
+            }
+            
+            showFinalResult() {
+                const modal = document.getElementById('resultModal');
+                const resultContent = document.getElementById('resultContent');
+                
+                let finalWinner = '';
+                let championColor = '';
+                let championBg = '';
+                
+                if (this.player1Wins > this.player2Wins) {
+                    finalWinner = 'Player 1이 최종 승리!';
+                    championColor = 'text-blue-600';
+                    championBg = 'bg-blue-50';
+                } else if (this.player2Wins > this.player1Wins) {
+                    finalWinner = 'Player 2가 최종 승리!';
+                    championColor = 'text-red-600';
+                    championBg = 'bg-red-50';
+                } else {
+                    finalWinner = '최종 무승부!';
+                    championColor = 'text-purple-600';
+                    championBg = 'bg-purple-50';
+                }
+                
+                resultContent.innerHTML = `
+                    <div class="mb-4">
+                        <div class="text-6xl mb-4">🏆</div>
+                        <h3 class="text-3xl font-bold ${championColor} mb-4">축하합니다!</h3>
+                        <h4 class="text-xl font-bold ${championColor} mb-6">${finalWinner}</h4>
+                        
+                        <div class="${championBg} p-4 rounded-lg mb-4 border-2 ${this.player1Wins > this.player2Wins ? 'border-blue-200' : this.player2Wins > this.player1Wins ? 'border-red-200' : 'border-purple-200'}">
+                            <div class="text-lg font-bold mb-2">🏅 최종 스코어</div>
+                            <div class="flex justify-center space-x-8">
+                                <div class="text-center">
+                                    <div class="text-blue-600 font-bold">Player 1</div>
+                                    <div class="text-2xl font-bold">${this.player1Wins}승</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-red-600 font-bold">Player 2</div>
+                                    <div class="text-2xl font-bold">${this.player2Wins}승</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                            <div class="font-bold text-yellow-800 mb-2">마지막 라운드 결과</div>
+                            <div class="text-sm space-y-2">
+                                <div class="bg-blue-50 p-2 rounded">
+                                    <span class="font-bold text-blue-600">Player 1:</span> ${this.formatPolynomial(this.player1Cards)} = ${this.player1Score}점
+                                </div>
+                                <div class="bg-red-50 p-2 rounded">
+                                    <span class="font-bold text-red-600">Player 2:</span> ${this.formatPolynomial(this.player2Cards)} = ${this.player2Score}점
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                const closeBtn = document.getElementById('closeResult');
+                closeBtn.textContent = '확인';
+                closeBtn.onclick = () => this.closeResult();
+            }
+            
+            nextRound() {
+                this.currentRound++;
+                // 라운드마다 랜덤하게 시작 플레이어 결정
+                this.currentPlayer = Math.random() < 0.5 ? 1 : 2;
+                this.selectedCards = [];
+                this.player1Cards = [];
+                this.player2Cards = [];
+                this.player1Score = 0;
+                this.player2Score = 0;
+                this.gamePhase = 'selecting';
+                // 새 라운드에서 카드 초기화
+                this.usedCardIndices = new Set();
+                
+                // UI 업데이트
+                document.getElementById('currentRound').textContent = this.currentRound;
+                document.getElementById('player1Score').textContent = '0';
+                document.getElementById('player2Score').textContent = '0';
+                document.getElementById('player1Polynomial').textContent = '다항식 대기중...';
+                document.getElementById('player2Polynomial').textContent = '다항식 대기중...';
+                document.getElementById('nextRound').disabled = true;
+                
+                this.resetForNextPlayer();
+                this.updateDisplay();
+            }
+            
+            closeResult() {
+                const modal = document.getElementById('resultModal');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            
+            newGame() {
+                // 새 게임 시작 시 랜덤하게 시작 플레이어 결정
+                this.currentPlayer = Math.random() < 0.5 ? 1 : 2;
+                this.selectedCards = [];
+                this.player1Cards = [];
+                this.player2Cards = [];
+                this.player1Score = 0;
+                this.player2Score = 0;
+                this.gamePhase = 'selecting';
+                this.currentRound = 1;
+                this.player1Wins = 0;
+                this.player2Wins = 0;
+                this.usedCardIndices = new Set();
+                
+                document.getElementById('currentRound').textContent = '1';
+                document.getElementById('player1Wins').textContent = '0';
+                document.getElementById('player2Wins').textContent = '0';
+                document.getElementById('player1Score').textContent = '0';
+                document.getElementById('player2Score').textContent = '0';
+                document.getElementById('player1Polynomial').textContent = '다항식 대기중...';
+                document.getElementById('player2Polynomial').textContent = '다항식 대기중...';
+                document.getElementById('nextRound').disabled = true;
+                
+                this.resetForNextPlayer();
+                this.updateDisplay();
+                this.closeResult();
+            }
+            
+            bindEvents() {
+                document.getElementById('completePolynomial').addEventListener('click', () => this.completePolynomial());
+                document.getElementById('nextRound').addEventListener('click', () => this.nextRound());
+                document.getElementById('newGame').addEventListener('click', () => this.newGame());
+                document.getElementById('closeResult').addEventListener('click', () => this.closeResult());
+            }
+        }
+        
+        // 게임 시작
+        document.addEventListener('DOMContentLoaded', () => {
+            new PolynomialDuel();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'95e76aedc744eab1',t:'MTc1MjM5NTQyMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

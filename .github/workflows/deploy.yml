@@ -14,9 +14,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) 레포를 체크아웃
+      # 1) 레포를 체크아웃 (전체 히스토리 포함)
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # 전체 히스토리 가져오기
 
       # 2) 노드 환경 설정
       - name: Setup Node.js

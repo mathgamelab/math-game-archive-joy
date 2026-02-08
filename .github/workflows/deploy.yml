@@ -33,7 +33,19 @@ jobs:
         working-directory: apps/airing/main
         run: npm install
 
-      # 4) 모든 앱 빌드
+      # 4) public/ 폴더의 정적 파일들을 먼저 dist/로 복사 (main 빌드 전에)
+      - name: Copy public static files to dist
+        run: |
+          mkdir -p dist
+          # public/의 HTML 파일들과 기타 정적 파일들 복사 (airing, edugame_builder 제외)
+          cp -r public/*.html dist/ 2>/dev/null || true
+          cp -r public/images dist/ 2>/dev/null || true
+          cp -r public/videos dist/ 2>/dev/null || true
+          cp public/robots.txt dist/ 2>/dev/null || true
+          cp public/placeholder.svg dist/ 2>/dev/null || true
+          echo "✓ Copied public static files to dist/"
+
+      # 5) 모든 앱 빌드
       # - edugame_builder 빌드 (public/edugame_builder/에 출력)
       # - main 빌드 (dist/에 출력, public/ 내용 포함)
       # - airing 빌드 (public/airing/에 출력)
@@ -47,7 +59,7 @@ jobs:
       - name: Build airing
         run: npm run build:airing
 
-      # 5) 빌드 결과 확인
+      # 6) 빌드 결과 확인
       - name: Check build outputs
         run: |
           echo "Checking dist/ contents:"
@@ -55,7 +67,7 @@ jobs:
           echo "Checking public/ contents:"
           ls -la public/ || echo "public/ does not exist"
 
-      # 6) public/ 폴더의 빌드 결과를 dist/로 복사
+      # 7) public/ 폴더의 빌드 결과를 dist/로 복사
       - name: Copy public builds to dist
         run: |
           echo "Checking public/airing:"
@@ -83,14 +95,14 @@ jobs:
           echo "Final dist/ contents:"
           ls -la dist/
 
-      # 7) 기존 docs/ 삭제 후 dist/을 docs/로 이동
+      # 8) 기존 docs/ 삭제 후 dist/을 docs/로 이동
       - name: Prepare docs folder
         run: |
           rm -rf docs
           mv dist docs
           cp CNAME docs/CNAME
 
-      # 8) 변경된 docs/를 커밋·푸시
+      # 9) 변경된 docs/를 커밋·푸시
       - name: Commit and Push docs
         uses: stefanzweifel/git-auto-commit-action@v4
         with:

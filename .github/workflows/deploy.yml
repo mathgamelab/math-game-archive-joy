@@ -58,18 +58,30 @@ jobs:
       # 6) public/ 폴더의 빌드 결과를 dist/로 복사
       - name: Copy public builds to dist
         run: |
+          echo "Checking public/airing:"
+          ls -la public/airing/ || echo "public/airing does not exist"
+          echo "Checking public/edugame_builder:"
+          ls -la public/edugame_builder/ || echo "public/edugame_builder does not exist"
+          
           if [ -d "public/airing" ]; then
             cp -r public/airing dist/
-            echo "Copied public/airing to dist/"
+            echo "✓ Copied public/airing to dist/"
+            ls -la dist/airing/ || echo "Failed to verify dist/airing"
           else
-            echo "Warning: public/airing does not exist"
+            echo "✗ ERROR: public/airing does not exist - build may have failed"
+            exit 1
           fi
+          
           if [ -d "public/edugame_builder" ]; then
             cp -r public/edugame_builder dist/
-            echo "Copied public/edugame_builder to dist/"
+            echo "✓ Copied public/edugame_builder to dist/"
           else
-            echo "Warning: public/edugame_builder does not exist"
+            echo "✗ ERROR: public/edugame_builder does not exist - build may have failed"
+            exit 1
           fi
+          
+          echo "Final dist/ contents:"
+          ls -la dist/
 
       # 7) 기존 docs/ 삭제 후 dist/을 docs/로 이동
       - name: Prepare docs folder

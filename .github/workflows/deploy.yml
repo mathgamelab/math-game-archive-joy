@@ -22,22 +22,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18.x'
+          node-version: '24.x'
 
       # 3) 의존성 설치 (workspace 자동 처리)
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       
       # 3-1) apps/airing/main 의존성 설치 (workspace가 아니므로 별도 설치)
       - name: Install airing/main dependencies
-        run: |
-          cd apps/airing/main
-          if [ -f "package-lock.json" ]; then
-            npm ci
-          else
-            npm install
-          fi
-          cd ../..
+        working-directory: apps/airing/main
+        run: npm install
 
       # 4) 모든 앱 빌드
       # - edugame_builder 빌드 (public/edugame_builder/에 출력)
@@ -47,29 +41,44 @@ jobs:
         run: npm run build:edugame-builder
       
       - name: Build main (airing/main)
-        run: npm run build:main
+        working-directory: apps/airing/main
+        run: npm run build
       
       - name: Build airing
         run: npm run build:airing
 
-      # 5) public/ 폴더의 빌드 결과를 dist/로 복사
+      # 5) 빌드 결과 확인
+      - name: Check build outputs
+        run: |
+          echo "Checking dist/ contents:"
+          ls -la dist/ || echo "dist/ does not exist"
+          echo "Checking public/ contents:"
+          ls -la public/ || echo "public/ does not exist"
+
+      # 6) public/ 폴더의 빌드 결과를 dist/로 복사
       - name: Copy public builds to dist
         run: |
           if [ -d "public/airing" ]; then
             cp -r public/airing dist/
+            echo "Copied public/airing to dist/"
+          else
+            echo "Warning: public/airing does not exist"
           fi
           if [ -d "public/edugame_builder" ]; then
             cp -r public/edugame_builder dist/
+            echo "Copied public/edugame_builder to dist/"
+          else
+            echo "Warning: public/edugame_builder does not exist"
           fi
 
-      # 6) 기존 docs/ 삭제 후 dist/을 docs/로 이동
+      # 7) 기존 docs/ 삭제 후 dist/을 docs/로 이동
       - name: Prepare docs folder
         run: |
           rm -rf docs
           mv dist docs
           cp CNAME docs/CNAME
 
-      # 7) 변경된 docs/를 커밋·푸시
+      # 8) 변경된 docs/를 커밋·푸시
       - name: Commit and Push docs
         uses: stefanzweifel/git-auto-commit-action@v4
         with:

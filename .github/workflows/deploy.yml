@@ -32,14 +32,25 @@ jobs:
       - name: Install airing/main dependencies
         run: |
           cd apps/airing/main
-          npm ci
+          if [ -f "package-lock.json" ]; then
+            npm ci
+          else
+            npm install
+          fi
+          cd ../..
 
       # 4) 모든 앱 빌드
       # - edugame_builder 빌드 (public/edugame_builder/에 출력)
       # - main 빌드 (dist/에 출력, public/ 내용 포함)
       # - airing 빌드 (public/airing/에 출력)
-      - name: Build all apps
-        run: npm run build:all
+      - name: Build edugame_builder
+        run: npm run build:edugame-builder
+      
+      - name: Build main (airing/main)
+        run: npm run build:main
+      
+      - name: Build airing
+        run: npm run build:airing
 
       # 5) public/ 폴더의 빌드 결과를 dist/로 복사
       - name: Copy public builds to dist

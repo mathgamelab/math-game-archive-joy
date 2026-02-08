@@ -27,21 +27,38 @@ jobs:
       # 3) 의존성 설치 (workspace 자동 처리)
       - name: Install dependencies
         run: npm ci
+      
+      # 3-1) apps/airing/main 의존성 설치 (workspace가 아니므로 별도 설치)
+      - name: Install airing/main dependencies
+        run: |
+          cd apps/airing/main
+          npm ci
 
       # 4) 모든 앱 빌드
       # - edugame_builder 빌드 (public/edugame_builder/에 출력)
       # - main 빌드 (dist/에 출력, public/ 내용 포함)
+      # - airing 빌드 (public/airing/에 출력)
       - name: Build all apps
         run: npm run build:all
 
-      # 5) 기존 docs/ 삭제 후 dist/을 docs/로 이동
+      # 5) public/ 폴더의 빌드 결과를 dist/로 복사
+      - name: Copy public builds to dist
+        run: |
+          if [ -d "public/airing" ]; then
+            cp -r public/airing dist/
+          fi
+          if [ -d "public/edugame_builder" ]; then
+            cp -r public/edugame_builder dist/
+          fi
+
+      # 6) 기존 docs/ 삭제 후 dist/을 docs/로 이동
       - name: Prepare docs folder
         run: |
           rm -rf docs
           mv dist docs
           cp CNAME docs/CNAME
 
-      # 6) 변경된 docs/를 커밋·푸시
+      # 7) 변경된 docs/를 커밋·푸시
       - name: Commit and Push docs
         uses: stefanzweifel/git-auto-commit-action@v4
         with:

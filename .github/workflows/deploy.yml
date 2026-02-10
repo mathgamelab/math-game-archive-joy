@@ -27,6 +27,11 @@ jobs:
       # 3) 의존성 설치 (workspace 자동 처리)
       - name: Install dependencies
         run: npm install
+      
+      # 3-1) apps/airing/main 의존성 설치 (workspace가 아니므로 별도 설치)
+      - name: Install airing/main dependencies
+        working-directory: apps/airing/main
+        run: npm install
 
       # 4) dist/ 폴더 생성 및 public/ 정적 파일 복사
       - name: Copy public static files to dist

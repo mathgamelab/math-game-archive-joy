@@ -27,17 +27,13 @@ jobs:
       # 3) 의존성 설치 (workspace 자동 처리)
       - name: Install dependencies
         run: npm install
-      
-      # 3-1) apps/airing/main 의존성 설치 (workspace가 아니므로 별도 설치)
-      - name: Install airing/main dependencies
-        working-directory: apps/airing/main
-        run: npm install
 
-      # 4) public/ 폴더의 정적 파일들을 먼저 dist/로 복사 (main 빌드 전에)
+      # 4) dist/ 폴더 생성 및 public/ 정적 파일 복사
       - name: Copy public static files to dist
         run: |
           mkdir -p dist
-          # public/의 HTML 파일들과 기타 정적 파일들 복사 (airing, edugame_builder 제외)
+          # public/의 HTML 파일들과 기타 정적 파일들 복사
+          # (airing/, edugame_builder/ 폴더는 빌드 결과물이므로 제외)
           cp public/*.html dist/ 2>/dev/null || true
           cp -r public/images dist/ 2>/dev/null || true
           cp -r public/videos dist/ 2>/dev/null || true
@@ -46,9 +42,10 @@ jobs:
           echo "✓ Copied public static files to dist/"
 
       # 5) 모든 앱 빌드
-      # - edugame_builder 빌드 (public/edugame_builder/에 출력)
-      # - main 빌드 (dist/에 출력, 기존 파일 유지하면서 index.html 생성)
-      # - airing 빌드 (public/airing/에 출력)
+      # 빌드 순서: edugame_builder → main → airing
+      # - edugame_builder: public/edugame_builder/에 출력
+      # - main: dist/main/에 출력 (dist/의 기존 파일 유지)
+      # - airing: public/airing/에 출력
       - name: Build edugame_builder
         run: npm run build:edugame-builder
       
@@ -59,33 +56,50 @@ jobs:
       - name: Build airing
         run: npm run build:airing
 
-      # 6) main 빌드 결과를 dist/로 복사 (dist/main/index.html → dist/index.html)
+      # 6) main 빌드 결과를 dist/ 루트로 복사
+      # dist/main/index.html → dist/index.html (메인 페이지)
       - name: Copy main build to dist root
         run: |
           if [ -f "dist/main/index.html" ]; then
             cp dist/main/index.html dist/index.html
-            cp -r dist/main/assets dist/ 2>/dev/null || true
-            echo "✓ Copied main build to dist/"
+            # assets 폴더 병합 (기존 assets가 있을 수 있음)
+            if [ -d "dist/main/assets" ]; then
+              cp -r dist/main/assets/* dist/assets/ 2>/dev/null || mkdir -p dist/assets && cp -r dist/main/assets/* dist/assets/
+            fi
+            echo "✓ Copied main build to dist/ root"
+          else
+            echo "⚠ Warning: dist/main/index.html not found!"
+            exit 1
           fi
 
       # 7) public/ 폴더의 빌드 결과를 dist/로 복사
+      # airing과 edugame_builder 앱을 dist/ 하위로 복사
       - name: Copy public builds to dist
         run: |
           if [ -d "public/airing" ]; then
             cp -r public/airing dist/
             echo "✓ Copied public/airing to dist/"
+          else
+            echo "⚠ Warning: public/airing not found!"
           fi
           if [ -d "public/edugame_builder" ]; then
             cp -r public/edugame_builder dist/
             echo "✓ Copied public/edugame_builder to dist/"
+          else
+            echo "⚠ Warning: public/edugame_builder not found!"
           fi
 
-      # 8) 기존 docs/ 삭제 후 dist/을 docs/로 이동
-      - name: Prepare docs folder
+      # 8) dist/를 docs/로 이동 (GitHub Pages 배포)
+      # 기존 docs/ 삭제 후 dist/ 내용을 docs/로 이동
+      - name: Prepare docs folder for GitHub Pages
         run: |
           rm -rf docs
           mv dist docs
-          cp CNAME docs/CNAME
+          # CNAME 파일 복사 (도메인 설정)
+          if [ -f "CNAME" ]; then
+            cp CNAME docs/CNAME
+          fi
+          echo "✓ Prepared docs/ folder for deployment"
 
       # 9) 변경된 docs/를 커밋·푸시
       - name: Commit and Push docs

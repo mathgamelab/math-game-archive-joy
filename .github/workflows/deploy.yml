@@ -59,7 +59,16 @@ jobs:
       - name: Build airing
         run: npm run build:airing
 
-      # 6) public/ 폴더의 빌드 결과를 dist/로 복사
+      # 6) main 빌드 결과를 dist/로 복사 (dist/main/index.html → dist/index.html)
+      - name: Copy main build to dist root
+        run: |
+          if [ -f "dist/main/index.html" ]; then
+            cp dist/main/index.html dist/index.html
+            cp -r dist/main/assets dist/ 2>/dev/null || true
+            echo "✓ Copied main build to dist/"
+          fi
+
+      # 7) public/ 폴더의 빌드 결과를 dist/로 복사
       - name: Copy public builds to dist
         run: |
           if [ -d "public/airing" ]; then
@@ -71,14 +80,14 @@ jobs:
             echo "✓ Copied public/edugame_builder to dist/"
           fi
 
-      # 7) 기존 docs/ 삭제 후 dist/을 docs/로 이동
+      # 8) 기존 docs/ 삭제 후 dist/을 docs/로 이동
       - name: Prepare docs folder
         run: |
           rm -rf docs
           mv dist docs
           cp CNAME docs/CNAME
 
-      # 8) 변경된 docs/를 커밋·푸시
+      # 9) 변경된 docs/를 커밋·푸시
       - name: Commit and Push docs
         uses: stefanzweifel/git-auto-commit-action@v4
         with:

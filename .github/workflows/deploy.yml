@@ -58,6 +58,29 @@ jobs:
         working-directory: apps/airing/main
         run: npm run build
       
+      # 5-1) main 빌드 결과 확인 및 디버깅
+      - name: Verify main build output
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Checking if dist/ exists:"
+          ls -la dist/ 2>/dev/null || echo "dist/ does not exist"
+          echo ""
+          echo "Checking if dist/main/ exists:"
+          if [ -d "dist/main" ]; then
+            echo "dist/main/ contents:"
+            ls -la dist/main/
+          else
+            echo "dist/main/ does not exist"
+          fi
+          echo ""
+          if [ ! -f "dist/main/index.html" ]; then
+            echo "❌ Error: dist/main/index.html not found!"
+            echo "Searching for index.html files:"
+            find . -name "index.html" -type f 2>/dev/null | head -10
+            exit 1
+          fi
+          echo "✓ Main build output verified: dist/main/index.html exists"
+      
       - name: Build airing
         run: npm run build:airing
 
@@ -65,17 +88,13 @@ jobs:
       # dist/main/index.html → dist/index.html (메인 페이지)
       - name: Copy main build to dist root
         run: |
-          if [ -f "dist/main/index.html" ]; then
-            cp dist/main/index.html dist/index.html
-            # assets 폴더 병합 (기존 assets가 있을 수 있음)
-            if [ -d "dist/main/assets" ]; then
-              cp -r dist/main/assets/* dist/assets/ 2>/dev/null || mkdir -p dist/assets && cp -r dist/main/assets/* dist/assets/
-            fi
-            echo "✓ Copied main build to dist/ root"
-          else
-            echo "⚠ Warning: dist/main/index.html not found!"
-            exit 1
+          cp dist/main/index.html dist/index.html
+          # assets 폴더 병합 (기존 assets가 있을 수 있음)
+          if [ -d "dist/main/assets" ]; then
+            mkdir -p dist/assets
+            cp -r dist/main/assets/* dist/assets/
           fi
+          echo "✓ Copied main build to dist/ root"
 
       # 7) public/ 폴더의 빌드 결과를 dist/로 복사
       # airing과 edugame_builder 앱을 dist/ 하위로 복사

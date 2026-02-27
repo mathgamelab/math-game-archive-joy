@@ -3,7 +3,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import { Message, Persona, ConversationMode } from "../types";
 
 // 배포용 API 키 설정
-export const GEMINI_API_KEY = 'AIzaSyCUIwJXFyEGz3sOIMimvatPnQRzHlDzPU8';
+export const GEMINI_API_KEY = 'AIzaSyCR-Ex5kwxxzz7-RJVUeBHyKPIfmghSELI';
 
 const getAI = (apiKey?: string) => {
   if (!apiKey || apiKey.trim() === '') {
@@ -307,45 +307,60 @@ export async function decodeAudioData(
   return buffer;
 }
 
-export const connectLiveSession = (apiKey: string | undefined, persona: Persona, callbacks: any) => {
+export const connectLiveSession = async (apiKey: string | undefined, persona: Persona, callbacks: any) => {
   const ai = getAI(apiKey);
   if (!ai) {
     console.warn('Gemini API key is not set. Live session cannot be started.');
     throw new Error('API 키가 설정되지 않았습니다. 환경 변수 GEMINI_API_KEY를 확인해주세요.');
   }
 
-  try {
-    return ai.live.connect({
-      model: 'gemini-2.5-flash-native-audio-preview-12-2025',
-      callbacks,
-      config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voice } },
+  // Gemini API (AI Studio key)에서는 preview native-audio 모델이 안정적으로 동작한다.
+  // 'gemini-live-2.5-flash-native-audio'는 환경에 따라 onopen 후 1008로 즉시 close될 수 있어 제외.
+  const modelCandidates = [
+    'gemini-2.5-flash-native-audio-preview-12-2025',
+  ];
+
+  let lastError: any = null;
+  for (const model of modelCandidates) {
+    try {
+      console.log('Live 모델 연결 시도:', model);
+      return await ai.live.connect({
+        model,
+        callbacks,
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voice } },
+          },
+          systemInstruction: persona.systemPrompt,
+          inputAudioTranscription: {},
+          outputAudioTranscription: {},
         },
-        systemInstruction: persona.systemPrompt,
-        inputAudioTranscription: {},
-        outputAudioTranscription: {},
-      },
-    });
-  } catch (error: any) {
-    console.error('Live session connection failed:', error);
-    console.error('Error details:', {
-      status: error?.status,
-      code: error?.code,
-      message: error?.message,
-      response: error?.response,
-      fullError: JSON.stringify(error, null, 2)
-    });
-    
-    // API_KEY_HTTP_REFERRER_BLOCKED 에러인 경우 사용자에게 안내
-    if (error?.status === 403 || error?.code === 403) {
-      const errorMessage = error?.message || '';
-      const errorString = JSON.stringify(error).toLowerCase();
-      if (errorMessage.includes('referer') || errorMessage.includes('REFERRER') || 
-          errorString.includes('referer') || errorString.includes('referrer')) {
-        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '알 수 없음';
-        console.error(`
+      });
+    } catch (error: any) {
+      lastError = error;
+      console.error(`Live session connection failed with model "${model}":`, error);
+    }
+  }
+
+  const error = lastError;
+  console.error('All Live model connection attempts failed.');
+  console.error('Error details:', {
+    status: error?.status,
+    code: error?.code,
+    message: error?.message,
+    response: error?.response,
+    fullError: JSON.stringify(error, null, 2)
+  });
+  
+  // API_KEY_HTTP_REFERRER_BLOCKED 에러인 경우 사용자에게 안내
+  if (error?.status === 403 || error?.code === 403) {
+    const errorMessage = error?.message || '';
+    const errorString = JSON.stringify(error).toLowerCase();
+    if (errorMessage.includes('referer') || errorMessage.includes('REFERRER') || 
+        errorString.includes('referer') || errorString.includes('referrer')) {
+      const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '알 수 없음';
+      console.error(`
 ⚠️ API 키 HTTP referrer 제한 문제입니다.
 
 현재 도메인: ${currentOrigin}
@@ -367,9 +382,8 @@ export const connectLiveSession = (apiKey: string | undefined, persona: Persona,
 5. 저장 후 페이지 새로고침
 
 또는 "제한 없음"으로 설정하세요.
-        `);
-      }
+      `);
     }
-    throw error;
   }
+  throw error;
 };

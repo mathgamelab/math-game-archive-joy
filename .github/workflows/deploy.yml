@@ -42,10 +42,11 @@ jobs:
           echo "✓ Copied public static files to dist/"
 
       # 5) 모든 앱 빌드
-      # 빌드 순서: edugame_builder → main → airing
+      # 빌드 순서: edugame_builder → main → airing → aieg
       # - edugame_builder: public/edugame_builder/에 출력
       # - main: dist/main/에 출력 (dist/의 기존 파일 유지)
       # - airing: public/airing/에 출력
+      # - aieg: public/aieg/에 출력
       - name: Build edugame_builder
         run: npm run build:edugame-builder
       
@@ -78,6 +79,9 @@ jobs:
       - name: Build airing
         run: npm run build:airing
 
+      - name: Build aieg
+        run: npm run build:aieg
+
       # 6) main 빌드 결과를 dist/ 루트로 복사
       # dist/main/index.html → dist/index.html (메인 페이지)
       - name: Copy main build to dist root
@@ -91,7 +95,7 @@ jobs:
           echo "✓ Copied main build to dist/ root"
 
       # 7) public/ 폴더의 빌드 결과를 dist/로 복사
-      # airing과 edugame_builder 앱을 dist/ 하위로 복사
+      # airing, edugame_builder, aieg 앱을 dist/ 하위로 복사
       - name: Copy public builds to dist
         run: |
           if [ -d "public/airing" ]; then
@@ -105,6 +109,12 @@ jobs:
             echo "✓ Copied public/edugame_builder to dist/"
           else
             echo "⚠ Warning: public/edugame_builder not found!"
+          fi
+          if [ -d "public/aieg" ]; then
+            cp -r public/aieg dist/
+            echo "✓ Copied public/aieg to dist/"
+          else
+            echo "⚠ Warning: public/aieg not found!"
           fi
 
       # 8) dist/를 docs/로 이동 (GitHub Pages 배포)

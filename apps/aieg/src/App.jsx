@@ -469,6 +469,7 @@ function CallScreen({ apiKey, settings, onEnd }) {
   const ci = CHARACTERS.find((c) => c.id === char);
 
   const [status, setStatus] = useState("connecting");
+  const [connectionError, setConnectionError] = useState("");
   const [muted, setMuted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [subs, setSubs] = useState([]);
@@ -675,8 +676,25 @@ function CallScreen({ apiKey, settings, onEnd }) {
           }
         };
 
-        socket.onerror = () => { if (!dead) setStatus("error"); };
-        socket.onclose = () => { if (!dead) setStatus((prev) => prev === "connecting" ? "error" : prev); };
+        socket.onerror = () => {
+          if (!dead) {
+            setConnectionError("네트워크 또는 서버 오류");
+            setStatus("error");
+          }
+        };
+        socket.onclose = (ev) => {
+          if (!dead) {
+            const msg = ev.code === 1006 ? "연결이 끊어졌습니다 (API 키 또는 권한 확인)" : `연결 종료: ${ev.code} ${ev.reason || ""}`;
+            if (ev.code === 4001 || ev.code === 401) {
+              setConnectionError("API 키가 올바르지 않거나 만료되었습니다.");
+            } else if (ev.code === 403) {
+              setConnectionError("Gemini Live API 사용 권한이 없습니다. AI Studio에서 해당 API를 활성화해 주세요.");
+            } else {
+              setConnectionError(msg.trim());
+            }
+            setStatus((prev) => (prev === "connecting" ? "error" : prev));
+          }
+        };
       } catch (err) {
         console.error("Init error:", err);
         if (!dead) setStatus("error");
@@ -689,8 +707,8 @@ function CallScreen({ apiKey, settings, onEnd }) {
       wsR.current?.close();
       procR.current?.disconnect();
       srcR.current?.disconnect();
-      acR.current?.close();
-      pbR.current?.close();
+      if (acR.current?.state !== "closed") acR.current?.close();
+      if (pbR.current?.state !== "closed") pbR.current?.close();
       strR.current?.getTracks().forEach((t) => t.stop());
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -756,7 +774,13 @@ function CallScreen({ apiKey, settings, onEnd }) {
         {status === "error" && (
           <div style={{ textAlign: "center", padding: "36px 20px" }}>
             <div style={{ fontSize: 28, marginBottom: 8 }}>⚠️</div>
-            <p style={{ fontSize: 13, color: "#dc2626" }}>연결에 실패했습니다.<br />API Key와 네트워크를 확인해주세요.</p>
+            <p style={{ fontSize: 13, color: "#dc2626" }}>연결에 실패했습니다.</p>
+            {connectionError && (
+              <p style={{ fontSize: 13, color: "#b91c1c", marginTop: 8, lineHeight: 1.5 }}>{connectionError}</p>
+            )}
+            <p style={{ fontSize: 12, color: "#71717a", marginTop: 12 }}>
+              API 키는 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb" }}>Google AI Studio</a>에서 발급받고, <strong>Generative Language API</strong>가 사용 설정되어 있는지 확인해 주세요.
+            </p>
           </div>
         )}
 

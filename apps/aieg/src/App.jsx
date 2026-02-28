@@ -684,13 +684,16 @@ function CallScreen({ apiKey, settings, onEnd }) {
         };
         socket.onclose = (ev) => {
           if (!dead) {
-            const msg = ev.code === 1006 ? "연결이 끊어졌습니다 (API 키 또는 권한 확인)" : `연결 종료: ${ev.code} ${ev.reason || ""}`;
+            const reason = (ev.reason || "").toLowerCase();
+            const isReferrerBlocked = ev.code === 1008 || reason.includes("referer") || reason.includes("referrer");
             if (ev.code === 4001 || ev.code === 401) {
               setConnectionError("API 키가 올바르지 않거나 만료되었습니다.");
             } else if (ev.code === 403) {
               setConnectionError("Gemini Live API 사용 권한이 없습니다. AI Studio에서 해당 API를 활성화해 주세요.");
+            } else if (isReferrerBlocked) {
+              setConnectionError("이 사이트에서의 요청이 차단되었습니다. Google Cloud Console → API 키 → 애플리케이션 제한에서 'HTTP 리퍼러'를 사용 중이라면, 이 페이지 주소(예: https://mathgame.kr)를 허용 목록에 추가하거나, 제한을 해제해 주세요.");
             } else {
-              setConnectionError(msg.trim());
+              setConnectionError(ev.code === 1006 ? "연결이 끊어졌습니다 (API 키 또는 권한 확인)" : `연결 종료: ${ev.code} ${(ev.reason || "").trim()}`);
             }
             setStatus((prev) => (prev === "connecting" ? "error" : prev));
           }

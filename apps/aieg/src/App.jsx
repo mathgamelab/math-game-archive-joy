@@ -1,7 +1,28 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import * as pdfjsLib from "pdfjs-dist";
+
+// PDF.js worker for Vite (use ?url so Vite emits the worker file)
+try {
+  const workerSrc = new URL("pdfjs-dist/build/pdf.worker.mjs", import.meta.url).href;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+} catch (_) {}
+
+/** Extract text from PDF file (ArrayBuffer). */
+async function extractTextFromPdf(arrayBuffer) {
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const numPages = pdf.numPages;
+  const parts = [];
+  for (let i = 1; i <= numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const text = content.items.map((it) => it.str).join(" ");
+    parts.push(text);
+  }
+  return parts.join("\n\n").trim();
+}
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const API_KEY = "AIzaSyCR-Ex5kwxxzz7-RJVUeBHyKPIfmghSELI";
+const API_KEY_STORAGE = "aieg_gemini_api_key";
 const WS_URL = "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
 const MODEL = "models/gemini-2.5-flash-native-audio-preview-12-2025";
 const GEMINI_REST = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
@@ -18,6 +39,7 @@ const CHARACTERS = [
   { id: "traveler", name: "Emma", role: "Travel Buddy", emoji: "✈️", voice: "Aoede", color: "#db2777" },
   { id: "professor", name: "Mike", role: "University Professor", emoji: "📚", voice: "Puck", color: "#7c3aed" },
   { id: "neighbor", name: "Alex", role: "Friendly Neighbor", emoji: "🏠", voice: "Fenrir", color: "#059669" },
+  { id: "passage", name: "Guide", role: "From your passage", emoji: "📄", voice: "Charon", color: "#7c3aed" },
 ];
 
 // ─── Audio Utilities ─────────────────────────────────────────────────────────
@@ -65,7 +87,7 @@ function fmt(s) {
 }
 
 // ─── System Prompt Builder ───────────────────────────────────────────────────
-function buildSystemPrompt(diff, char, topic) {
+function buildSystemPrompt(diff, char, topic, customPassage) {
   const dc = {
     beginner: {
       speed: "Speak slowly and clearly.",
@@ -87,6 +109,28 @@ function buildSystemPrompt(diff, char, topic) {
     },
   }[diff];
   const c = CHARACTERS.find((x) => x.id === char);
+
+  if (customPassage && customPassage.trim()) {
+    const passage = customPassage.trim().slice(0, 12000);
+    return `You are on a phone call with a Korean English learner. Your persona MUST be one of:
+1) A character who appears in the passage below, OR
+2) Someone who deeply understands and can discuss the passage (e.g. expert, narrator, teacher).
+
+Use the following passage as your sole context. Stay in character. Speak ONLY in English. Keep responses 1-3 sentences (natural phone conversation).
+- ${dc.speed}
+- ${dc.vocab}
+- ${dc.help}
+- ${dc.corr}
+
+PASSAGE:
+---
+${passage}
+---
+
+When you see "[HINT]", suggest a phrase the user could say: "You could say: '...'" then continue.
+Start with a natural greeting in character (introduce yourself based on the passage).`;
+  }
+
   const tl = topic
     ? `The conversation topic is: "${topic}".`
     : "Choose a natural topic based on your role.";
@@ -172,18 +216,132 @@ function CtrlBtn({ onClick, active, activeColor, disabled, children }) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  API KEY SCREEN
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function ApiKeyScreen({ onContinue }) {
+  const [key, setKey] = useState(() => {
+    try {
+      return typeof localStorage !== "undefined" ? localStorage.getItem(API_KEY_STORAGE) ?? "" : "";
+    } catch {
+      return "";
+    }
+  });
+  const [remember, setRemember] = useState(!!key);
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const trimmed = key.trim();
+    if (!trimmed) {
+      setError("API 키를 입력해주세요.");
+      return;
+    }
+    setError("");
+    try {
+      if (remember) localStorage.setItem(API_KEY_STORAGE, trimmed);
+      else localStorage.removeItem(API_KEY_STORAGE);
+    } catch (_) {}
+    onContinue(trimmed);
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#fafafa", color: "#18181b", display: "flex", flexDirection: "column", padding: "24px 20px" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", maxWidth: 400, margin: "0 auto", width: "100%" }}>
+        <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #2563eb, #7c3aed)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, marginBottom: 16, color: "#fff" }}>
+          🔑
+        </div>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: "#18181b", marginBottom: 6 }}>Gemini API 키 입력</h1>
+        <p style={{ fontSize: 13, color: "#71717a", marginBottom: 24 }}>
+          전화 영어 연습을 위해 Google AI Studio에서 발급한 Gemini API 키가 필요합니다.
+        </p>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="password"
+            value={key}
+            onChange={(e) => { setKey(e.target.value); setError(""); }}
+            placeholder="AIzaSy..."
+            autoComplete="off"
+            style={{
+              width: "100%", padding: "14px 16px", background: "#fff", border: error ? "2px solid #dc2626" : "1.5px solid #e4e4e7",
+              borderRadius: 12, fontSize: 14, outline: "none", color: "#18181b", marginBottom: 12,
+            }}
+          />
+          {error && <p style={{ fontSize: 12, color: "#dc2626", marginBottom: 12 }}>{error}</p>}
+          <label style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24, cursor: "pointer", fontSize: 13, color: "#52525b" }}>
+            <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+            이 기기에 API 키 저장 (다음 방문 시 자동 입력)
+          </label>
+          <button type="submit" style={{
+            width: "100%", padding: "16px", background: "linear-gradient(135deg, #2563eb, #7c3aed)", border: "none", borderRadius: 16, color: "#fff",
+            fontSize: 16, fontWeight: 800, cursor: "pointer",
+            boxShadow: "0 4px 20px rgba(37,99,235,0.35)",
+          }}>
+            다음
+          </button>
+        </form>
+        <p style={{ fontSize: 11, color: "#a1a1aa", marginTop: 20 }}>
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", textDecoration: "underline" }}>Google AI Studio</a>에서 무료로 API 키를 발급받을 수 있습니다.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  SETUP SCREEN
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function SetupScreen({ onStart }) {
+function SetupScreen({ onStart, onChangeApiKey }) {
   const [diff, setDiff] = useState("intermediate");
   const [char, setChar] = useState("barista");
   const [topic, setTopic] = useState("");
-  const sc = CHARACTERS.find((c) => c.id === char);
+  const [passageText, setPassageText] = useState("");
+  const [pdfName, setPdfName] = useState("");
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState("");
+  const fileInputRef = useRef(null);
+
+  const hasPassage = passageText.trim().length > 0;
+  const effectiveChar = hasPassage ? "passage" : char;
+  const sc = CHARACTERS.find((c) => c.id === effectiveChar);
+
+  const handlePdfChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPdfError("");
+    setPdfLoading(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const text = await extractTextFromPdf(buf);
+      setPassageText((prev) => (prev ? prev + "\n\n" : "") + text);
+      setPdfName(file.name);
+    } catch (err) {
+      setPdfError("PDF를 읽을 수 없습니다. 텍스트 기반 PDF인지 확인해주세요.");
+    } finally {
+      setPdfLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleStart = () => {
+    if (hasPassage) {
+      onStart({ diff, char: "passage", topic: topic.trim(), customPassage: passageText.trim() });
+    } else {
+      onStart({ diff, char, topic: topic.trim(), customPassage: null });
+    }
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "#fafafa", color: "#18181b", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <div style={{ padding: "32px 20px 12px", textAlign: "center" }}>
+      <div style={{ padding: "32px 20px 12px", textAlign: "center", position: "relative" }}>
+        {onChangeApiKey && (
+          <button type="button" onClick={onChangeApiKey} style={{
+            position: "absolute", left: 20, top: 32, background: "none", border: "none", fontSize: 12, color: "#71717a",
+            cursor: "pointer", textDecoration: "underline",
+          }}>
+            API 키 변경
+          </button>
+        )}
         <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #2563eb, #7c3aed)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 28, marginBottom: 10, color: "#fff" }}>
           📞
         </div>
@@ -191,7 +349,7 @@ function SetupScreen({ onStart }) {
         <p style={{ fontSize: 13, color: "#71717a", marginTop: 2 }}>원어민과 전화 영어 연습</p>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: "8px 20px 120px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "8px 20px 120px", WebkitOverflowScrolling: "touch" }}>
         {/* Difficulty */}
         <Section label="난이도">
           <div style={{ display: "flex", gap: 8 }}>
@@ -211,41 +369,87 @@ function SetupScreen({ onStart }) {
           </div>
         </Section>
 
-        {/* Character */}
-        <Section label="캐릭터 선택">
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {CHARACTERS.map((c) => (
-              <button key={c.id} onClick={() => setChar(c.id)} style={{
-                display: "flex", alignItems: "center", gap: 14, padding: "14px 16px",
-                background: char === c.id ? "#fff" : "#f4f4f5",
-                border: char === c.id ? `2px solid ${c.color}` : "2px solid #e4e4e7",
-                borderRadius: 14, cursor: "pointer", textAlign: "left", transition: "all .15s",
-                boxShadow: char === c.id ? `0 2px 12px ${c.color}20` : "none",
-              }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: `${c.color}12`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>
-                  {c.emoji}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#18181b" }}>{c.name}</div>
-                  <div style={{ fontSize: 12, color: "#71717a" }}>{c.role}</div>
-                </div>
-                {char === c.id && <CheckIcon size={20} color={c.color} />}
-              </button>
-            ))}
+        {/* Character (hidden when passage is set) */}
+        {!hasPassage && (
+          <Section label="캐릭터 선택">
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {CHARACTERS.filter((c) => c.id !== "passage").map((c) => (
+                <button key={c.id} onClick={() => setChar(c.id)} style={{
+                  display: "flex", alignItems: "center", gap: 14, padding: "14px 16px",
+                  background: char === c.id ? "#fff" : "#f4f4f5",
+                  border: char === c.id ? `2px solid ${c.color}` : "2px solid #e4e4e7",
+                  borderRadius: 14, cursor: "pointer", textAlign: "left", transition: "all .15s",
+                  boxShadow: char === c.id ? `0 2px 12px ${c.color}20` : "none",
+                }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: `${c.color}12`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>
+                    {c.emoji}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: "#18181b" }}>{c.name}</div>
+                    <div style={{ fontSize: 12, color: "#71717a" }}>{c.role}</div>
+                  </div>
+                  {char === c.id && <CheckIcon size={20} color={c.color} />}
+                </button>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {/* Passage: paste or PDF */}
+        <Section label="지문으로 대화하기 (선택)">
+          <p style={{ fontSize: 12, color: "#71717a", marginBottom: 10 }}>
+            영어 지문을 넣으면, NPC가 지문 속 인물 또는 지문을 이해한 전문가로 대화합니다.
+          </p>
+          <textarea
+            value={passageText}
+            onChange={(e) => { setPassageText(e.target.value); setPdfError(""); }}
+            placeholder="영어 지문을 붙여넣으세요..."
+            rows={4}
+            style={{
+              width: "100%", padding: "12px 14px", background: "#fff", border: "1.5px solid #e4e4e7",
+              borderRadius: 12, fontSize: 14, outline: "none", color: "#18181b", resize: "vertical", minHeight: 88,
+            }}
+          />
+          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              onChange={handlePdfChange}
+              style={{ display: "none" }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={pdfLoading}
+              style={{
+                padding: "10px 16px", background: "#f4f4f5", border: "1.5px solid #e4e4e7", borderRadius: 10,
+                fontSize: 13, fontWeight: 600, color: "#52525b", cursor: pdfLoading ? "default" : "pointer",
+              }}
+            >
+              {pdfLoading ? "PDF 읽는 중..." : "📎 PDF 첨부"}
+            </button>
+            {pdfName && <span style={{ fontSize: 12, color: "#71717a" }}>{pdfName}</span>}
           </div>
+          {pdfError && <p style={{ fontSize: 12, color: "#dc2626", marginTop: 6 }}>{pdfError}</p>}
+          {hasPassage && (
+            <p style={{ fontSize: 12, color: "#16a34a", marginTop: 8 }}>✓ 지문 기반 대화로 진행됩니다 (캐릭터: 지문 속 인물/전문가)</p>
+          )}
         </Section>
 
-        {/* Topic */}
-        <Section label="대화 주제 (선택)">
-          <input value={topic} onChange={(e) => setTopic(e.target.value)}
-            placeholder="예: ordering coffee, travel plans..."
-            style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1.5px solid #e4e4e7", borderRadius: 12, fontSize: 14, outline: "none", color: "#18181b" }} />
-        </Section>
+        {/* Topic (when no passage) */}
+        {!hasPassage && (
+          <Section label="대화 주제 (선택)">
+            <input value={topic} onChange={(e) => setTopic(e.target.value)}
+              placeholder="예: ordering coffee, travel plans..."
+              style={{ width: "100%", padding: "12px 14px", background: "#fff", border: "1.5px solid #e4e4e7", borderRadius: 12, fontSize: 14, outline: "none", color: "#18181b" }} />
+          </Section>
+        )}
       </div>
 
       {/* CTA */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, padding: "12px 20px 24px", background: "linear-gradient(transparent, #fafafa 30%)", paddingTop: 40 }}>
-        <button onClick={() => onStart({ diff, char, topic })} style={{
+        <button onClick={handleStart} style={{
           width: "100%", padding: "16px", background: sc.color, border: "none", borderRadius: 16, color: "#fff",
           fontSize: 16, fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
           boxShadow: `0 4px 20px ${sc.color}40`, transition: "all .15s",
@@ -260,8 +464,8 @@ function SetupScreen({ onStart }) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  CALL SCREEN
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function CallScreen({ settings, onEnd }) {
-  const { diff, char, topic } = settings;
+function CallScreen({ apiKey, settings, onEnd }) {
+  const { diff, char, topic, customPassage } = settings;
   const ci = CHARACTERS.find((c) => c.id === char);
 
   const [status, setStatus] = useState("connecting");
@@ -345,7 +549,7 @@ function CallScreen({ settings, onEnd }) {
         silent.connect(ac.destination);
 
         // WebSocket to Gemini
-        const socket = new WebSocket(`${WS_URL}?key=${API_KEY}`);
+        const socket = new WebSocket(`${WS_URL}?key=${apiKey}`);
         socket.binaryType = "arraybuffer";
         wsR.current = socket;
 
@@ -357,7 +561,7 @@ function CallScreen({ settings, onEnd }) {
                 responseModalities: ["AUDIO"],
                 speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: ci.voice } } },
               },
-              systemInstruction: { parts: [{ text: buildSystemPrompt(diff, char, topic) }] },
+              systemInstruction: { parts: [{ text: buildSystemPrompt(diff, char, topic, customPassage ?? null) }] },
               outputAudioTranscription: {},
               inputAudioTranscription: {},
             },
@@ -616,7 +820,7 @@ function CallScreen({ settings, onEnd }) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  FEEDBACK SCREEN
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function FeedbackScreen({ transcripts, elapsed, settings, onRestart }) {
+function FeedbackScreen({ apiKey, transcripts, elapsed, settings, onRestart }) {
   const { diff, char } = settings;
   const ci = CHARACTERS.find((c) => c.id === char);
   const [tab, setTab] = useState("script");
@@ -631,7 +835,7 @@ function FeedbackScreen({ transcripts, elapsed, settings, onRestart }) {
 
     (async () => {
       try {
-        const r = await fetch(`${GEMINI_REST}?key=${API_KEY}`, {
+        const r = await fetch(`${GEMINI_REST}?key=${apiKey}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -805,17 +1009,45 @@ Respond ONLY in this JSON:
 //  ROOT APP
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export default function App() {
-  const [screen, setScreen] = useState("setup");
+  const [apiKey, setApiKey] = useState(() => {
+    try {
+      return typeof localStorage !== "undefined" ? localStorage.getItem(API_KEY_STORAGE) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [screen, setScreen] = useState(apiKey ? "setup" : "apiKey");
   const [settings, setSettings] = useState(null);
   const [callData, setCallData] = useState(null);
 
+  // Sync screen when apiKey is set from ApiKeyScreen
+  useEffect(() => {
+    if (apiKey && screen === "apiKey") setScreen("setup");
+  }, [apiKey, screen]);
+
+  if (!apiKey) {
+    return <ApiKeyScreen onContinue={(key) => { setApiKey(key); setScreen("setup"); }} />;
+  }
   if (screen === "setup") {
-    return <SetupScreen onStart={(s) => { setSettings(s); setScreen("call"); }} />;
+    return (
+      <SetupScreen
+        onStart={(s) => { setSettings(s); setScreen("call"); }}
+        onChangeApiKey={() => { setApiKey(null); setScreen("apiKey"); }}
+      />
+    );
   }
   if (screen === "call") {
-    return <CallScreen settings={settings} onEnd={(t, e) => { setCallData({ t, e }); setScreen("feedback"); }} />;
+    return <CallScreen apiKey={apiKey} settings={settings} onEnd={(t, e) => { setCallData({ t, e }); setScreen("feedback"); }} />;
   }
   if (screen === "feedback") {
-    return <FeedbackScreen transcripts={callData.t} elapsed={callData.e} settings={settings} onRestart={() => { setCallData(null); setScreen("setup"); }} />;
+    return (
+      <FeedbackScreen
+        apiKey={apiKey}
+        transcripts={callData.t}
+        elapsed={callData.e}
+        settings={settings}
+        onRestart={() => { setCallData(null); setScreen("setup"); }}
+      />
+    );
   }
 }

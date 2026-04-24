@@ -266,6 +266,66 @@ export const gamesData: Record<string, GameData[]> = {
       mobile: '지원'
     },
     {
+      id: '3d-tictactoe',
+      title: '3D 틱택토',
+      description: `🎮게임명 : 3D 틱택토
+📘 교과명 : 뇌풀기 게임
+📂 내용범주 : 전략/논리
+📌 내용요소 : 3차원 공간에서의 규칙 이해, 승리 조건 탐색
+✏️ 학습 가능 용어 : 전략, 규칙, 공간, 경우의 수
+🎯 성취기준 : 규칙 기반 전략 사고와 공간적 사고를 기른다.
+📚 학습 유형 : 전략 보드게임
+🔥 난이도 : ★★★☆☆`,
+      icon: '🧊',
+      status: 'playable',
+      difficulty: '중급',
+      estimatedTime: '10분',
+      url: '/3D_tictactoe.html',
+      type: '전략 보드게임',
+      summary: '3차원 보드에서 한 줄 만들기를 겨루는 전략 게임',
+      mobile: '제한'
+    },
+    {
+      id: 'ultimate-3d-tictactoe',
+      title: '얼티밋 3D 틱택토',
+      description: `🎮게임명 : 얼티밋 3D 틱택토
+📘 교과명 : 뇌풀기 게임
+📂 내용범주 : 전략/논리
+📌 내용요소 : 3D 틱택토의 확장 규칙, 복합 목표 최적화
+✏️ 학습 가능 용어 : 전략, 규칙, 공간, 경우의 수, 최적화
+🎯 성취기준 : 복합 규칙 상황에서의 전략적 의사결정을 기른다.
+📚 학습 유형 : 전략 보드게임
+🔥 난이도 : ★★★★☆`,
+      icon: '🧠',
+      status: 'playable',
+      difficulty: '고급',
+      estimatedTime: '15분',
+      url: '/ult_3d_tictactoe.html',
+      type: '전략 보드게임',
+      summary: '더 복잡한 규칙의 3D 틱택토에서 전략을 겨루는 고난도 게임',
+      mobile: '제한'
+    },
+    {
+      id: 'ultimate-tictactoe',
+      title: '얼티밋 틱택토',
+      description: `🎮게임명 : 얼티밋 틱택토
+📘 교과명 : 뇌풀기 게임
+📂 내용범주 : 전략/논리
+📌 내용요소 : 확장 규칙 기반의 수읽기, 선택의 결과 예측
+✏️ 학습 가능 용어 : 전략, 규칙, 경우의 수, 의사결정
+🎯 성취기준 : 규칙을 분석하고 최적의 수를 선택하는 전략적 사고를 기른다.
+📚 학습 유형 : 전략 보드게임
+🔥 난이도 : ★★★☆☆`,
+      icon: '❌⭕',
+      status: 'playable',
+      difficulty: '중급',
+      estimatedTime: '12분',
+      url: '/ult_tictactoe.html',
+      type: '전략 보드게임',
+      summary: '확장 규칙의 틱택토에서 수읽기와 전략을 겨루는 게임',
+      mobile: '제한'
+    },
+    {
       id: 'domineering',
       title: '도미니어링',
       description: `🎮게임명 : 도미니어링

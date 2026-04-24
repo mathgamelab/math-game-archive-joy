@@ -6,7 +6,10 @@ import StatusBar from './StatusBar';
 import { Mic, Volume2, VolumeX, PhoneOff, Phone, Send } from 'lucide-react';
 
 const WS_URL = 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
-const MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
+const MODELS = [
+  'models/gemini-2.5-flash-native-audio',
+  'models/gemini-2.5-flash-native-audio-preview-12-2025',
+];
 
 function ab2b64(buf: ArrayBuffer): string {
   const u8 = new Uint8Array(buf);
@@ -172,6 +175,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ persona, mode, difficulty, scen
     if (!isLive) return;
 
     if (!isRecording) {
+      console.log('🟢 Recording START');
       setIsRecording(true);
       isRecordingRef.current = true;
       stopAllAudio();
@@ -182,6 +186,7 @@ const CallScreen: React.FC<CallScreenProps> = ({ persona, mode, difficulty, scen
       setTranscription({ user: '', ai: '' });
     } else {
       const finalUserText = inBuf.current.trim();
+      console.log('🔴 Recording STOP, transcribed text:', JSON.stringify(finalUserText));
       if (finalUserText) {
         const userMsg: Message = { role: 'user', text: finalUserText };
         setMessages(prev => [...prev, userMsg]);
@@ -193,12 +198,12 @@ const CallScreen: React.FC<CallScreenProps> = ({ persona, mode, difficulty, scen
       setMicLevel(0);
 
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          realtimeInput: { audioStreamEnd: true },
-        }));
+        console.log('📤 Sending turnComplete');
         wsRef.current.send(JSON.stringify({
           clientContent: { turnComplete: true },
         }));
+      } else {
+        console.warn('⚠️ WebSocket not open, readyState:', wsRef.current?.readyState);
       }
 
       if (pendingAudioQueue.current.length > 0) {
@@ -267,141 +272,158 @@ const CallScreen: React.FC<CallScreenProps> = ({ persona, mode, difficulty, scen
       silent.connect(ac.destination);
 
       const apiKey = GEMINI_API_KEY;
-      const socket = new WebSocket(`${WS_URL}?key=${apiKey}`);
-      wsRef.current = socket;
 
-      socket.onopen = () => {
-        console.log('WebSocket opened, sending setup...');
-        socket.send(JSON.stringify({
-          setup: {
-            model: MODEL,
-            generationConfig: {
-              responseModalities: ['AUDIO'],
-              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voice } } },
-            },
-            systemInstruction: { parts: [{ text: persona.systemPrompt }] },
-            outputAudioTranscription: {},
-            inputAudioTranscription: {},
-          },
-        }));
-      };
-
-      socket.onmessage = async (ev) => {
-        if (isEndingRef.current) return;
-
-        let raw = ev.data;
-        if (raw instanceof Blob) raw = await raw.text();
-        else if (raw instanceof ArrayBuffer) raw = new TextDecoder().decode(raw);
-        if (typeof raw !== 'string') {
-          console.warn('비문자열 메시지 수신:', typeof raw, raw);
+      const connectModel = (modelIdx: number) => {
+        if (modelIdx >= MODELS.length) {
+          setMessages([{ role: 'model', text: '⚠️ 모든 모델 연결 실패. 종료 버튼을 눌러주세요.' }]);
           return;
         }
+        const model = MODELS[modelIdx];
+        console.log(`🔄 Trying model: ${model}`);
 
-        let data: any;
-        try { data = JSON.parse(raw); } catch (e) {
-          console.warn('JSON 파싱 실패:', raw.substring(0, 300));
-          return;
-        }
-        console.log('서버 메시지:', Object.keys(data).join(', '), JSON.stringify(data).substring(0, 200));
+        const socket = new WebSocket(`${WS_URL}?key=${apiKey}`);
+        socket.binaryType = 'arraybuffer';
+        wsRef.current = socket;
+        let setupDone = false;
 
-        if (data.setupComplete) {
-          console.log('✅ setupComplete received');
-          setIsLive(true);
-
-          const prompt = scenario
-            ? `Let's practice English about "${scenario}". My level is ${difficulty}. Start by greeting me in 1-2 short sentences.`
-            : `My level is ${difficulty}. Let's have a chat. Start by greeting me in 1-2 short sentences.`;
+        socket.onopen = () => {
+          console.log('WebSocket opened, sending setup...');
           socket.send(JSON.stringify({
-            clientContent: {
-              turns: [{ role: 'user', parts: [{ text: prompt }] }],
-              turnComplete: true,
+            setup: {
+              model,
+              generationConfig: {
+                responseModalities: ['AUDIO'],
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: persona.voice } } },
+              },
+              systemInstruction: { parts: [{ text: persona.systemPrompt }] },
             },
           }));
+        };
 
-          proc.onaudioprocess = (e) => {
-            if (isEndingRef.current || !isRecordingRef.current || socket.readyState !== 1) return;
-            const rawPcm = e.inputBuffer.getChannelData(0);
-            const ds = downsample(rawPcm, ac.sampleRate, 16000);
-            const i16 = f32toi16(ds);
+        socket.onmessage = async (ev) => {
+          if (isEndingRef.current) return;
 
-            let sum = 0;
-            for (let i = 0; i < ds.length; i++) sum += ds[i] * ds[i];
-            setMicLevel(Math.sqrt(sum / ds.length));
+          let raw = ev.data;
+          if (raw instanceof Blob) raw = await raw.text();
+          else if (raw instanceof ArrayBuffer) raw = new TextDecoder().decode(raw);
+          if (typeof raw !== 'string') return;
 
+          let data: any;
+          try { data = JSON.parse(raw); } catch { return; }
+          console.log('서버:', Object.keys(data).join(', '), JSON.stringify(data).substring(0, 150));
+
+          if (data.setupComplete) {
+            setupDone = true;
+            console.log(`✅ setupComplete (${model})`);
+            setIsLive(true);
+
+            const prompt = scenario
+              ? `Let's practice English about "${scenario}". My level is ${difficulty}. Start by greeting me in 1-2 short sentences.`
+              : `My level is ${difficulty}. Let's have a chat. Start by greeting me in 1-2 short sentences.`;
             socket.send(JSON.stringify({
-              realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=16000', data: ab2b64(i16.buffer) }] },
+              clientContent: {
+                turns: [{ role: 'user', parts: [{ text: prompt }] }],
+                turnComplete: true,
+              },
             }));
-          };
-        }
 
-        if (data.serverContent) {
-          const sc = data.serverContent;
+            let audioSendCount = 0;
+            proc.onaudioprocess = (e) => {
+              if (isEndingRef.current || !isRecordingRef.current || socket.readyState !== 1) return;
+              const rawPcm = e.inputBuffer.getChannelData(0);
+              const ds = downsample(rawPcm, ac.sampleRate, 16000);
+              const i16 = f32toi16(ds);
 
-          if (sc.modelTurn?.parts) {
-            for (const p of sc.modelTurn.parts) {
-              if (p.inlineData?.data) {
-                if (isRecordingRef.current) {
-                  pendingAudioQueue.current.push(p.inlineData.data);
-                } else {
-                  audioQueue.current.push(p.inlineData.data);
-                  playQueue();
+              let sum = 0;
+              for (let i = 0; i < ds.length; i++) sum += ds[i] * ds[i];
+              const rms = Math.sqrt(sum / ds.length);
+              setMicLevel(rms);
+
+              if (audioSendCount++ % 20 === 0) {
+                console.log(`🎤 Audio #${audioSendCount}, RMS=${rms.toFixed(4)}`);
+              }
+
+              socket.send(JSON.stringify({
+                realtimeInput: { mediaChunks: [{ mimeType: 'audio/pcm;rate=16000', data: ab2b64(i16.buffer) }] },
+              }));
+            };
+          }
+
+          if (data.serverContent) {
+            const sc = data.serverContent;
+
+            if (sc.modelTurn?.parts) {
+              for (const p of sc.modelTurn.parts) {
+                if (p.inlineData?.data) {
+                  if (isRecordingRef.current) {
+                    pendingAudioQueue.current.push(p.inlineData.data);
+                  } else {
+                    audioQueue.current.push(p.inlineData.data);
+                    playQueue();
+                  }
                 }
               }
             }
-          }
 
-          if (sc.outputTranscription?.text) {
-            outBuf.current += sc.outputTranscription.text;
-            if (!isRecordingRef.current) {
-              setTranscription(prev => ({ ...prev, ai: outBuf.current }));
+            if (sc.outputTranscription?.text) {
+              outBuf.current += sc.outputTranscription.text;
+              if (!isRecordingRef.current) {
+                setTranscription(prev => ({ ...prev, ai: outBuf.current }));
+              }
             }
-          }
 
-          if (sc.inputTranscription?.text) {
-            inBuf.current += sc.inputTranscription.text;
-            if (isRecordingRef.current) {
-              setTranscription(prev => ({ ...prev, user: inBuf.current }));
-            }
-          }
-
-          if (sc.turnComplete) {
-            if (outBuf.current.trim()) {
-              const aiMsg: Message = { role: 'model', text: outBuf.current.trim() };
+            if (sc.inputTranscription?.text) {
+              inBuf.current += sc.inputTranscription.text;
               if (isRecordingRef.current) {
-                pendingAiMessages.current.push(aiMsg);
-              } else {
-                setMessages(prev => [...prev, aiMsg]);
-                historyRef.current.push(aiMsg);
+                setTranscription(prev => ({ ...prev, user: inBuf.current }));
               }
             }
-            outBuf.current = '';
-            if (!isRecordingRef.current) {
-              if (inBuf.current.trim()) {
-                const userMsg: Message = { role: 'user', text: inBuf.current.trim() };
-                if (!historyRef.current.some(m => m.text === userMsg.text && m.role === 'user')) {
-                  setMessages(prev => [...prev, userMsg]);
-                  historyRef.current.push(userMsg);
+
+            if (sc.turnComplete) {
+              if (outBuf.current.trim()) {
+                const aiMsg: Message = { role: 'model', text: outBuf.current.trim() };
+                if (isRecordingRef.current) {
+                  pendingAiMessages.current.push(aiMsg);
+                } else {
+                  setMessages(prev => [...prev, aiMsg]);
+                  historyRef.current.push(aiMsg);
                 }
               }
-              inBuf.current = '';
-              setTranscription({ user: '', ai: '' });
+              outBuf.current = '';
+              if (!isRecordingRef.current) {
+                if (inBuf.current.trim()) {
+                  const userMsg: Message = { role: 'user', text: inBuf.current.trim() };
+                  if (!historyRef.current.some(m => m.text === userMsg.text && m.role === 'user')) {
+                    setMessages(prev => [...prev, userMsg]);
+                    historyRef.current.push(userMsg);
+                  }
+                }
+                inBuf.current = '';
+                setTranscription({ user: '', ai: '' });
+              }
             }
           }
-        }
+        };
+
+        socket.onerror = () => {
+          console.error('WebSocket error');
+        };
+
+        socket.onclose = (ev) => {
+          console.warn(`WebSocket closed: ${ev.code} ${ev.reason}`);
+          if (!setupDone && modelIdx + 1 < MODELS.length) {
+            console.log('⏩ Setup failed, trying next model...');
+            connectModel(modelIdx + 1);
+            return;
+          }
+          setIsLive(false);
+          setIsRecording(false);
+          isRecordingRef.current = false;
+          setMicLevel(0);
+        };
       };
 
-      socket.onerror = () => {
-        console.error('WebSocket error');
-        setIsLive(false);
-      };
-
-      socket.onclose = (ev) => {
-        console.warn('WebSocket closed:', ev.code, ev.reason);
-        setIsLive(false);
-        setIsRecording(false);
-        isRecordingRef.current = false;
-        setMicLevel(0);
-      };
+      connectModel(0);
     } catch (err: any) {
       console.error('acceptCall error:', err);
       setMessages([{ role: 'model', text: `⚠️ 오류: ${err?.message || '알 수 없는 오류'}\n\n종료 버튼을 눌러주세요.` }]);

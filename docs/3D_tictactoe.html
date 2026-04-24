@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D 틱택토</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body {
+            margin: 0;
+            background-color: #f9fafb;
+            color: #1f2937;
+            font-family: 'Segoe UI', 'Apple SD Gothic Neo', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #canvas-container { width: 100vw; height: 100vh; display: block; touch-action: none; }
+        .ui-layer { position: absolute; inset: 0; pointer-events: none; }
+        .ui-layer > * { pointer-events: auto; }
+
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .topbar {
+            position: absolute; top: 1rem; left: 1rem; right: 1rem;
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 0.75rem; pointer-events: none;
+        }
+        .topbar > * { pointer-events: auto; }
+        .top-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .icon-btn {
+            width: 2.4rem; height: 2.4rem; border-radius: 0.6rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            color: #4b5563; cursor: pointer; font-size: 1.05rem; font-family: inherit;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.18s;
+        }
+        .icon-btn:hover { background: white; color: #111827; transform: translateY(-1px); }
+        .icon-btn:active { transform: translateY(0); }
+        .icon-btn.primary { background: #4f46e5; color: white; border-color: #4f46e5; }
+        .icon-btn.primary:hover { background: #6366f1; color: white; }
+        .hidden { display: none !important; }
+
+        .top-center {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            max-width: 520px; min-width: 0;
+        }
+        .title {
+            margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.025em;
+            background: linear-gradient(90deg, #3b82f6 0%, #fbbf24 50%, #f87171 100%);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            line-height: 1.1;
+        }
+        @media (min-width: 768px) { .title { font-size: 1.65rem; } }
+
+        .status-card {
+            margin-top: 0.45rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border-radius: 9999px;
+            box-shadow: 0 4px 12px -2px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+            padding: 0.35rem 1rem;
+            display: flex; align-items: center; gap: 0.6rem; justify-content: center;
+            font-size: 0.82rem;
+        }
+        .line-meta { color: #6b7280; font-size: 0.78rem; font-weight: 700; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.12rem 0.65rem; border-radius: 9999px;
+            font-weight: 600; font-size: 0.82rem;
+        }
+        .chip.p1 { background: #eff6ff; color: #2563eb; }
+        .chip.p2 { background: #fef2f2; color: #dc2626; }
+        .chip.draw { background: #f3f4f6; color: #4b5563; }
+        .dot {
+            width: 0.5rem; height: 0.5rem; border-radius: 50%;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.8); display: inline-block;
+        }
+        .dot.blue { background: #3b82f6; }
+        .dot.red  { background: #f87171; }
+        .dot.gray { background: #9ca3af; }
+
+        .top-right { display: flex; gap: 0.4rem; align-items: flex-start; }
+        .mode-toggle {
+            display: flex; gap: 0.3rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.2rem;
+        }
+        .mode-btn {
+            padding: 0.35rem 0.7rem; border-radius: 0.4rem; background: transparent;
+            border: none; font-size: 0.8rem; font-weight: 600; color: #6b7280; cursor: pointer;
+            transition: all 0.18s; font-family: inherit;
+        }
+        .mode-btn:hover { color: #374151; }
+        .mode-btn.active { color: #4f46e5; background: #eef2ff; }
+
+        .control-hint {
+            position: absolute; bottom: 1.2rem; left: 50%; transform: translateX(-50%);
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            border: 1px solid #e5e7eb; border-radius: 9999px;
+            padding: 0.35rem 0.9rem; font-size: 0.72rem; color: #6b7280;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(17, 24, 39, 0.45);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 100; padding: 1rem;
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal-card {
+            background: white; border-radius: 1rem; max-width: 440px; width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            padding: 1.5rem 1.75rem; position: relative;
+        }
+        .modal-card h2 {
+            margin: 0 0 0.9rem 0; font-size: 1.15rem; font-weight: 700; color: #1f2937;
+        }
+        .modal-close {
+            position: absolute; top: 0.75rem; right: 0.75rem;
+            width: 2rem; height: 2rem; border-radius: 50%;
+            background: #f3f4f6; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            color: #6b7280; font-size: 1rem;
+        }
+        .modal-close:hover { background: #e5e7eb; color: #111827; }
+        .rule-item {
+            display: flex; gap: 0.7rem; margin-bottom: 0.85rem;
+            font-size: 0.88rem; color: #4b5563; line-height: 1.5;
+        }
+        .rule-item:last-child { margin-bottom: 0; }
+        .rule-num {
+            flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+            background: #eef2ff; color: #4f46e5;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700;
+        }
+        .rule-item b { color: #d97706; font-weight: 700; }
+        .rule-item strong { color: #1f2937; font-weight: 600; }
+        .modal-tip {
+            margin-top: 0.9rem; padding: 0.65rem 0.85rem;
+            background: #fffbeb; border-left: 3px solid #f59e0b;
+            border-radius: 0.3rem; font-size: 0.78rem; color: #78350f;
+        }
+        .controls-hint {
+            margin-top: 0.75rem; font-size: 0.72rem; color: #9ca3af; line-height: 1.5;
+        }
+
+        .banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; }
+        .banner.show { display: block; }
+        .banner-inner {
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border-radius: 1rem; border: 2px solid #9ca3af;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            padding: 1.6rem 2rem; text-align: center;
+        }
+        .banner-text { font-size: 1.65rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.45rem; }
+        .banner-text.blue { color: #2563eb; }
+        .banner-text.red { color: #dc2626; }
+        .banner-text.gray { color: #4b5563; }
+        .banner-sub { font-size: 0.86rem; color: #6b7280; margin-bottom: 1rem; }
+        .banner-btn {
+            padding: 0.5rem 1.05rem; border-radius: 0.5rem;
+            background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer;
+        }
+        .banner-btn:hover { background: #e5e7eb; color: #111827; }
+
+        .creator-info {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #4a5568;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            z-index: 200;
+            width: fit-content;
+            max-width: calc(100vw - 24px);
+        }
+        @media (max-width: 768px) {
+            .creator-info {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+                bottom: 10px;
+            }
+        }
+        .creator-info p { margin: 2px 0; }
+        .creator-info a { color: #4299e1; text-decoration: none; }
+        .creator-info a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- UI Overlay -->
+    <div class="ui-layer">
+        <div class="topbar fade-in">
+            <div class="top-actions">
+                <button class="icon-btn" id="restart-btn" title="새 게임">🔄</button>
+                <button class="icon-btn" id="btn-undo" title="되돌리기 (Z)">↶</button>
+                <button class="icon-btn hidden" id="btn-pie" title="파이룰 적용(진영 스왑)">⇄</button>
+            </div>
+            <div class="top-center">
+                <h1 class="title">3D 틱택토</h1>
+                <div class="status-card">
+                    <span id="turn-chip" class="chip p1">
+                        <span class="dot blue"></span>
+                        <span id="turn-name">선공 (O)의 차례</span>
+                    </span>
+                    <span class="line-meta" id="line-score">빙고 O:0 X:0</span>
+                </div>
+            </div>
+            <div class="top-right">
+                <div class="mode-toggle">
+                    <button class="mode-btn active" id="btn-pvp">👥 2인</button>
+                    <button class="mode-btn" id="btn-pve">🤖 AI</button>
+                </div>
+                <button class="icon-btn" id="btn-rules" title="게임 규칙">📖</button>
+            </div>
+        </div>
+
+        <div class="modal-backdrop" id="rules-modal">
+            <div class="modal-card" onclick="event.stopPropagation()">
+                <button class="modal-close" id="btn-close-rules" title="닫기">✕</button>
+                <h2>📖 게임 규칙</h2>
+                <div class="rule-item">
+                    <span class="rule-num">1</span>
+                    <div>3×3×3 공간에서 O/X를 번갈아 놓습니다.</div>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-num">2</span>
+                    <div><strong>빙고 2줄</strong>을 먼저 완성해야 승리합니다.</div>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-num">3</span>
+                    <div>중앙 칸(정가운데)은 <b>빙고 라인으로 1번만</b> 사용할 수 있습니다. 한 번 사용되면 이후 중앙 포함 라인은 무효입니다.</div>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-num">4</span>
+                    <div><b>파이룰:</b> 첫 수 이후 후공은 1회에 한해 <strong>진영 스왑(⇄)</strong>을 선택할 수 있습니다.</div>
+                </div>
+                <div class="rule-item">
+                    <span class="rule-num">5</span>
+                    <div><b>AI 모드</b>에서는 후공(X)을 컴퓨터가 자동으로 둡니다.</div>
+                </div>
+                <div class="modal-tip">터치 기기에서는 먼저 칸을 선택하고, 같은 칸을 한 번 더 탭하면 돌이 놓입니다.</div>
+                <div class="controls-hint">
+                    <b>조작:</b> 드래그 회전 · 휠/핀치 간격 조절 · 탭 선택<br>
+                    <b>단축키:</b> R 새게임 · Z 되돌리기 · ? 규칙 · ESC 닫기
+                </div>
+            </div>
+        </div>
+
+        <div class="banner" id="banner">
+            <div class="banner-inner" id="banner-inner">
+                <div class="banner-text" id="banner-text"></div>
+                <div class="banner-sub">한 번 더 플레이할까요?</div>
+                <button class="banner-btn" id="banner-reset-btn">새 게임</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            // --- Game State ---
+            let currentPlayer = 1; // 1 = O (Blue), 2 = X (Red)
+            let mode = 'pvp'; // pvp | pve
+            let isGameOver = false;
+            let board = new Array(3).fill(null).map(() => new Array(3).fill(null).map(() => new Array(3).fill(0)));
+            let pieces = []; // To store created meshes for restart
+            let moveHistory = [];
+            let lineCounts = { 1: 0, 2: 0 };
+            let countedLines = { 1: new Set(), 2: new Set() };
+            let centerLineConsumed = false;
+            let pieAvailable = false;
+            let pieUsed = false;
+
+            const CELL_SIZE = 2;
+            let targetSpacing = 2.2;
+            let currentSpacing = 2.2;
+
+            // --- Three.js Setup ---
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0xf9fafb, 0.02); 
+
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(14, 12, 18); // 간격이 벌어질 것을 대비해 카메라를 살짝 뒤로 배치
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            const controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enableZoom = false; // 카메라 줌 대신 블록 간격 조절을 사용하기 위해 비활성화
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(10, 20, 10);
+            scene.add(dirLight);
+
+            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+            dirLight2.position.set(-10, -10, -10);
+            scene.add(dirLight2);
+
+            // --- Board Generation (The Rubik's Cube Grid) ---
+            const raycastTargets = [];
+            const gridEdges = []; // 간격 조절 시 업데이트를 위한 배열
+            const gridGroup = new THREE.Group();
+            scene.add(gridGroup);
+
+            // Create target boxes
+            const boxGeo = new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            const edgesGeo = new THREE.EdgesGeometry(boxGeo);
+            const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x9ca3af, transparent: true, opacity: 0.5 }); 
+            
+            const invisibleMat = new THREE.MeshBasicMaterial({ visible: false });
+
+            // Highlight material
+            const highlightGeo = new THREE.BoxGeometry(CELL_SIZE * 0.9, CELL_SIZE * 0.9, CELL_SIZE * 0.9);
+            const highlightMat = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.1 }); 
+            const highlightMesh = new THREE.Mesh(highlightGeo, highlightMat);
+            highlightMesh.visible = false;
+            scene.add(highlightMesh);
+
+            for (let x = 0; x < 3; x++) {
+                for (let y = 0; y < 3; y++) {
+                    for (let z = 0; z < 3; z++) {
+                        const posX = (x - 1) * currentSpacing;
+                        const posY = (y - 1) * currentSpacing;
+                        const posZ = (z - 1) * currentSpacing;
+
+                        // Visual grid lines
+                        const edges = new THREE.LineSegments(edgesGeo, edgeMaterial);
+                        edges.position.set(posX, posY, posZ);
+                        edges.userData = { x, y, z };
+                        gridGroup.add(edges);
+                        gridEdges.push(edges);
+
+                        // Invisible clickable box
+                        const targetBox = new THREE.Mesh(boxGeo, invisibleMat);
+                        targetBox.position.set(posX, posY, posZ);
+                        targetBox.userData = { x, y, z, isOccupied: false };
+                        gridGroup.add(targetBox);
+                        raycastTargets.push(targetBox);
+                    }
+                }
+            }
+
+            // Generate Win Lines (49 total in 3x3x3)
+            const winLines = [];
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    winLines.push([[0, i, j], [1, i, j], [2, i, j]]);
+                    winLines.push([[i, 0, j], [i, 1, j], [i, 2, j]]);
+                    winLines.push([[i, j, 0], [i, j, 1], [i, j, 2]]);
+                }
+            }
+            for (let i = 0; i < 3; i++) {
+                winLines.push([[0, 0, i], [1, 1, i], [2, 2, i]]);
+                winLines.push([[0, 2, i], [1, 1, i], [2, 0, i]]);
+                winLines.push([[0, i, 0], [1, i, 1], [2, i, 2]]);
+                winLines.push([[0, i, 2], [1, i, 1], [2, i, 0]]);
+                winLines.push([[i, 0, 0], [i, 1, 1], [i, 2, 2]]);
+                winLines.push([[i, 0, 2], [i, 1, 1], [i, 2, 0]]);
+            }
+            winLines.push([[0, 0, 0], [1, 1, 1], [2, 2, 2]]);
+            winLines.push([[2, 0, 0], [1, 1, 1], [0, 2, 2]]);
+            winLines.push([[0, 2, 0], [1, 1, 1], [2, 0, 2]]);
+            winLines.push([[0, 0, 2], [1, 1, 1], [2, 2, 0]]);
+            const lineHasCenter = (line) => line.some(([x,y,z]) => x === 1 && y === 1 && z === 1);
+            const lineKey = (line) => line.map(([x,y,z]) => `${x}${y}${z}`).join('-');
+
+
+            // --- Controls & Interaction (터치 및 마우스 완벽 대응) ---
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            
+            let initialPinchDistance = null;
+            let isTouchInteraction = false;
+            let lastTouchedBlock = null; // 터치 기기용 호버(선택) 상태 저장
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            // 1. 마우스 휠 (이격 조절)
+            window.addEventListener('wheel', (e) => {
+                targetSpacing += e.deltaY * 0.003;
+                targetSpacing = Math.max(2.2, Math.min(targetSpacing, 4.5));
+                highlightMesh.visible = false;
+            }, { passive: true });
+
+            // 2. 터치 시작
+            window.addEventListener('touchstart', (e) => {
+                isTouchInteraction = true; // 터치 모드 활성화
+                if (e.touches.length === 1) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                } else if (e.touches.length === 2) {
+                    initialPinchDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                }
+            }, { passive: false });
+
+            // 3. 터치 이동 (핀치 줌 / 간격 조절)
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinchDistance !== null) {
+                    e.preventDefault();
+                    const currentDistance = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const delta = initialPinchDistance - currentDistance;
+                    targetSpacing -= delta * 0.015;
+                    targetSpacing = Math.max(2.2, Math.min(targetSpacing, 4.5));
+                    initialPinchDistance = currentDistance;
+                    highlightMesh.visible = false;
+                }
+            }, { passive: false });
+
+            // 4. 터치 종료 (탭 판정 및 2번 터치 로직)
+            window.addEventListener('touchend', (e) => {
+                if (e.touches.length < 2) {
+                    initialPinchDistance = null;
+                }
+                
+                // 단일 터치이고 게임 진행 중일 때 '탭(Tap)'인지 확인
+                if (e.changedTouches.length === 1 && !isGameOver) {
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const touchEndY = e.changedTouches[0].clientY;
+                    const distance = Math.hypot(touchEndX - touchStartX, touchEndY - touchStartY);
+
+                    // 드래그(화면 회전)가 아닌 가벼운 터치(거리 10 이하)일 때만 실행
+                    if (distance < 10) {
+                        handleTap(touchEndX, touchEndY);
+                    }
+                }
+            });
+
+            function handleTap(clientX, clientY) {
+                if (mode === 'pve' && currentPlayer === 2) return;
+                mouse.x = (clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(raycastTargets);
+
+                if (intersects.length > 0) {
+                    const obj = intersects[0].object;
+                    if (!obj.userData.isOccupied) {
+                        if (lastTouchedBlock === obj) {
+                            // 이미 선택된(호버된) 블록을 다시 터치한 경우 -> 돌 놓기
+                            placePiece(obj);
+                            lastTouchedBlock = null;
+                        } else {
+                            // 처음 터치한 블록인 경우 -> 호버 효과(하이라이트)만 주기
+                            highlightMesh.position.copy(obj.position);
+                            highlightMesh.visible = true;
+                            lastTouchedBlock = obj;
+                        }
+                    }
+                } else {
+                    // 허공을 터치한 경우 선택 초기화
+                    highlightMesh.visible = false;
+                    lastTouchedBlock = null;
+                }
+            }
+
+            function updateGridPositions() {
+                const updatePos = (obj) => {
+                    const { x, y, z } = obj.userData;
+                    obj.position.set((x - 1) * currentSpacing, (y - 1) * currentSpacing, (z - 1) * currentSpacing);
+                };
+                raycastTargets.forEach(updatePos);
+                gridEdges.forEach(updatePos);
+                pieces.forEach(p => updatePos(p.wrapper));
+            }
+
+            // 5. 마우스 이동 (데스크탑)
+            window.addEventListener('mousemove', (event) => {
+                isTouchInteraction = false; // 마우스를 움직이면 터치 모드 해제
+                if (isGameOver || (mode === 'pve' && currentPlayer === 2)) return;
+                
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(raycastTargets);
+
+                if (intersects.length > 0) {
+                    const obj = intersects[0].object;
+                    if (!obj.userData.isOccupied) {
+                        highlightMesh.position.copy(obj.position);
+                        highlightMesh.visible = true;
+                        document.body.style.cursor = 'pointer';
+                    } else {
+                        highlightMesh.visible = false;
+                        document.body.style.cursor = 'default';
+                    }
+                } else {
+                    highlightMesh.visible = false;
+                    document.body.style.cursor = 'default';
+                }
+            }, false);
+
+            // 6. 마우스 클릭 (데스크탑)
+            window.addEventListener('click', (event) => {
+                // 터치 조작 중이거나 게임 오버면 무시 (터치는 touchend에서 처리)
+                if (isTouchInteraction || isGameOver || (mode === 'pve' && currentPlayer === 2)) return; 
+
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(raycastTargets);
+
+                if (intersects.length > 0) {
+                    const obj = intersects[0].object;
+                    if (!obj.userData.isOccupied) {
+                        placePiece(obj);
+                    }
+                }
+            }, false);
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }, false);
+
+
+            // --- Game Logic ---
+            function placePiece(targetMesh) {
+                if (pieAvailable && currentPlayer === 2) {
+                    pieAvailable = false;
+                    pieUsed = true;
+                }
+                const { x, y, z } = targetMesh.userData;
+                board[x][y][z] = currentPlayer;
+                targetMesh.userData.isOccupied = true;
+                moveHistory.push({ x, y, z, player: currentPlayer });
+                highlightMesh.visible = false;
+                document.body.style.cursor = 'default';
+
+                // 블록(칸) 내부를 플레이어 색상으로 연하게 칠하기 (투명도 15%)
+                const blockColor = currentPlayer === 1 ? 0x60A5FA : 0xF87171;
+                targetMesh.material = new THREE.MeshBasicMaterial({
+                    color: blockColor,
+                    transparent: true,
+                    opacity: 0.15,
+                    depthWrite: false // 투명한 박스들이 겹칠 때 렌더링이 깨지는 현상 방지
+                });
+
+                // Create Wrapper to hold the rotation offset perfectly
+                const wrapper = new THREE.Group();
+                wrapper.userData = { x, y, z };
+                let innerMesh;
+
+                if (currentPlayer === 1) {
+                    // Draw 'O' (Blue Torus)
+                    const geometry = new THREE.TorusGeometry(0.6, 0.2, 16, 32);
+                    const material = new THREE.MeshStandardMaterial({ color: 0x60A5FA, metalness: 0.3, roughness: 0.4 }); 
+                    innerMesh = new THREE.Mesh(geometry, material);
+                    innerMesh.rotation.x = Math.PI / 2; // 처음 누워있는 상태
+                } else {
+                    // Draw 'X' (Red Cross)
+                    innerMesh = new THREE.Group();
+                    const geometry = new THREE.BoxGeometry(0.3, 1.4, 0.3);
+                    const material = new THREE.MeshStandardMaterial({ color: 0xF87171, metalness: 0.3, roughness: 0.4 }); 
+                    
+                    const bar1 = new THREE.Mesh(geometry, material);
+                    bar1.rotation.z = Math.PI / 4;
+                    bar1.rotation.x = Math.PI / 4;
+                    
+                    const bar2 = new THREE.Mesh(geometry, material);
+                    bar2.rotation.z = -Math.PI / 4;
+                    bar2.rotation.x = Math.PI / 4;
+
+                    innerMesh.add(bar1);
+                    innerMesh.add(bar2);
+                }
+
+                wrapper.add(innerMesh);
+                wrapper.position.copy(targetMesh.position);
+                wrapper.scale.set(0, 0, 0); // Spawn Animation start state
+                scene.add(wrapper);
+                
+                pieces.push({ wrapper: wrapper, innerMesh: innerMesh, targetScale: 1, isWin: false });
+                registerNewLines(currentPlayer);
+                updateStatusText();
+
+                if (lineCounts[currentPlayer] >= 2) {
+                    endGame(currentPlayer, null);
+                } else if (checkDraw()) {
+                    endGame(0, null);
+                } else {
+                    currentPlayer = currentPlayer === 1 ? 2 : 1;
+                    if (moveHistory.length === 1 && !pieUsed) pieAvailable = true;
+                    updateStatusText();
+                    updatePieButton();
+                    if (!isGameOver && mode === 'pve' && currentPlayer === 2) {
+                        if (pieAvailable && !pieUsed) {
+                            const fm = moveHistory[0];
+                            const shouldSwap = fm.x === 1 && fm.y === 1 && fm.z === 1;
+                            if (shouldSwap) {
+                                setTimeout(applyPieRule, 250);
+                                return;
+                            }
+                            pieAvailable = false;
+                            pieUsed = true;
+                            updatePieButton();
+                        }
+                        setTimeout(aiMove, 380);
+                    }
+                }
+            }
+
+            function registerNewLines(player) {
+                for (const line of winLines) {
+                    const key = lineKey(line);
+                    if (countedLines[player].has(key)) continue;
+                    const complete = line.every(([a,b,c]) => board[a][b][c] === player);
+                    if (!complete) continue;
+                    const usesCenter = lineHasCenter(line);
+                    if (usesCenter && centerLineConsumed) continue;
+                    if (usesCenter) centerLineConsumed = true;
+                    countedLines[player].add(key);
+                    lineCounts[player] += 1;
+                }
+            }
+
+            function recomputeScoringFromHistory() {
+                const tmp = new Array(3).fill(null).map(() => new Array(3).fill(null).map(() => new Array(3).fill(0)));
+                const c = { 1: 0, 2: 0 };
+                const sets = { 1: new Set(), 2: new Set() };
+                let centerUsed = false;
+
+                for (const mv of moveHistory) {
+                    tmp[mv.x][mv.y][mv.z] = mv.player;
+                    for (const line of winLines) {
+                        const key = lineKey(line);
+                        if (sets[mv.player].has(key)) continue;
+                        const complete = line.every(([a,b,c0]) => tmp[a][b][c0] === mv.player);
+                        if (!complete) continue;
+                        const usesCenter = lineHasCenter(line);
+                        if (usesCenter && centerUsed) continue;
+                        if (usesCenter) centerUsed = true;
+                        sets[mv.player].add(key);
+                        c[mv.player] += 1;
+                    }
+                }
+
+                lineCounts = c;
+                countedLines = sets;
+                centerLineConsumed = centerUsed;
+            }
+
+            function undoMove() {
+                if (!moveHistory.length) return;
+                const undos = mode === 'pve' ? Math.min(2, moveHistory.length) : 1;
+                for (let i = 0; i < undos; i++) {
+                    const mv = moveHistory.pop();
+                    board[mv.x][mv.y][mv.z] = 0;
+                    const target = getTargetMesh(mv.x, mv.y, mv.z);
+                    if (target) {
+                        target.userData.isOccupied = false;
+                        target.material = invisibleMat;
+                    }
+                    const p = pieces.pop();
+                    if (p) {
+                        scene.remove(p.wrapper);
+                        p.wrapper.traverse(o => {
+                            if (o.geometry) o.geometry.dispose();
+                            if (o.material) {
+                                if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+                                else o.material.dispose();
+                            }
+                        });
+                    }
+                }
+
+                isGameOver = false;
+                banner.classList.remove('show');
+                if (!moveHistory.length) {
+                    currentPlayer = 1;
+                    pieAvailable = false;
+                    pieUsed = false;
+                } else {
+                    const last = moveHistory[moveHistory.length - 1];
+                    currentPlayer = last.player === 1 ? 2 : 1;
+                    if (moveHistory.length === 1 && !pieUsed && currentPlayer === 2) pieAvailable = true;
+                    else pieAvailable = false;
+                }
+                recomputeScoringFromHistory();
+                updateStatusText();
+                updatePieButton();
+                highlightMesh.visible = false;
+                document.body.style.cursor = 'default';
+            }
+
+            function getTargetMesh(x, y, z) {
+                for (const t of raycastTargets) {
+                    if (t.userData.x === x && t.userData.y === y && t.userData.z === z) return t;
+                }
+                return null;
+            }
+
+            function aiMove() {
+                if (isGameOver || mode !== 'pve' || currentPlayer !== 2) return;
+                const empties = [];
+                for (let x = 0; x < 3; x++) for (let y = 0; y < 3; y++) for (let z = 0; z < 3; z++) {
+                    if (board[x][y][z] === 0) empties.push([x, y, z]);
+                }
+                if (!empties.length) return;
+
+                const countLinesFor = (player, centerConsumedNow) => {
+                    let cnt = 0;
+                    let centerUsedHere = centerConsumedNow;
+                    for (const line of winLines) {
+                        const complete = line.every(([a,b,c]) => board[a][b][c] === player);
+                        if (!complete) continue;
+                        const centerLine = lineHasCenter(line);
+                        if (centerLine && centerUsedHere) continue;
+                        if (centerLine) centerUsedHere = true;
+                        cnt++;
+                    }
+                    return cnt;
+                };
+
+                let pick = null;
+                for (const [x,y,z] of empties) {
+                    board[x][y][z] = 2;
+                    const l2 = countLinesFor(2, centerLineConsumed);
+                    board[x][y][z] = 0;
+                    if (l2 >= 2) { pick = [x,y,z]; break; }
+                }
+                if (!pick) {
+                    for (const [x,y,z] of empties) {
+                        board[x][y][z] = 1;
+                        const l1 = countLinesFor(1, centerLineConsumed);
+                        board[x][y][z] = 0;
+                        if (l1 >= 2) { pick = [x,y,z]; break; }
+                    }
+                }
+                if (!pick) {
+                    const scored = empties.map(([x, y, z]) => {
+                        board[x][y][z] = 2;
+                        const myLines = countLinesFor(2, centerLineConsumed);
+                        const oppLines = countLinesFor(1, centerLineConsumed);
+                        board[x][y][z] = 0;
+                        const centerWeight = (x === 1 && y === 1 && z === 1) ? 0.2 : ((x === 1) + (y === 1) + (z === 1)) * 0.4;
+                        return { c: [x,y,z], s: myLines * 30 - oppLines * 8 + centerWeight };
+                    });
+                    const best = Math.max(...scored.map(v => v.s));
+                    const top = scored.filter(v => v.s >= best - 0.05);
+                    pick = top[Math.floor(Math.random() * top.length)].c;
+                }
+
+                const mesh = getTargetMesh(pick[0], pick[1], pick[2]);
+                if (mesh && !mesh.userData.isOccupied) placePiece(mesh);
+            }
+
+            function checkDraw() {
+                for (let x = 0; x < 3; x++) {
+                    for (let y = 0; y < 3; y++) {
+                        for (let z = 0; z < 3; z++) {
+                            if (board[x][y][z] === 0) return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            // --- UI & Lifecycle ---
+            const turnChip = document.getElementById('turn-chip');
+            const turnName = document.getElementById('turn-name');
+            const lineScore = document.getElementById('line-score');
+            const restartBtn = document.getElementById('restart-btn');
+            const undoBtn = document.getElementById('btn-undo');
+            const pieBtn = document.getElementById('btn-pie');
+            const banner = document.getElementById('banner');
+            const bannerInner = document.getElementById('banner-inner');
+            const bannerText = document.getElementById('banner-text');
+            const bannerResetBtn = document.getElementById('banner-reset-btn');
+            const rulesModal = document.getElementById('rules-modal');
+            const btnRules = document.getElementById('btn-rules');
+            const btnCloseRules = document.getElementById('btn-close-rules');
+
+            function updateStatusText() {
+                turnChip.classList.remove('p1', 'p2', 'draw');
+                const dot = turnChip.querySelector('.dot');
+                dot.classList.remove('blue', 'red', 'gray');
+                if (currentPlayer === 1) {
+                    turnChip.classList.add('p1');
+                    dot.classList.add('blue');
+                    turnName.textContent = '선공 (O)의 차례';
+                } else {
+                    turnChip.classList.add('p2');
+                    dot.classList.add('red');
+                    turnName.textContent = (mode === 'pve' ? 'AI' : '후공') + ' (X)의 차례';
+                }
+                lineScore.textContent = `빙고 O:${lineCounts[1]} X:${lineCounts[2]}${centerLineConsumed ? ' · 중앙라인 소모' : ''}`;
+            }
+
+            function updatePieButton() {
+                const canUse = pieAvailable && !pieUsed && !isGameOver && currentPlayer === 2;
+                if (canUse) pieBtn.classList.remove('hidden');
+                else pieBtn.classList.add('hidden');
+            }
+
+            function applyPieRule() {
+                if (!pieAvailable || pieUsed || moveHistory.length !== 1 || currentPlayer !== 2) return;
+                const first = moveHistory[0];
+                const prevMode = mode;
+                resetGame();
+                mode = prevMode;
+                currentPlayer = 2;
+                const target = getTargetMesh(first.x, first.y, first.z);
+                if (target) placePiece(target);
+                pieAvailable = false;
+                pieUsed = true;
+                updatePieButton();
+                updateStatusText();
+            }
+
+            function showBanner(winner) {
+                banner.classList.add('show');
+                bannerText.classList.remove('blue', 'red', 'gray');
+                if (winner === 1) {
+                    bannerText.textContent = '선공 (O) 승리';
+                    bannerText.classList.add('blue');
+                    bannerInner.style.borderColor = '#3B82F6';
+                } else if (winner === 2) {
+                    bannerText.textContent = (mode === 'pve' ? 'AI' : '후공') + ' (X) 승리';
+                    bannerText.classList.add('red');
+                    bannerInner.style.borderColor = '#EF4444';
+                } else {
+                    bannerText.textContent = '무승부';
+                    bannerText.classList.add('gray');
+                    bannerInner.style.borderColor = '#9CA3AF';
+                }
+            }
+
+            function endGame(winner, line) {
+                isGameOver = true;
+                lastTouchedBlock = null; // 게임 종료 시 터치 선택 상태 초기화
+                turnChip.classList.remove('p1', 'p2', 'draw');
+                const dot = turnChip.querySelector('.dot');
+                dot.classList.remove('blue', 'red', 'gray');
+                if (winner === 1) {
+                    turnChip.classList.add('p1');
+                    dot.classList.add('blue');
+                    turnName.textContent = '선공 (O) 승';
+                } else if (winner === 2) {
+                    turnChip.classList.add('p2');
+                    dot.classList.add('red');
+                    turnName.textContent = (mode === 'pve' ? 'AI' : '후공') + ' (X) 승';
+                } else {
+                    turnChip.classList.add('draw');
+                    dot.classList.add('gray');
+                    turnName.textContent = '무승부';
+                }
+                showBanner(winner);
+                updatePieButton();
+
+                if (line) {
+                    // 승리한 조각들에 isWin 플래그 부여
+                    pieces.forEach(p => {
+                        const { x, y, z } = p.wrapper.userData;
+                        if (line.some(coord => coord[0] === x && coord[1] === y && coord[2] === z)) {
+                            p.isWin = true;
+                        }
+                    });
+                }
+            }
+
+            function resetGame() {
+                // Reset State
+                currentPlayer = 1;
+                isGameOver = false;
+                lastTouchedBlock = null; // 터치 선택 상태 초기화
+                board = new Array(3).fill(null).map(() => new Array(3).fill(null).map(() => new Array(3).fill(0)));
+                moveHistory = [];
+                lineCounts = { 1: 0, 2: 0 };
+                countedLines = { 1: new Set(), 2: new Set() };
+                centerLineConsumed = false;
+                pieAvailable = false;
+                pieUsed = false;
+                
+                // Clear scene
+                pieces.forEach(p => scene.remove(p.wrapper));
+                pieces = [];
+                
+                raycastTargets.forEach(t => {
+                    t.userData.isOccupied = false;
+                    t.material = invisibleMat; // 블록 색상을 다시 투명하게 초기화
+                });
+                highlightMesh.visible = false;
+                
+                // 간격 초기화
+                targetSpacing = 2.2;
+                
+                // Reset UI
+                banner.classList.remove('show');
+                updateStatusText();
+                updatePieButton();
+                
+                // Reset Camera
+                camera.position.set(14, 12, 18);
+                controls.target.set(0,0,0);
+            }
+
+            restartBtn.addEventListener('click', resetGame);
+            bannerResetBtn.addEventListener('click', resetGame);
+            undoBtn.addEventListener('click', undoMove);
+            pieBtn.addEventListener('click', applyPieRule);
+
+            function openRules() { rulesModal.classList.add('show'); }
+            function closeRules() { rulesModal.classList.remove('show'); }
+            btnRules.addEventListener('click', openRules);
+            btnCloseRules.addEventListener('click', closeRules);
+            const btnPvp = document.getElementById('btn-pvp');
+            const btnPve = document.getElementById('btn-pve');
+            btnPvp.addEventListener('click', () => {
+                mode = 'pvp';
+                btnPvp.classList.add('active');
+                btnPve.classList.remove('active');
+                resetGame();
+            });
+            btnPve.addEventListener('click', () => {
+                mode = 'pve';
+                btnPve.classList.add('active');
+                btnPvp.classList.remove('active');
+                resetGame();
+            });
+            rulesModal.addEventListener('click', e => {
+                if (e.target === rulesModal) closeRules();
+            });
+            window.addEventListener('keydown', e => {
+                if (e.key === 'Escape') closeRules();
+                if (e.key === '?' || e.key === '/') openRules();
+                if (e.key === 'r' || e.key === 'R') resetGame();
+                if (e.key === 'z' || e.key === 'Z') undoMove();
+            });
+
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            // --- Animation Loop ---
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                const delta = clock.getDelta();
+                const time = clock.getElapsedTime();
+
+                controls.update();
+
+                // 이격(Spacing) 부드러운 전환 애니메이션
+                if (Math.abs(targetSpacing - currentSpacing) > 0.001) {
+                    currentSpacing += (targetSpacing - currentSpacing) * 0.15;
+                    updateGridPositions();
+                }
+
+                // 글로벌 회전 축 (모든 피스들이 이 각도를 완벽하게 공유)
+                const globalRotation = time * 1.5;
+
+                pieces.forEach(p => {
+                    // 등장 스케일 애니메이션
+                    if (p.wrapper.scale.x < p.targetScale) {
+                        p.wrapper.scale.addScalar(delta * 5);
+                        if (p.wrapper.scale.x > p.targetScale) {
+                            p.wrapper.scale.set(p.targetScale, p.targetScale, p.targetScale);
+                        }
+                    }
+                    
+                    // 1. 완벽한 동기화: 모든 래퍼(Wrapper)가 동일한 시간축 각도로 회전
+                    p.wrapper.rotation.set(globalRotation, globalRotation, 0);
+
+                    // 2. 승리 애니메이션: 기본 군무에 맞춰 춤추면서 자신만의 추가 텀블링과 펄스 이펙트 적용
+                    if (p.isWin) {
+                        p.innerMesh.rotation.y += delta * 4;
+                        p.innerMesh.rotation.x += delta * 2;
+                        
+                        const pulseScale = p.targetScale * (1 + Math.sin(time * 6) * 0.2);
+                        p.wrapper.scale.set(pulseScale, pulseScale, pulseScale);
+                    } else {
+                        // 승리하지 않은 피스는 내부 회전을 초기 상태로 유지
+                        // (O는 처음 누운 상태, X는 십자가 상태)
+                    }
+                });
+
+                renderer.render(scene, camera);
+            }
+
+            // Start
+            updateStatusText();
+            updatePieButton();
+            animate();
+        };
+    </script>
+
+    <div class="creator-info">
+        <p>행복한 수학, 함께 만들어요 😊</p>
+        <p>© 행복한윤쌤 | <a href="https://blog.naver.com/happy_yoonssam" target="_blank" rel="noopener noreferrer">https://blog.naver.com/happy_yoonssam</a></p>
+    </div>
+</body>
+</html>

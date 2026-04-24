@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>얼티밋 3D 틱택토</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    margin: 0;
+    background-color: #f9fafb;
+    color: #1f2937;
+    font-family: 'Segoe UI', 'Apple SD Gothic Neo', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #canvas-container { width: 100vw; height: 100vh; display: block; touch-action: none; }
+  .ui-layer { position: absolute; inset: 0; pointer-events: none; }
+  .ui-layer > * { pointer-events: auto; }
+
+  .fade-in { animation: fadeIn 0.5s ease-out; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ----- Top bar: 3-column layout ----- */
+  .topbar {
+    position: absolute; top: 1rem; left: 1rem; right: 1rem;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 0.75rem; pointer-events: none;
+  }
+  .topbar > * { pointer-events: auto; }
+
+  /* Left: action buttons */
+  .top-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .icon-btn {
+    width: 2.4rem; height: 2.4rem; border-radius: 0.6rem;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    color: #4b5563; cursor: pointer;
+    font-size: 1.05rem; font-family: inherit;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.18s;
+  }
+  .icon-btn:hover { background: white; color: #111827; transform: translateY(-1px); }
+  .icon-btn:active { transform: translateY(0); }
+  .icon-btn.primary { background: #4f46e5; color: white; border-color: #4f46e5; }
+  .icon-btn.primary:hover { background: #6366f1; color: white; }
+  .hidden { display: none !important; }
+
+  /* Center: title + status card */
+  .top-center {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    max-width: 520px; min-width: 0;
+  }
+  .title {
+    margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.025em;
+    background: linear-gradient(90deg, #3b82f6 0%, #fbbf24 50%, #f87171 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    line-height: 1.1;
+  }
+  @media (min-width: 768px) { .title { font-size: 1.65rem; } }
+
+  .status-card {
+    margin-top: 0.45rem;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-radius: 9999px;
+    box-shadow: 0 4px 12px -2px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+    padding: 0.35rem 1rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.82rem; flex-wrap: wrap; justify-content: center;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.12rem 0.65rem; border-radius: 9999px;
+    font-weight: 600; font-size: 0.82rem;
+  }
+  .chip.p1 { background: #eff6ff; color: #2563eb; }
+  .chip.p2 { background: #fef2f2; color: #dc2626; }
+  .chip.draw { background: #f3f4f6; color: #4b5563; }
+  .dot {
+    width: 0.5rem; height: 0.5rem; border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.8); display: inline-block;
+  }
+  .dot.blue { background: #3b82f6; }
+  .dot.red  { background: #f87171; }
+  .dot.gray { background: #9ca3af; }
+
+  .sep { width: 1px; height: 0.85rem; background: #d1d5db; }
+  .scores { display: flex; align-items: center; gap: 0.55rem; color: #6b7280; font-size: 0.8rem; }
+  .scores .s1 { font-weight: 700; color: #2563eb; }
+  .scores .s2 { font-weight: 700; color: #dc2626; }
+
+  /* Right: mode toggle + rules */
+  .top-right { display: flex; gap: 0.4rem; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; }
+  .mode-toggle { display: flex; gap: 0.3rem; background: rgba(255,255,255,0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.2rem; }
+  .mode-btn {
+    padding: 0.35rem 0.7rem; border-radius: 0.4rem; background: transparent;
+    border: none; font-size: 0.8rem; font-weight: 600; color: #6b7280; cursor: pointer;
+    transition: all 0.18s; font-family: inherit;
+  }
+  .mode-btn:hover { color: #374151; }
+  .mode-btn.active { color: #4f46e5; background: #eef2ff; }
+
+  /* Mobile: tighter top bar */
+  @media (max-width: 640px) {
+    .topbar { top: 0.75rem; left: 0.5rem; right: 0.5rem; gap: 0.4rem; }
+    .icon-btn { width: 2.1rem; height: 2.1rem; font-size: 0.95rem; border-radius: 0.5rem; }
+    .title { font-size: 1rem; }
+    .status-card { padding: 0.3rem 0.7rem; font-size: 0.75rem; gap: 0.45rem; }
+    .chip { font-size: 0.75rem; padding: 0.1rem 0.55rem; }
+    .mode-btn { padding: 0.3rem 0.5rem; font-size: 0.72rem; }
+  }
+
+  /* ----- Rules modal ----- */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(17, 24, 39, 0.45);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 1rem;
+    animation: fadeBackdrop 0.2s ease-out;
+  }
+  .modal-backdrop.show { display: flex; }
+  @keyframes fadeBackdrop {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .modal-card {
+    background: white; border-radius: 1rem;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    padding: 1.5rem 1.75rem; max-width: 420px; width: 100%;
+    position: relative;
+    animation: popIn 0.24s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  .modal-close {
+    position: absolute; top: 0.75rem; right: 0.75rem;
+    width: 2rem; height: 2rem; border-radius: 50%;
+    background: #f3f4f6; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #6b7280; font-size: 1rem; transition: all 0.15s;
+  }
+  .modal-close:hover { background: #e5e7eb; color: #111827; }
+  .modal-card h2 {
+    margin: 0 0 1rem 0; font-size: 1.15rem; font-weight: 700; color: #1f2937;
+    letter-spacing: -0.01em;
+  }
+  .modal-card .rule-item {
+    display: flex; gap: 0.7rem; margin-bottom: 0.85rem;
+    font-size: 0.88rem; color: #4b5563; line-height: 1.5;
+  }
+  .modal-card .rule-item:last-child { margin-bottom: 0; }
+  .modal-card .rule-num {
+    flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+    background: #eef2ff; color: #4f46e5;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 700;
+  }
+  .modal-card .rule-item b { color: #d97706; font-weight: 700; }
+  .modal-card .rule-item strong { color: #1f2937; font-weight: 600; }
+  .modal-card .hint {
+    margin-top: 1rem; padding: 0.65rem 0.85rem;
+    background: #fffbeb; border-left: 3px solid #f59e0b;
+    border-radius: 0.3rem; font-size: 0.78rem; color: #78350f;
+    line-height: 1.5;
+  }
+  .modal-card .controls-hint {
+    margin-top: 0.75rem; font-size: 0.72rem; color: #9ca3af; line-height: 1.5;
+  }
+
+  .spread-hint {
+    position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%);
+    background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid #e5e7eb; border-radius: 9999px;
+    padding: 0.3rem 0.85rem; font-size: 0.7rem; color: #6b7280;
+    display: flex; align-items: center; gap: 0.5rem;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+  .spread-hint.show { opacity: 1; }
+  .spread-hint .bar {
+    position: relative; width: 80px; height: 4px;
+    background: #e5e7eb; border-radius: 9999px; overflow: hidden;
+  }
+  .spread-hint .fill {
+    position: absolute; left: 0; top: 0; height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #f59e0b, #ef4444);
+    border-radius: 9999px; transition: width 0.05s;
+  }
+  .spread-hint .mid-mark {
+    position: absolute; left: 50%; top: -2px; width: 1px; height: 8px;
+    background: #9ca3af;
+  }
+
+  .banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; }
+  .banner.show { display: block; }
+  .banner-inner {
+    background: rgba(255,255,255,0.96); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-radius: 1rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    border: 2px solid #9ca3af; padding: 2rem 2.5rem; text-align: center;
+  }
+  .banner-text { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.025em; margin-bottom: 0.5rem; }
+  .banner-text.blue { color: #2563eb; }
+  .banner-text.red  { color: #dc2626; }
+  .banner-text.gray { color: #4b5563; }
+  .banner-sub { font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; }
+  .banner-btn {
+    padding: 0.5rem 1.1rem; border-radius: 0.5rem; background: #f3f4f6;
+    color: #374151; border: 1px solid #e5e7eb; font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all 0.18s;
+  }
+  .banner-btn:hover { background: #e5e7eb; color: #111827; }
+
+  .creator-info {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: #4a5568;
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 8px 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+    z-index: 200;
+    width: fit-content;
+    max-width: calc(100vw - 24px);
+  }
+  @media (max-width: 768px) {
+    .creator-info {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      bottom: 10px;
+    }
+  }
+  .creator-info p { margin: 2px 0; }
+  .creator-info a { color: #4299e1; text-decoration: none; }
+  .creator-info a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<div class="ui-layer">
+  <div class="topbar fade-in">
+    <!-- Left: action buttons -->
+    <div class="top-actions">
+      <button class="icon-btn" id="btn-reset" title="새 게임 (R)">🔄</button>
+      <button class="icon-btn" id="btn-undo" title="되돌리기 (Z)">↶</button>
+      <button class="icon-btn" id="btn-view" title="시점 리셋">📷</button>
+      <button class="icon-btn hidden" id="btn-pie" title="파이룰 적용(진영 스왑)">⇄</button>
+    </div>
+
+    <!-- Center: title + status -->
+    <div class="top-center">
+      <h1 class="title">얼티밋 3D 틱택토</h1>
+      <div class="status-card">
+        <span id="turn-chip" class="chip p1">
+          <span class="dot blue"></span>
+          <span id="turn-name">선공 (O)</span>
+        </span>
+        <span class="sep"></span>
+        <div class="scores">
+          <span class="dot blue"></span>
+          <span class="s1" id="sc1">0</span>
+          <span style="color:#d1d5db;">:</span>
+          <span class="s2" id="sc2">0</span>
+          <span class="dot red"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: mode + rules -->
+    <div class="top-right">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-pvp">👥 2인</button>
+        <button class="mode-btn" id="btn-pve">🤖 AI</button>
+      </div>
+      <button class="icon-btn" id="btn-rules" title="게임 규칙">📖</button>
+    </div>
+  </div>
+
+  <div class="spread-hint" id="spread-hint">
+    <span>벌림</span>
+    <div class="bar"><div class="fill" id="spread-fill" style="width: 25%"></div><div class="mid-mark"></div></div>
+    <span id="spread-stage">서브</span>
+  </div>
+
+  <!-- Rules modal -->
+  <div class="modal-backdrop" id="rules-modal">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <button class="modal-close" id="btn-close-rules" title="닫기">✕</button>
+      <h2>📖 게임 규칙</h2>
+      <div class="rule-item">
+        <span class="rule-num">1</span>
+        <div>3×3×3 <strong>메타 큐브</strong> 안에 또 3×3×3 <strong>서브 큐브</strong>가 27개 들어 있어요.</div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-num">2</span>
+        <div>작은 돌 3개를 일렬로 놓으면 그 서브 큐브 승리<br>
+          <span style="color:#9ca3af;font-size:0.8rem;">(직선 · 면 대각선 · 공간 대각선, 총 49가지)</span></div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-num">3</span>
+        <div><b>내가 둔 국소 좌표</b>가 <strong>상대의 다음 서브 큐브 좌표</strong>가 돼요.<br>
+          <span style="color:#9ca3af;font-size:0.8rem;">보내진 서브가 이미 승부났으면 어디든 둘 수 있어요.</span></div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-num">4</span>
+        <div>서브 큐브 3개를 일렬로 차지하면 <strong>최종 승리!</strong></div>
+      </div>
+      <div class="rule-item">
+        <span class="rule-num">5</span>
+        <div><b>파이룰:</b> 첫 수 이후 후공은 1회에 한해 <strong>진영을 스왑(⇄)</strong>할 수 있어요.</div>
+      </div>
+
+      <div class="hint">💡 <b>중앙 셀이 안 보이면 휠/핀치로 더 벌려보세요</b> — 1단계는 서브, 2단계는 셀까지 분리됩니다.</div>
+
+      <div class="controls-hint">
+        <b>조작:</b> 드래그 회전 · 휠/핀치 스프레드 · 우클릭 드래그 이동<br>
+        <b>단축키:</b> R 새게임 · Z 되돌리기 · ? 규칙 · ESC 닫기
+      </div>
+    </div>
+  </div>
+
+  <div class="banner" id="banner">
+    <div class="banner-inner" id="banner-inner">
+      <div class="banner-text" id="banner-text"></div>
+      <div class="banner-sub">수고하셨어요! 다시 시작할까요?</div>
+      <button class="banner-btn" onclick="document.getElementById('btn-reset').click()">🔄 새 게임</button>
+    </div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('load', () => {
+  // ============================================================
+  //  CONSTANTS
+  // ============================================================
+  const CELL_SIZE = 0.9;
+  const META_MIN  = 3.5;
+  const META_MID  = 6.0;   // end of stage-1
+  const META_MAX  = 9.5;
+  const CELL_MIN  = 1.15;
+  const CELL_MAX  = 1.9;
+
+  // spread: 0..1 = stage1 (meta 벌림), 1..2 = stage2 (cell도 벌림)
+  let targetSpread = 0.6;
+  let currentSpread = 0.6;
+  let currentMeta = 0, currentCell = 0;
+
+  function getSpacing(spread) {
+    if (spread <= 1) {
+      return { meta: META_MIN + (META_MID - META_MIN) * spread, cell: CELL_MIN };
+    } else {
+      const t = spread - 1;
+      return {
+        meta: META_MID + (META_MAX - META_MID) * t,
+        cell: CELL_MIN + (CELL_MAX - CELL_MIN) * t
+      };
+    }
+  }
+
+  const COL_P1      = 0x60A5FA;
+  const COL_P1_DARK = 0x3B82F6;
+  const COL_P2      = 0xF87171;
+  const COL_P2_DARK = 0xEF4444;
+  const COL_ACTIVE  = 0xF59E0B;
+  const COL_WIRE    = 0xCBD5E1;
+  const COL_SUBWIRE = 0x94A3B8;
+  const COL_BG      = 0xf9fafb;
+
+  // 49 winning lines
+  function genWinLines() {
+    const L = [];
+    for (let i=0;i<3;i++) for (let j=0;j<3;j++) {
+      L.push([[0,i,j],[1,i,j],[2,i,j]]);
+      L.push([[i,0,j],[i,1,j],[i,2,j]]);
+      L.push([[i,j,0],[i,j,1],[i,j,2]]);
+    }
+    for (let i=0;i<3;i++) {
+      L.push([[0,0,i],[1,1,i],[2,2,i]]);
+      L.push([[0,2,i],[1,1,i],[2,0,i]]);
+      L.push([[0,i,0],[1,i,1],[2,i,2]]);
+      L.push([[0,i,2],[1,i,1],[2,i,0]]);
+      L.push([[i,0,0],[i,1,1],[i,2,2]]);
+      L.push([[i,0,2],[i,1,1],[i,2,0]]);
+    }
+    L.push([[0,0,0],[1,1,1],[2,2,2]]);
+    L.push([[0,0,2],[1,1,1],[2,2,0]]);
+    L.push([[0,2,0],[1,1,1],[2,0,2]]);
+    L.push([[2,0,0],[1,1,1],[0,2,2]]);
+    return L;
+  }
+  const WIN_LINES = genWinLines();
+
+  // ============================================================
+  //  STATE
+  // ============================================================
+  function mk6d() {
+    const a = [];
+    for (let m0=0;m0<3;m0++){ a[m0]=[];
+      for (let m1=0;m1<3;m1++){ a[m0][m1]=[];
+        for (let m2=0;m2<3;m2++){ a[m0][m1][m2]=[];
+          for (let c0=0;c0<3;c0++){ a[m0][m1][m2][c0]=[];
+            for (let c1=0;c1<3;c1++){ a[m0][m1][m2][c0][c1]=[0,0,0]; }}}}}
+    return a;
+  }
+  function mk3d(v) {
+    const a = [];
+    for (let i=0;i<3;i++){ a[i]=[];
+      for (let j=0;j<3;j++){ a[i][j]=[];
+        for (let k=0;k<3;k++) a[i][j][k]=v; }}
+    return a;
+  }
+
+  const state = {
+    cells: mk6d(),
+    subWinner: mk3d(0),
+    subWinLine: mk3d(null),
+    activeMeta: null,
+    currentPlayer: 1,
+    gameWinner: 0,
+    gameWinLine: null,
+    mode: 'pvp',
+    history: [],
+    pieAvailable: false,
+    pieUsed: false
+  };
+
+  // ============================================================
+  //  THREE.JS SETUP
+  // ============================================================
+  const container = document.getElementById('canvas-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(COL_BG);
+  scene.fog = new THREE.FogExp2(COL_BG, 0.015);
+
+  const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 300);
+  const defaultCamPos = new THREE.Vector3(24, 20, 30);
+  camera.position.copy(defaultCamPos);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.enableZoom = false;
+  controls.enablePan = true;
+  controls.panSpeed = 0.6;
+  controls.rotateSpeed = 0.7;
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+  const kl = new THREE.DirectionalLight(0xffffff, 0.55);
+  kl.position.set(12, 18, 10);
+  scene.add(kl);
+  const fl = new THREE.DirectionalLight(0xffffff, 0.2);
+  fl.position.set(-10, -8, -12);
+  scene.add(fl);
+
+  // ============================================================
+  //  OPTIMIZED BOARD CONSTRUCTION
+  //  - Cell wireframes: 27 LineSegments sharing ONE BufferGeometry
+  //  - Click targets: 1 InstancedMesh (729 instances)
+  //  - Tints: on-demand, only for occupied cells
+  // ============================================================
+  const cellBoxGeo = new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+  // --- Shared cell-wire geometry (12 edges × 27 cells, mutable positions) ---
+  const CELL_EDGES = (() => {
+    const h = CELL_SIZE / 2;
+    return [
+      [-h,-h,-h, h,-h,-h], [h,-h,-h, h,h,-h], [h,h,-h, -h,h,-h], [-h,h,-h, -h,-h,-h],
+      [-h,-h, h, h,-h, h], [h,-h, h, h,h, h], [h,h, h, -h,h, h], [-h,h, h, -h,-h, h],
+      [-h,-h,-h, -h,-h, h], [h,-h,-h, h,-h, h], [h,h,-h, h,h, h], [-h,h,-h, -h,h, h],
+    ];
+  })();
+  const CELL_WIRE_VERTS = 27 * 12 * 2;
+  const cellWirePosArr = new Float32Array(CELL_WIRE_VERTS * 3);
+
+  function fillCellWirePositions(arr, cellSpacing) {
+    let p = 0;
+    for (let cx=0;cx<3;cx++)
+    for (let cy=0;cy<3;cy++)
+    for (let cz=0;cz<3;cz++) {
+      const ox = (cx-1)*cellSpacing, oy = (cy-1)*cellSpacing, oz = (cz-1)*cellSpacing;
+      for (const e of CELL_EDGES) {
+        arr[p++]=ox+e[0]; arr[p++]=oy+e[1]; arr[p++]=oz+e[2];
+        arr[p++]=ox+e[3]; arr[p++]=oy+e[4]; arr[p++]=oz+e[5];
+      }
+    }
+  }
+  fillCellWirePositions(cellWirePosArr, CELL_MIN);
+  const sharedCellWireGeo = new THREE.BufferGeometry();
+  sharedCellWireGeo.setAttribute('position', new THREE.BufferAttribute(cellWirePosArr, 3));
+  sharedCellWireGeo.computeBoundingSphere();
+
+  // --- Unit geometries — scaled per-sub in updateSpacing ---
+  const unitBoxGeo  = new THREE.BoxGeometry(1, 1, 1);
+  const unitEdgeGeo = new THREE.EdgesGeometry(unitBoxGeo);
+
+  // --- Per-sub groups ---
+  const subGroups = mk3d(null);
+  const subWires = mk3d(null);
+  const subFills = mk3d(null);
+  const cellWireMeshes = mk3d(null);
+
+  for (let mx=0;mx<3;mx++)
+  for (let my=0;my<3;my++)
+  for (let mz=0;mz<3;mz++) {
+    const group = new THREE.Group();
+    scene.add(group);
+    subGroups[mx][my][mz] = group;
+
+    const wMat = new THREE.LineBasicMaterial({ color: COL_WIRE, transparent: true, opacity: 0.4 });
+    const wMesh = new THREE.LineSegments(sharedCellWireGeo, wMat);
+    wMesh.frustumCulled = false;
+    group.add(wMesh);
+    cellWireMeshes[mx][my][mz] = wMesh;
+
+    const swm = new THREE.LineBasicMaterial({ color: COL_SUBWIRE, transparent: true, opacity: 0.35 });
+    const swire = new THREE.LineSegments(unitEdgeGeo, swm);
+    // scale applied in updateSpacing
+    group.add(swire);
+    subWires[mx][my][mz] = swire;
+
+    const sfm = new THREE.MeshBasicMaterial({
+      color: 0xffffff, transparent: true, opacity: 0,
+      side: THREE.DoubleSide, depthWrite: false
+    });
+    const sfill = new THREE.Mesh(unitBoxGeo, sfm);
+    // scale applied in updateSpacing
+    group.add(sfill);
+    subFills[mx][my][mz] = sfill;
+  }
+
+  // --- Single InstancedMesh for 729 click targets ---
+  const clickMat = new THREE.MeshBasicMaterial({ visible: false });
+  const clickInst = new THREE.InstancedMesh(cellBoxGeo, clickMat, 729);
+  clickInst.frustumCulled = false;
+  scene.add(clickInst);
+
+  function instanceIdxToCoords(i) {
+    const cz = i % 3; i = (i / 3)|0;
+    const cy = i % 3; i = (i / 3)|0;
+    const cx = i % 3; i = (i / 3)|0;
+    const mz = i % 3; i = (i / 3)|0;
+    const my = i % 3; i = (i / 3)|0;
+    const mx = i % 3;
+    return [mx, my, mz, cx, cy, cz];
+  }
+
+  // --- Hover highlight (single reusable mesh) ---
+  const hlGeo = new THREE.BoxGeometry(CELL_SIZE*0.95, CELL_SIZE*0.95, CELL_SIZE*0.95);
+  const hlMat = new THREE.MeshBasicMaterial({ color: 0x111827, transparent: true, opacity: 0.08, depthWrite: false });
+  const highlightMesh = new THREE.Mesh(hlGeo, hlMat);
+  highlightMesh.visible = false;
+  scene.add(highlightMesh);
+
+  // --- Tap flash mesh ---
+  const flashMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false });
+  const flashMesh = new THREE.Mesh(new THREE.BoxGeometry(CELL_SIZE*1.15, CELL_SIZE*1.15, CELL_SIZE*1.15), flashMat);
+  flashMesh.visible = false;
+  scene.add(flashMesh);
+
+  // Marker storage
+  const pieces = [];
+  const metaWinFX = { tube: null, data: null };
+
+  // ============================================================
+  //  SPACING UPDATE (stage 1 + stage 2)
+  // ============================================================
+  const _dummy = new THREE.Object3D();
+  function updateSpacing() {
+    const { meta, cell } = getSpacing(currentSpread);
+    const cellChanged = Math.abs(cell - currentCell) > 1e-5;
+    currentMeta = meta;
+    currentCell = cell;
+
+    // 1. Sub-group positions (meta spacing)
+    for (let mx=0;mx<3;mx++) for (let my=0;my<3;my++) for (let mz=0;mz<3;mz++) {
+      subGroups[mx][my][mz].position.set((mx-1)*meta, (my-1)*meta, (mz-1)*meta);
+    }
+
+    // 2. Shared cell-wire geometry (cell spacing) — only when cell changes
+    if (cellChanged) {
+      fillCellWirePositions(cellWirePosArr, cell);
+      sharedCellWireGeo.attributes.position.needsUpdate = true;
+    }
+
+    // 3. Click target instance matrices (both spacings)
+    let idx = 0;
+    for (let mx=0;mx<3;mx++)
+    for (let my=0;my<3;my++)
+    for (let mz=0;mz<3;mz++)
+    for (let cx=0;cx<3;cx++)
+    for (let cy=0;cy<3;cy++)
+    for (let cz=0;cz<3;cz++) {
+      _dummy.position.set(
+        (mx-1)*meta + (cx-1)*cell,
+        (my-1)*meta + (cy-1)*cell,
+        (mz-1)*meta + (cz-1)*cell
+      );
+      _dummy.updateMatrix();
+      clickInst.setMatrixAt(idx++, _dummy.matrix);
+    }
+    clickInst.instanceMatrix.needsUpdate = true;
+
+    // 4. Sub-cube size + marker/tint positions (cell spacing) — only when cell changes
+    if (cellChanged) {
+      const subSize = 2 * cell + CELL_SIZE + 0.15;
+      const fillSize = subSize * 0.98;
+      for (let mx=0;mx<3;mx++) for (let my=0;my<3;my++) for (let mz=0;mz<3;mz++) {
+        subWires[mx][my][mz].scale.setScalar(subSize);
+        subFills[mx][my][mz].scale.setScalar(fillSize);
+      }
+      for (const p of pieces) {
+        const [cx,cy,cz] = p.localIdx;
+        p.wrapper.position.set((cx-1)*cell, (cy-1)*cell, (cz-1)*cell);
+        if (p.tint) p.tint.position.copy(p.wrapper.position);
+      }
+    }
+
+    // 6. Meta-win tube (depends on meta spacing)
+    if (metaWinFX.data) {
+      removeMetaWinTube();
+      drawMetaWinLine(metaWinFX.data.line, metaWinFX.data.winner);
+    }
+
+    // UI hint
+    updateSpreadHint();
+  }
+
+  // ============================================================
+  //  GAME LOGIC
+  // ============================================================
+  function isSubFull(mx,my,mz){
+    for (let cx=0;cx<3;cx++) for (let cy=0;cy<3;cy++) for (let cz=0;cz<3;cz++)
+      if (state.cells[mx][my][mz][cx][cy][cz] === 0) return false;
+    return true;
+  }
+  function checkSubWin(mx,my,mz){
+    for (const L of WIN_LINES) {
+      const [[a,b,c],[d,e,f],[g,h,i]] = L;
+      const v1 = state.cells[mx][my][mz][a][b][c];
+      if (!v1) continue;
+      if (v1 === state.cells[mx][my][mz][d][e][f] && v1 === state.cells[mx][my][mz][g][h][i])
+        return { winner: v1, line: L };
+    }
+    return null;
+  }
+  function checkMetaWin(){
+    for (const L of WIN_LINES) {
+      const [[a,b,c],[d,e,f],[g,h,i]] = L;
+      const v1 = state.subWinner[a][b][c];
+      if (v1 === 0 || v1 === 3) continue;
+      if (v1 === state.subWinner[d][e][f] && v1 === state.subWinner[g][h][i])
+        return { winner: v1, line: L };
+    }
+    return null;
+  }
+  function isValid(mx,my,mz,cx,cy,cz){
+    if (state.gameWinner) return false;
+    if (state.cells[mx][my][mz][cx][cy][cz] !== 0) return false;
+    if (state.subWinner[mx][my][mz] !== 0) return false;
+    if (state.activeMeta) {
+      const a = state.activeMeta;
+      if (a.x !== mx || a.y !== my || a.z !== mz) return false;
+    }
+    return true;
+  }
+
+  // ============================================================
+  //  MARKERS
+  // ============================================================
+  function makeO_Mesh() {
+    const geo = new THREE.TorusGeometry(0.28, 0.075, 12, 22);
+    const mat = new THREE.MeshStandardMaterial({
+      color: COL_P1_DARK, metalness: 0.25, roughness: 0.35,
+      emissive: COL_P1, emissiveIntensity: 0.12
+    });
+    return new THREE.Mesh(geo, mat);
+  }
+  function makeX_Mesh() {
+    const g = new THREE.Group();
+    const geo = new THREE.BoxGeometry(0.11, 0.62, 0.11);
+    const mat = new THREE.MeshStandardMaterial({
+      color: COL_P2_DARK, metalness: 0.25, roughness: 0.35,
+      emissive: COL_P2, emissiveIntensity: 0.12
+    });
+    const bar1 = new THREE.Mesh(geo, mat);
+    bar1.rotation.z = Math.PI/4; bar1.rotation.x = Math.PI/4;
+    const bar2 = new THREE.Mesh(geo, mat);
+    bar2.rotation.z = -Math.PI/4; bar2.rotation.x = Math.PI/4;
+    g.add(bar1); g.add(bar2);
+    return g;
+  }
+
+  function placeMarkerVisual(mx,my,mz,cx,cy,cz,player) {
+    const parent = subGroups[mx][my][mz];
+    const wrapper = new THREE.Group();
+    wrapper.position.set((cx-1)*currentCell, (cy-1)*currentCell, (cz-1)*currentCell);
+    const inner = player === 1 ? makeO_Mesh() : makeX_Mesh();
+    wrapper.add(inner);
+    wrapper.scale.setScalar(0.001);
+    parent.add(wrapper);
+
+    // On-demand tint
+    const tintMat = new THREE.MeshBasicMaterial({
+      color: player === 1 ? COL_P1 : COL_P2,
+      transparent: true, opacity: 0.13,
+      depthWrite: false, side: THREE.DoubleSide
+    });
+    const tint = new THREE.Mesh(cellBoxGeo, tintMat);
+    tint.position.copy(wrapper.position);
+    parent.add(tint);
+
+    pieces.push({
+      wrapper, inner, tint, player,
+      key: `${mx},${my},${mz},${cx},${cy},${cz}`,
+      targetScale: 1, isWin: false,
+      subIdx: [mx,my,mz], localIdx: [cx,cy,cz]
+    });
+  }
+
+  function markSubDecided(mx,my,mz,winner,winLine) {
+    const wire = subWires[mx][my][mz];
+    const fill = subFills[mx][my][mz];
+    if (winner === 1) {
+      wire.material.color.setHex(COL_P1_DARK); wire.material.opacity = 0.95;
+      fill.material.color.setHex(COL_P1_DARK); fill.material.opacity = 0.22;
+    } else if (winner === 2) {
+      wire.material.color.setHex(COL_P2_DARK); wire.material.opacity = 0.95;
+      fill.material.color.setHex(COL_P2_DARK); fill.material.opacity = 0.22;
+    } else {
+      wire.material.color.setHex(0x9ca3af); wire.material.opacity = 0.6;
+      fill.material.color.setHex(0x9ca3af); fill.material.opacity = 0.15;
+    }
+    // Hide cell wires inside decided sub (saves draw call)
+    cellWireMeshes[mx][my][mz].visible = false;
+
+    // Hide all markers + tints in this sub — the colored cube itself shows ownership
+    for (const p of pieces) {
+      if (p.subIdx[0] === mx && p.subIdx[1] === my && p.subIdx[2] === mz) {
+        p.wrapper.visible = false;
+        if (p.tint) p.tint.visible = false;
+        p.hidden = true;
+      }
+    }
+  }
+
+  function drawMetaWinLine(line, winner) {
+    const [[a,b,c],,[g,h,i]] = line;
+    const p1 = new THREE.Vector3((a-1)*currentMeta,(b-1)*currentMeta,(c-1)*currentMeta);
+    const p2 = new THREE.Vector3((g-1)*currentMeta,(h-1)*currentMeta,(i-1)*currentMeta);
+    const mid = p1.clone().add(p2).multiplyScalar(0.5);
+    const dir = p2.clone().sub(p1);
+    const len = dir.length();
+    const tubeGeo = new THREE.CylinderGeometry(0.18, 0.18, len, 16);
+    const tubeMat = new THREE.MeshStandardMaterial({
+      color: winner === 1 ? COL_P1_DARK : COL_P2_DARK,
+      transparent: true, opacity: 0.88,
+      emissive: winner === 1 ? COL_P1_DARK : COL_P2_DARK, emissiveIntensity: 0.35,
+      metalness: 0.3, roughness: 0.3
+    });
+    const tube = new THREE.Mesh(tubeGeo, tubeMat);
+    tube.position.copy(mid);
+    tube.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
+    scene.add(tube);
+    metaWinFX.tube = tube;
+    metaWinFX.data = { line, winner };
+  }
+  function removeMetaWinTube() {
+    if (metaWinFX.tube) {
+      scene.remove(metaWinFX.tube);
+      metaWinFX.tube.geometry.dispose();
+      metaWinFX.tube.material.dispose();
+      metaWinFX.tube = null;
+    }
+  }
+
+  function highlightActive() {
+    for (let mx=0;mx<3;mx++) for (let my=0;my<3;my++) for (let mz=0;mz<3;mz++) {
+      if (state.subWinner[mx][my][mz] !== 0) continue;
+      const w = subWires[mx][my][mz];
+      w.material.color.setHex(COL_SUBWIRE);
+      w.material.opacity = 0.32;
+    }
+    if (state.gameWinner) return;
+    if (state.activeMeta) {
+      const {x,y,z} = state.activeMeta;
+      if (state.subWinner[x][y][z] === 0) {
+        const w = subWires[x][y][z];
+        w.material.color.setHex(COL_ACTIVE);
+        w.material.opacity = 1;
+      }
+    } else {
+      for (let mx=0;mx<3;mx++) for (let my=0;my<3;my++) for (let mz=0;mz<3;mz++) {
+        if (state.subWinner[mx][my][mz] !== 0) continue;
+        const w = subWires[mx][my][mz];
+        w.material.color.setHex(COL_ACTIVE);
+        w.material.opacity = 0.55;
+      }
+    }
+  }
+
+  function commitMove(mx,my,mz,cx,cy,cz) {
+    if (!isValid(mx,my,mz,cx,cy,cz)) return false;
+    if (state.pieAvailable && state.currentPlayer === 2) {
+      state.pieAvailable = false;
+      state.pieUsed = true;
+    }
+    const player = state.currentPlayer;
+
+    state.cells[mx][my][mz][cx][cy][cz] = player;
+    state.history.push({ mx,my,mz,cx,cy,cz,player });
+    placeMarkerVisual(mx,my,mz,cx,cy,cz,player);
+
+    const sub = checkSubWin(mx,my,mz);
+    if (sub) {
+      state.subWinner[mx][my][mz] = sub.winner;
+      state.subWinLine[mx][my][mz] = sub.line;
+      markSubDecided(mx,my,mz,sub.winner,sub.line);
+    } else if (isSubFull(mx,my,mz)) {
+      state.subWinner[mx][my][mz] = 3;
+      markSubDecided(mx,my,mz,3,null);
+    }
+
+    const meta = checkMetaWin();
+    if (meta) {
+      state.gameWinner = meta.winner;
+      state.gameWinLine = meta.line;
+      drawMetaWinLine(meta.line, meta.winner);
+      const winningSubs = meta.line;
+      pieces.forEach(p => {
+        for (const [sx,sy,sz] of winningSubs) {
+          if (p.subIdx[0]===sx && p.subIdx[1]===sy && p.subIdx[2]===sz) {
+            p.isWin = true; break;
+          }
+        }
+      });
+      showBanner(meta.winner);
+      updateUI();
+      return true;
+    }
+
+    if (state.subWinner[cx][cy][cz] !== 0) state.activeMeta = null;
+    else state.activeMeta = { x:cx, y:cy, z:cz };
+
+    let anyOpen = false;
+    for (let a=0;a<3;a++) for (let b=0;b<3;b++) for (let c=0;c<3;c++)
+      if (state.subWinner[a][b][c] === 0) anyOpen = true;
+    if (!anyOpen) {
+      state.gameWinner = 3;
+      showBanner(3);
+      updateUI();
+      return true;
+    }
+
+    state.currentPlayer = player === 1 ? 2 : 1;
+    if (state.history.length === 1 && !state.pieUsed) state.pieAvailable = true;
+    updateUI();
+    highlightActive();
+    updatePieButton();
+
+    if (state.mode === 'pve' && state.currentPlayer === 2 && !state.gameWinner) {
+      if (state.pieAvailable && !state.pieUsed) {
+        const first = state.history[0];
+        const shouldSwap = first.cx === 1 && first.cy === 1 && first.cz === 1;
+        if (shouldSwap) { setTimeout(applyPieRule, 260); return true; }
+        state.pieAvailable = false;
+        state.pieUsed = true;
+        updatePieButton();
+      }
+      setTimeout(aiMove, 450);
+    }
+    return true;
+  }
+
+  // ============================================================
+  //  INTERACTION — InstancedMesh raycast
+  // ============================================================
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  const _worldPos = new THREE.Vector3();
+
+  function cellWorldPos(mx,my,mz,cx,cy,cz, out) {
+    out.set(
+      (mx-1)*currentMeta + (cx-1)*currentCell,
+      (my-1)*currentMeta + (cy-1)*currentCell,
+      (mz-1)*currentMeta + (cz-1)*currentCell
+    );
+    return out;
+  }
+
+  function updateHover(clientX, clientY) {
+    if (state.gameWinner) { highlightMesh.visible = false; return; }
+    if (state.mode === 'pve' && state.currentPlayer === 2) { highlightMesh.visible = false; return; }
+    ndc.x = (clientX/innerWidth)*2 - 1;
+    ndc.y = -(clientY/innerHeight)*2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObject(clickInst);
+    for (const h of hits) {
+      const [mx,my,mz,cx,cy,cz] = instanceIdxToCoords(h.instanceId);
+      if (!isValid(mx,my,mz,cx,cy,cz)) continue;
+      cellWorldPos(mx,my,mz,cx,cy,cz, highlightMesh.position);
+      highlightMesh.material.color.setHex(state.currentPlayer === 1 ? COL_P1_DARK : COL_P2_DARK);
+      highlightMesh.material.opacity = 0.14;
+      highlightMesh.visible = true;
+      document.body.style.cursor = 'pointer';
+      return;
+    }
+    highlightMesh.visible = false;
+    document.body.style.cursor = 'default';
+  }
+
+  let flashAnim = null;
+  function showTapFlash(mx,my,mz,cx,cy,cz, color) {
+    cellWorldPos(mx,my,mz,cx,cy,cz, flashMesh.position);
+    flashMesh.material.color.setHex(color);
+    flashMesh.material.opacity = 0.4;
+    flashMesh.scale.setScalar(1);
+    flashMesh.visible = true;
+    flashAnim = { t: 0 };
+  }
+
+  function tryClick(clientX, clientY) {
+    if (state.gameWinner) return;
+    if (state.mode === 'pve' && state.currentPlayer === 2) return;
+    ndc.x = (clientX/innerWidth)*2 - 1;
+    ndc.y = -(clientY/innerHeight)*2 + 1;
+    raycaster.setFromCamera(ndc, camera);
+    const hits = raycaster.intersectObject(clickInst);
+    for (const h of hits) {
+      const [mx,my,mz,cx,cy,cz] = instanceIdxToCoords(h.instanceId);
+      if (isValid(mx,my,mz,cx,cy,cz)) {
+        showTapFlash(mx,my,mz,cx,cy,cz, state.currentPlayer === 1 ? COL_P1_DARK : COL_P2_DARK);
+        commitMove(mx,my,mz,cx,cy,cz);
+        highlightMesh.visible = false;
+        return;
+      }
+    }
+  }
+
+  let down = null;
+  renderer.domElement.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    down = { x: e.clientX, y: e.clientY, moved: false, t: performance.now() };
+  });
+  renderer.domElement.addEventListener('pointermove', e => {
+    if (down) {
+      const th = e.pointerType === 'touch' ? 12 : 6;
+      if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > th) down.moved = true;
+    }
+    if (e.pointerType !== 'touch') updateHover(e.clientX, e.clientY);
+  });
+  renderer.domElement.addEventListener('pointerup', e => {
+    if (down && !down.moved && (performance.now() - down.t) < 600) tryClick(e.clientX, e.clientY);
+    down = null;
+  });
+  renderer.domElement.addEventListener('pointercancel', () => { down = null; });
+  renderer.domElement.addEventListener('pointerleave', () => { highlightMesh.visible = false; });
+
+  // Wheel → spread
+  let hintTimer = null;
+  function showSpreadHint() {
+    document.getElementById('spread-hint').classList.add('show');
+    if (hintTimer) clearTimeout(hintTimer);
+    hintTimer = setTimeout(() => document.getElementById('spread-hint').classList.remove('show'), 1200);
+  }
+  function updateSpreadHint() {
+    const pct = Math.min(100, Math.max(0, (currentSpread / 2) * 100));
+    document.getElementById('spread-fill').style.width = pct + '%';
+    document.getElementById('spread-stage').textContent = currentSpread <= 1 ? '서브 큐브' : '셀 분리';
+  }
+
+  renderer.domElement.addEventListener('wheel', e => {
+    e.preventDefault();
+    targetSpread += e.deltaY * 0.0015;
+    targetSpread = Math.max(0, Math.min(2, targetSpread));
+    highlightMesh.visible = false;
+    showSpreadHint();
+  }, { passive: false });
+
+  let pinchDist = null;
+  renderer.domElement.addEventListener('touchstart', e => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      pinchDist = Math.hypot(dx,dy);
+      down = null;
+    }
+  }, { passive: false });
+  renderer.domElement.addEventListener('touchmove', e => {
+    if (e.touches.length === 2 && pinchDist !== null) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const nd = Math.hypot(dx,dy);
+      targetSpread -= (pinchDist - nd) * 0.005;
+      targetSpread = Math.max(0, Math.min(2, targetSpread));
+      pinchDist = nd;
+      highlightMesh.visible = false;
+      showSpreadHint();
+    }
+  }, { passive: false });
+  renderer.domElement.addEventListener('touchend', () => { pinchDist = null; });
+
+  addEventListener('resize', () => {
+    camera.aspect = innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  });
+
+  // ============================================================
+  //  AI
+  // ============================================================
+  function aiMove() {
+    const valid = [];
+    for (let mx=0;mx<3;mx++) for (let my=0;my<3;my++) for (let mz=0;mz<3;mz++)
+    for (let cx=0;cx<3;cx++) for (let cy=0;cy<3;cy++) for (let cz=0;cz<3;cz++)
+      if (isValid(mx,my,mz,cx,cy,cz)) valid.push([mx,my,mz,cx,cy,cz]);
+    if (!valid.length) return;
+
+    function subThreats(mx,my,mz, p){
+      let cnt = 0;
+      for (const L of WIN_LINES){
+        const [[a,b,c],[d,e,f],[g,h,i]] = L;
+        const v = [state.cells[mx][my][mz][a][b][c],
+                   state.cells[mx][my][mz][d][e][f],
+                   state.cells[mx][my][mz][g][h][i]];
+        const mine = v.filter(x=>x===p).length;
+        const opp  = v.filter(x=>x!==0 && x!==p).length;
+        if (mine === 2 && opp === 0) cnt++;
+      }
+      return cnt;
+    }
+    function metaThreats(p){
+      let cnt = 0;
+      for (const L of WIN_LINES){
+        const [[a,b,c],[d,e,f],[g,h,i]] = L;
+        const v = [state.subWinner[a][b][c], state.subWinner[d][e][f], state.subWinner[g][h][i]];
+        const mine = v.filter(x=>x===p).length;
+        const opp  = v.filter(x=>x!==0 && x!==p && x!==3).length;
+        const draws = v.filter(x=>x===3).length;
+        if (mine === 2 && opp === 0 && draws === 0) cnt++;
+      }
+      return cnt;
+    }
+
+    function scoreOf(mv){
+      const [mx,my,mz,cx,cy,cz] = mv;
+      let s = 0;
+      state.cells[mx][my][mz][cx][cy][cz] = 2;
+      const sw = checkSubWin(mx,my,mz);
+      if (sw && sw.winner === 2) {
+        s += 120;
+        state.subWinner[mx][my][mz] = 2;
+        const mw = checkMetaWin();
+        state.subWinner[mx][my][mz] = 0;
+        if (mw && mw.winner === 2) s += 50000;
+        else s += 40 * metaThreats(2);
+      } else s += 8 * subThreats(mx,my,mz, 2);
+      const oppActive = state.subWinner[cx][cy][cz] !== 0 ? null : {x:cx,y:cy,z:cz};
+      if (oppActive === null) s -= 25;
+      else {
+        const {x:ox,y:oy,z:oz} = oppActive;
+        if (state.subWinner[ox][oy][oz] === 0) {
+          let blocked = false;
+          outer:
+          for (let ex=0;ex<3;ex++) for (let ey=0;ey<3;ey++) for (let ez=0;ez<3;ez++) {
+            if (state.cells[ox][oy][oz][ex][ey][ez] !== 0) continue;
+            state.cells[ox][oy][oz][ex][ey][ez] = 1;
+            const ow = checkSubWin(ox,oy,oz);
+            state.cells[ox][oy][oz][ex][ey][ez] = 0;
+            if (ow && ow.winner === 1) {
+              blocked = true; s -= 90;
+              state.subWinner[ox][oy][oz] = 1;
+              const lm = checkMetaWin();
+              state.subWinner[ox][oy][oz] = 0;
+              if (lm && lm.winner === 1) s -= 20000;
+              break outer;
+            }
+          }
+          if (!blocked) s -= 5 * subThreats(ox,oy,oz, 1);
+        }
+      }
+      s += 1.5 * ((cx===1)+(cy===1)+(cz===1));
+      s += 1.2 * ((mx===1)+(my===1)+(mz===1));
+      state.cells[mx][my][mz][cx][cy][cz] = 0;
+      return s;
+    }
+
+    const scored = valid.map(mv => ({ mv, s: scoreOf(mv) }));
+    const best = Math.max(...scored.map(x => x.s));
+    const top = scored.filter(x => x.s >= best - 0.5);
+    const pick = top[Math.floor(Math.random()*top.length)].mv;
+    commitMove(...pick);
+  }
+
+  // ============================================================
+  //  UI
+  // ============================================================
+  const $ = id => document.getElementById(id);
+  function updatePieButton() {
+    const b = $('btn-pie');
+    const show = state.pieAvailable && !state.pieUsed && !state.gameWinner && state.currentPlayer === 2;
+    if (show) b.classList.remove('hidden');
+    else b.classList.add('hidden');
+  }
+
+  function applyPieRule() {
+    if (!state.pieAvailable || state.pieUsed || state.history.length !== 1 || state.currentPlayer !== 2) return;
+    const h = state.history[0];
+    const prevMode = state.mode;
+    resetGame();
+    state.mode = prevMode;
+    state.pieUsed = true;
+    state.currentPlayer = 2;
+    commitMove(h.mx, h.my, h.mz, h.cx, h.cy, h.cz);
+    state.pieAvailable = false;
+    updateUI();
+    updatePieButton();
+  }
+
+  function updateUI() {
+    const chip = $('turn-chip');
+    const name = $('turn-name');
+    const dot = chip.querySelector('.dot');
+    chip.classList.remove('p1','p2','draw');
+    dot.classList.remove('blue','red','gray');
+    if (state.gameWinner === 1) {
+      chip.classList.add('p1'); dot.classList.add('blue');
+      name.textContent = '선공 (O) 승!';
+    } else if (state.gameWinner === 2) {
+      chip.classList.add('p2'); dot.classList.add('red');
+      name.textContent = (state.mode==='pve'?'AI':'후공') + ' (X) 승!';
+    } else if (state.gameWinner === 3) {
+      chip.classList.add('draw'); dot.classList.add('gray');
+      name.textContent = '무승부';
+    } else if (state.currentPlayer === 1) {
+      chip.classList.add('p1'); dot.classList.add('blue');
+      name.textContent = '선공 (O)';
+    } else {
+      chip.classList.add('p2'); dot.classList.add('red');
+      name.textContent = (state.mode==='pve'?'AI':'후공') + ' (X)';
+    }
+
+    let s1=0, s2=0;
+    for (let a=0;a<3;a++) for (let b=0;b<3;b++) for (let c=0;c<3;c++){
+      if (state.subWinner[a][b][c] === 1) s1++;
+      else if (state.subWinner[a][b][c] === 2) s2++;
+    }
+    $('sc1').textContent = s1;
+    $('sc2').textContent = s2;
+    updatePieButton();
+  }
+
+  function showBanner(w) {
+    const b = $('banner'), inner = $('banner-inner'), t = $('banner-text');
+    b.classList.add('show');
+    t.classList.remove('blue','red','gray');
+    if (w === 1) {
+      t.textContent = '🎉 선공 (O) 승리!'; t.classList.add('blue');
+      inner.style.borderColor = '#3B82F6';
+    } else if (w === 2) {
+      t.textContent = '🎉 ' + (state.mode==='pve'?'AI':'후공') + ' (X) 승리!';
+      t.classList.add('red'); inner.style.borderColor = '#EF4444';
+    } else {
+      t.textContent = '🤝 무승부'; t.classList.add('gray');
+      inner.style.borderColor = '#9CA3AF';
+    }
+  }
+
+  function removePiece(p) {
+    p.wrapper.parent.remove(p.wrapper);
+    p.wrapper.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) {
+        if (Array.isArray(o.material)) o.material.forEach(m => m.dispose());
+        else o.material.dispose();
+      }
+    });
+    if (p.tint) {
+      p.tint.parent.remove(p.tint);
+      p.tint.material.dispose();
+    }
+  }
+
+  function resetGame() {
+    for (const p of pieces) removePiece(p);
+    pieces.length = 0;
+
+    for (let mx=0;mx<3;mx++) for (let my=0;my<3;my++) for (let mz=0;mz<3;mz++) {
+      const sw = subWires[mx][my][mz];
+      sw.material.color.setHex(COL_SUBWIRE);
+      sw.material.opacity = 0.35;
+      subFills[mx][my][mz].material.opacity = 0;
+      cellWireMeshes[mx][my][mz].visible = true;
+      cellWireMeshes[mx][my][mz].material.opacity = 0.4;
+    }
+    removeMetaWinTube();
+    metaWinFX.data = null;
+
+    state.cells = mk6d();
+    state.subWinner = mk3d(0);
+    state.subWinLine = mk3d(null);
+    state.activeMeta = null;
+    state.currentPlayer = 1;
+    state.gameWinner = 0;
+    state.gameWinLine = null;
+    state.history = [];
+    state.pieAvailable = false;
+    state.pieUsed = false;
+
+    highlightMesh.visible = false;
+    flashMesh.visible = false;
+    $('banner').classList.remove('show');
+    updateUI();
+    highlightActive();
+  }
+
+  function undoMove() {
+    if (state.gameWinner || !state.history.length) return;
+    const undos = state.mode === 'pve' ? Math.min(2, state.history.length) : 1;
+    for (let i = 0; i < undos; i++) {
+      const h = state.history.pop();
+      const { mx,my,mz,cx,cy,cz } = h;
+      state.cells[mx][my][mz][cx][cy][cz] = 0;
+      const k = `${mx},${my},${mz},${cx},${cy},${cz}`;
+      for (let j = pieces.length - 1; j >= 0; j--) {
+        if (pieces[j].key === k) {
+          removePiece(pieces[j]);
+          pieces.splice(j, 1);
+          break;
+        }
+      }
+      if (state.subWinner[mx][my][mz] !== 0) {
+        state.subWinner[mx][my][mz] = 0;
+        state.subWinLine[mx][my][mz] = null;
+        subWires[mx][my][mz].material.color.setHex(COL_SUBWIRE);
+        subWires[mx][my][mz].material.opacity = 0.35;
+        subFills[mx][my][mz].material.opacity = 0;
+        cellWireMeshes[mx][my][mz].visible = true;
+        // Re-show hidden pieces in this now-undecided sub
+        for (const p of pieces) {
+          if (p.subIdx[0] === mx && p.subIdx[1] === my && p.subIdx[2] === mz) {
+            p.wrapper.visible = true;
+            if (p.tint) p.tint.visible = true;
+            p.hidden = false;
+          }
+        }
+      }
+    }
+    if (!state.history.length) {
+      state.activeMeta = null;
+      state.currentPlayer = 1;
+      state.pieAvailable = false;
+      state.pieUsed = false;
+    } else {
+      const last = state.history[state.history.length - 1];
+      state.activeMeta = state.subWinner[last.cx][last.cy][last.cz] !== 0
+        ? null : { x:last.cx, y:last.cy, z:last.cz };
+      state.currentPlayer = last.player === 1 ? 2 : 1;
+      state.pieAvailable = state.history.length === 1 && !state.pieUsed && state.currentPlayer === 2;
+    }
+    state.gameWinner = 0;
+    state.gameWinLine = null;
+    removeMetaWinTube();
+    metaWinFX.data = null;
+    pieces.forEach(p => p.isWin = false);
+
+    $('banner').classList.remove('show');
+    updateUI();
+    highlightActive();
+  }
+
+  $('btn-reset').addEventListener('click', resetGame);
+  $('btn-undo').addEventListener('click', undoMove);
+  $('btn-pie').addEventListener('click', applyPieRule);
+  $('btn-view').addEventListener('click', () => {
+    camera.position.copy(defaultCamPos);
+    controls.target.set(0,0,0);
+    controls.update();
+    targetSpread = 0.6;
+  });
+  $('btn-pvp').addEventListener('click', () => {
+    state.mode = 'pvp';
+    $('btn-pvp').classList.add('active');
+    $('btn-pve').classList.remove('active');
+    resetGame();
+  });
+  $('btn-pve').addEventListener('click', () => {
+    state.mode = 'pve';
+    $('btn-pve').classList.add('active');
+    $('btn-pvp').classList.remove('active');
+    resetGame();
+  });
+
+  // Rules modal
+  const rulesModal = $('rules-modal');
+  function openRules() { rulesModal.classList.add('show'); }
+  function closeRules() { rulesModal.classList.remove('show'); }
+  $('btn-rules').addEventListener('click', openRules);
+  $('btn-close-rules').addEventListener('click', closeRules);
+  rulesModal.addEventListener('click', e => {
+    if (e.target === rulesModal) closeRules();
+  });
+
+  addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'Escape') { closeRules(); return; }
+    if (e.key === '?' || e.key === '/') { openRules(); return; }
+    if (rulesModal.classList.contains('show')) return;  // other shortcuts disabled while modal open
+    if (e.key === 'r' || e.key === 'R') resetGame();
+    if (e.key === 'z' || e.key === 'Z') undoMove();
+  });
+
+  // Initial setup
+  updateSpacing();
+  updateUI();
+  highlightActive();
+
+  // ============================================================
+  //  ANIMATION LOOP
+  // ============================================================
+  const clock = new THREE.Clock();
+  function animate() {
+    requestAnimationFrame(animate);
+    const dt = clock.getDelta();
+    const t  = clock.getElapsedTime();
+
+    controls.update();
+
+    if (Math.abs(targetSpread - currentSpread) > 0.001) {
+      currentSpread += (targetSpread - currentSpread) * 0.15;
+      updateSpacing();
+    }
+
+    // Flash fade
+    if (flashAnim && flashMesh.visible) {
+      flashAnim.t += dt;
+      const k = Math.min(1, flashAnim.t / 0.35);
+      flashMesh.material.opacity = 0.4 * (1 - k);
+      flashMesh.scale.setScalar(1 + k * 0.4);
+      if (k >= 1) { flashMesh.visible = false; flashAnim = null; }
+    }
+
+    const g = t * 1.4;
+    const winPulse = 1 + Math.sin(t * 6) * 0.18;
+
+    for (const p of pieces) {
+      if (p.hidden) continue;
+      if (p.wrapper.scale.x < p.targetScale) {
+        p.wrapper.scale.addScalar(dt * 5);
+        if (p.wrapper.scale.x > p.targetScale) p.wrapper.scale.setScalar(p.targetScale);
+      }
+      if (p.isWin) {
+        p.inner.rotation.y += dt * 4;
+        p.inner.rotation.x += dt * 2;
+        p.wrapper.scale.setScalar(p.targetScale * winPulse);
+      } else {
+        p.wrapper.rotation.set(g, g, 0);
+      }
+    }
+
+    if (!state.gameWinner) {
+      const pulse = 0.6 + 0.4 * Math.sin(t * 3.5);
+      if (state.activeMeta) {
+        const { x,y,z } = state.activeMeta;
+        if (state.subWinner[x][y][z] === 0) {
+          subWires[x][y][z].material.opacity = pulse;
+        }
+      } else {
+        for (let mx=0;mx<3;mx++) for (let my=0;my<3;my++) for (let mz=0;mz<3;mz++) {
+          if (state.subWinner[mx][my][mz] === 0) {
+            subWires[mx][my][mz].material.opacity = 0.3 + 0.3 * pulse;
+          }
+        }
+      }
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+});
+</script>
+
+<div class="creator-info">
+  <p>행복한 수학, 함께 만들어요 😊</p>
+  <p>© 행복한윤쌤 | <a href="https://blog.naver.com/happy_yoonssam" target="_blank" rel="noopener noreferrer">https://blog.naver.com/happy_yoonssam</a></p>
+</div>
+</body>
+</html>

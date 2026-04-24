@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>얼티밋 틱택토</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
+        * { box-sizing: border-box; }
+        html, body { width: 100%; min-height: 100%; }
+        body {
+            margin: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+        .page-wrap { width: min(960px, 100%); margin: 0 auto; padding: 1rem 1rem 2rem; }
+        .topbar {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 0.75rem; margin-bottom: 1rem;
+        }
+        .top-right-stack { display: flex; align-items: flex-start; gap: 0.4rem; }
+        .mode-toggle {
+            display: flex; gap: 0.3rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.2rem;
+        }
+        .play-mode-btn {
+            padding: 0.35rem 0.7rem; border-radius: 0.4rem;
+            background: transparent; border: none;
+            font-size: 0.8rem; font-weight: 600; color: #6b7280;
+            cursor: pointer; transition: all 0.18s; font-family: inherit;
+        }
+        .play-mode-btn:hover { color: #374151; }
+        .play-mode-btn.active { color: #4f46e5; background: #eef2ff; }
+        .icon-btn {
+            min-width: 2.4rem; height: 2.4rem; border-radius: 0.6rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            color: #4b5563; cursor: pointer; font-size: 1rem; font-family: inherit;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0 0.8rem; transition: all 0.18s;
+        }
+        .icon-btn:hover { background: white; color: #111827; transform: translateY(-1px); }
+        .icon-btn.primary { background: #4f46e5; color: white; border-color: #4f46e5; }
+        .icon-btn.primary:hover { background: #6366f1; color: white; }
+        .top-center { flex: 1; display: flex; flex-direction: column; align-items: center; }
+        .title {
+            margin: 0;
+            font-size: clamp(1.2rem, 4vw, 1.6rem);
+            font-weight: 900;
+            letter-spacing: -0.025em;
+            line-height: 1.1;
+            background: linear-gradient(90deg, #3b82f6 0%, #fbbf24 50%, #f87171 100%);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .status-card {
+            margin-top: 0.45rem;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border-radius: 9999px;
+            box-shadow: 0 4px 12px -2px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+            padding: 0.35rem 1rem;
+            display: flex; align-items: center; gap: 0.7rem;
+            font-size: 0.82rem; font-weight: 700;
+        }
+        .dot {
+            width: 0.5rem; height: 0.5rem; border-radius: 9999px;
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.8); display: inline-block;
+        }
+        .dot.live { background: #f59e0b; animation: pulse 1.2s ease-in-out infinite; }
+        .dot.done { background: #10b981; }
+        .glass-card {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            border: 1px solid #e5e7eb; border-radius: 1rem;
+            box-shadow: 0 10px 25px -12px rgba(17,24,39,0.35);
+        }
+        .select-ui {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.6rem;
+            padding: 0.5rem 0.65rem;
+            font-size: 0.85rem;
+            color: #374151;
+            width: 100%;
+        }
+        .select-ui:disabled { opacity: 0.65; cursor: not-allowed; }
+        .board-wrap {
+            background: #d1d5db;
+            border: 1px solid #cbd5e1;
+            border-radius: 1rem;
+            padding: 0.55rem;
+            box-shadow: 0 25px 50px -22px rgba(0,0,0,0.35);
+            width: fit-content;
+            margin: 0 auto;
+        }
+        .sub-board {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 4px; padding: 8px; border-radius: 0.7rem; position: relative;
+            transition: all 0.25s ease;
+            background: #e2e8f0;
+        }
+        .sub-board.active {
+            background: #fef3c7;
+            box-shadow: 0 0 0 1px #fbbf24, 0 10px 24px -12px rgba(245, 158, 11, 0.8);
+            transform: scale(1.015);
+            z-index: 10;
+        }
+        .sub-board.disabled { opacity: 0.55; filter: grayscale(0.35); }
+        .cell {
+            transition: all 0.2s;
+            width: 2.8rem; height: 2.8rem;
+            border-radius: 0.45rem; border: none; background: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: 900;
+            box-shadow: inset 0 0 0 1px #e5e7eb;
+            cursor: pointer;
+        }
+        @media (min-width: 640px) {
+            .cell { width: 3.25rem; height: 3.25rem; font-size: 1.35rem; }
+        }
+        .cell:hover:not(:disabled) { background-color: #f8fafc; transform: translateY(-1px); }
+        .cell:disabled { cursor: not-allowed; }
+        .win-overlay {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; font-weight: 900; border-radius: 0.7rem; z-index: 20;
+            background: rgba(255,255,255,0.83); pointer-events: none;
+        }
+        .helper-text { color: #6b7280; font-size: 0.8rem; }
+        .mode-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.78rem;
+            color: #4b5563;
+            background: #f3f4f6;
+            border-radius: 9999px;
+            padding: 0.22rem 0.7rem;
+        }
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.45);
+            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 60;
+            padding: 1rem;
+        }
+        .modal-backdrop.show { display: flex; }
+        .modal-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            padding: 1.5rem;
+            width: min(420px, 100%);
+            border: 1px solid #e5e7eb;
+            position: relative;
+        }
+        .modal-close {
+            position: absolute; top: 0.75rem; right: 0.75rem;
+            width: 2rem; height: 2rem; border-radius: 50%;
+            background: #f3f4f6; border: none; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #6b7280; font-size: 1rem; font-family: inherit;
+        }
+        .modal-close:hover { background: #e5e7eb; color: #111827; }
+        .modal-title { margin: 0 0 0.35rem; font-size: 1.25rem; font-weight: 900; color: #111827; }
+        .modal-sub { margin: 0 0 1rem; color: #6b7280; font-size: 0.88rem; }
+        .game-mode-btn {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 0.75rem 0.85rem;
+            text-align: left;
+            background: #f9fafb;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .game-mode-btn:hover {
+            background: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px -14px rgba(0,0,0,0.6);
+        }
+        .game-mode-btn .h { display: block; font-weight: 800; color: #111827; font-size: 0.92rem; }
+        .game-mode-btn .d { display: block; margin-top: 0.2rem; color: #6b7280; font-size: 0.78rem; }
+        .rule-item {
+            display: flex; gap: 0.7rem; margin-bottom: 0.85rem;
+            font-size: 0.88rem; color: #4b5563; line-height: 1.5;
+        }
+        .rule-item:last-child { margin-bottom: 0; }
+        .rule-num {
+            flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%;
+            background: #eef2ff; color: #4f46e5;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; font-weight: 700;
+        }
+        .rule-item b { color: #d97706; font-weight: 700; }
+        .rule-item strong { color: #1f2937; font-weight: 600; }
+        .controls-hint {
+            margin-top: 0.75rem; font-size: 0.72rem; color: #9ca3af; line-height: 1.5;
+        }
+        .classic-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .classic-cell {
+            width: 10.9rem;
+            height: 10.9rem;
+            border-radius: 0.7rem;
+            border: none;
+            background: #e2e8f0;
+            position: relative;
+            cursor: pointer;
+            padding: 0.45rem;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 0 1px #cbd5e1;
+        }
+        .classic-cell.occupied-x {
+            background: #fee2e2;
+            box-shadow: inset 0 0 0 2px #fca5a5;
+        }
+        .classic-cell.occupied-o {
+            background: #dbeafe;
+            box-shadow: inset 0 0 0 2px #93c5fd;
+        }
+        .classic-cell:hover:not(:disabled) {
+            transform: translateY(-1px);
+            background: #dbe3ee;
+        }
+        .classic-cell:disabled { cursor: not-allowed; opacity: 0.85; }
+        .classic-mark {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7.2rem;
+            font-weight: 900;
+            z-index: 2;
+            pointer-events: none;
+            line-height: 1;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.5; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.5; transform: scale(0.95); }
+        }
+
+        .creator-info {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #4a5568;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 8px 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border: 1px solid #e5e7eb;
+            z-index: 200;
+            width: fit-content;
+            max-width: calc(100vw - 24px);
+        }
+        @media (max-width: 768px) {
+            .creator-info {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+                bottom: 10px;
+            }
+        }
+        .creator-info p { margin: 2px 0; }
+        .creator-info a { color: #4299e1; text-decoration: none; }
+        .creator-info a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useRef } = React;
+        const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+        const checkWinner = (sqs) => {
+            for (let [a,b,c] of LINES) if (sqs[a] && sqs[a] === sqs[b] && sqs[a] === sqs[c]) return sqs[a];
+            return sqs.every(s => s !== null) ? 'Draw' : null;
+        };
+
+        function App() {
+            const [boards, setBoards] = useState(Array(9).fill(null).map(() => Array(9).fill(null)));
+            const [smallWinners, setSmallWinners] = useState(Array(9).fill(null));
+            const [activeIdx, setActiveIdx] = useState(null);
+            const [xNext, setXNext] = useState(true);
+            const [winner, setWinner] = useState(null);
+            const [started, setStarted] = useState(false);
+            const [selectedGame, setSelectedGame] = useState(null);
+            const [showModeModal, setShowModeModal] = useState(true);
+            const [showRulesModal, setShowRulesModal] = useState(false);
+            const [playMode, setPlayMode] = useState('pvp');
+            const [aiStatus, setAiStatus] = useState({ active: false, depth: 0, time: 0 });
+            const [classicBoard, setClassicBoard] = useState(Array(9).fill(null));
+            const [classicXNext, setClassicXNext] = useState(true);
+            const [classicWinner, setClassicWinner] = useState(null);
+            const [ultimateMoves, setUltimateMoves] = useState(0);
+            const [classicMoves, setClassicMoves] = useState(0);
+            const [pieAvailable, setPieAvailable] = useState(false);
+            const [pieUsed, setPieUsed] = useState(false);
+            
+            const stopAiFlag = useRef(false);
+
+            const resetUltimateState = useCallback(() => {
+                setBoards(Array(9).fill(null).map(() => Array(9).fill(null)));
+                setSmallWinners(Array(9).fill(null));
+                setActiveIdx(null);
+                setXNext(true);
+                setWinner(null);
+                setUltimateMoves(0);
+            }, []);
+
+            const resetClassicState = useCallback(() => {
+                setClassicBoard(Array(9).fill(null));
+                setClassicXNext(true);
+                setClassicWinner(null);
+                setClassicMoves(0);
+            }, []);
+
+            const selectGameMode = useCallback((mode) => {
+                setSelectedGame(mode);
+                setShowModeModal(false);
+                setStarted(true);
+                stopAiFlag.current = false;
+                setAiStatus({ active: false, depth: 0, time: 0 });
+                setPieAvailable(false);
+                setPieUsed(false);
+                if (mode === 'ultimate') {
+                    resetUltimateState();
+                } else {
+                    resetClassicState();
+                }
+            }, [resetClassicState, resetUltimateState]);
+
+            // 보드 상태 평가 함수 (Heuristic)
+            const evaluate = (tempWinners, mark) => {
+                const opp = mark === 'X' ? 'O' : 'X';
+                const win = checkWinner(tempWinners);
+                if (win === mark) return 10000;
+                if (win === opp) return -10000;
+                
+                let score = 0;
+                const weights = [3, 2, 3, 2, 5, 2, 3, 2, 3]; // 중앙/모서리 가중치
+                tempWinners.forEach((w, i) => {
+                    if (w === mark) score += weights[i] * 50;
+                    else if (w === opp) score -= weights[i] * 50;
+                });
+                return score;
+            };
+
+            // 미니맥스 알고리즘 (알파-베타 가지치기 적용)
+            const minimax = (tempBoards, tempWinners, currentIdx, depth, alpha, beta, isMax, mark) => {
+                const opp = mark === 'X' ? 'O' : 'X';
+                const win = checkWinner(tempWinners);
+                
+                if (win === mark) return 20000 + depth;
+                if (win === opp) return -20000 - depth;
+                if (depth === 0) return evaluate(tempWinners, mark);
+
+                let targetBoards = (currentIdx === null || tempWinners[currentIdx]) 
+                    ? tempWinners.map((w, i) => w === null ? i : null).filter(v => v !== null)
+                    : [currentIdx];
+
+                if (isMax) {
+                    let maxEval = -Infinity;
+                    for (let bIdx of targetBoards) {
+                        for (let i = 0; i < 9; i++) {
+                            if (tempBoards[bIdx][i] || stopAiFlag.current) continue;
+                            tempBoards[bIdx][i] = mark;
+                            const prevW = tempWinners[bIdx];
+                            const bw = checkWinner(tempBoards[bIdx]);
+                            if (bw) tempWinners[bIdx] = bw;
+
+                            const ev = minimax(tempBoards, tempWinners, tempWinners[i] ? null : i, depth - 1, alpha, beta, false, mark);
+                            
+                            tempBoards[bIdx][i] = null; tempWinners[bIdx] = prevW;
+                            maxEval = Math.max(maxEval, ev); alpha = Math.max(alpha, ev);
+                            if (beta <= alpha) return maxEval;
+                        }
+                    }
+                    return maxEval;
+                } else {
+                    let minEval = Infinity;
+                    for (let bIdx of targetBoards) {
+                        for (let i = 0; i < 9; i++) {
+                            if (tempBoards[bIdx][i] || stopAiFlag.current) continue;
+                            tempBoards[bIdx][i] = opp;
+                            const prevW = tempWinners[bIdx];
+                            const bw = checkWinner(tempBoards[bIdx]);
+                            if (bw) tempWinners[bIdx] = bw;
+
+                            const ev = minimax(tempBoards, tempWinners, tempWinners[i] ? null : i, depth - 1, alpha, beta, true, mark);
+                            
+                            tempBoards[bIdx][i] = null; tempWinners[bIdx] = prevW;
+                            minEval = Math.min(minEval, ev); beta = Math.min(beta, ev);
+                            if (beta <= alpha) return minEval;
+                        }
+                    }
+                    return minEval;
+                }
+            };
+
+            const getBestMove = async () => {
+                const mark = xNext ? 'X' : 'O';
+                let bIdx = activeIdx;
+                
+                if (bIdx === null || smallWinners[bIdx]) {
+                    const valid = smallWinners.map((w, i) => w === null ? i : null).filter(v => v !== null);
+                    bIdx = valid[Math.floor(Math.random() * valid.length)];
+                }
+                const available = boards[bIdx].map((s, i) => s === null ? i : null).filter(v => v !== null);
+
+                let bestV = -Infinity;
+                let bestS = available[0];
+                setAiStatus({ active: true, depth: 3, time: 0 });
+                await new Promise(r => setTimeout(r, 10));
+                for (let s of available) {
+                    const nB = boards.map(b => [...b]); nB[bIdx][s] = mark;
+                    const nW = [...smallWinners]; const bw = checkWinner(nB[bIdx]); if (bw) nW[bIdx] = bw;
+                    const v = minimax(nB, nW, nW[s] ? null : s, 3, -Infinity, Infinity, false, mark);
+                    if (v > bestV) { bestV = v; bestS = s; }
+                }
+                setAiStatus({ active: false, depth: 0, time: 0 });
+                return { bIdx, sIdx: bestS };
+            };
+
+            const handleUltimateMove = useCallback((bIdx, sIdx) => {
+                if (!started || selectedGame !== 'ultimate' || winner || boards[bIdx][sIdx] || smallWinners[bIdx]) return;
+                if (activeIdx !== null && activeIdx !== bIdx) return;
+                if (pieAvailable && !xNext) {
+                    setPieAvailable(false);
+                    setPieUsed(true);
+                }
+
+                const mark = xNext ? 'X' : 'O';
+                const nB = boards.map((b, i) => i === bIdx ? b.map((s, j) => j === sIdx ? mark : s) : b);
+                const nW = [...smallWinners];
+                const bw = checkWinner(nB[bIdx]);
+                if (bw) nW[bIdx] = bw;
+
+                setBoards(nB);
+                setSmallWinners(nW);
+                setXNext(!xNext);
+                setActiveIdx(nW[sIdx] ? null : sIdx);
+                const nextMoves = ultimateMoves + 1;
+                setUltimateMoves(nextMoves);
+                if (nextMoves === 1 && !pieUsed) setPieAvailable(true);
+            }, [boards, smallWinners, activeIdx, xNext, winner, started, selectedGame, ultimateMoves, pieUsed, pieAvailable]);
+
+            useEffect(() => {
+                if (!started || selectedGame !== 'ultimate' || winner) return;
+                const isAiTurn = playMode === 'pve' && !xNext;
+                if (!isAiTurn) return;
+                if (pieAvailable && !pieUsed && ultimateMoves === 1) {
+                    let fb = -1, fc = -1;
+                    for (let b = 0; b < 9; b++) {
+                        for (let c = 0; c < 9; c++) {
+                            if (boards[b][c] !== null) { fb = b; fc = c; break; }
+                        }
+                        if (fb !== -1) break;
+                    }
+                    if (fb === 4 && fc === 4) {
+                        setBoards(prev => prev.map(row => row.map(v => (v === 'X' ? 'O' : v === 'O' ? 'X' : null))));
+                        setSmallWinners(prev => prev.map(v => (v === 'X' ? 'O' : v === 'O' ? 'X' : v)));
+                        setWinner(null);
+                        setXNext(true);
+                        setPieAvailable(false);
+                        setPieUsed(true);
+                        return;
+                    }
+                    setPieAvailable(false);
+                    setPieUsed(true);
+                    return;
+                }
+                if (isAiTurn) {
+                    getBestMove().then(move => {
+                        handleUltimateMove(move.bIdx, move.sIdx);
+                    });
+                }
+            }, [xNext, started, winner, selectedGame, playMode, handleUltimateMove, pieAvailable, pieUsed, ultimateMoves, boards]);
+
+            useEffect(() => {
+                if (selectedGame !== 'ultimate') return;
+                const res = checkWinner(smallWinners);
+                if (res) setWinner(res);
+            }, [smallWinners, selectedGame]);
+
+            const checkClassicWinner = (squares) => {
+                for (let [a,b,c] of LINES) {
+                    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) return squares[a];
+                }
+                return squares.every(v => v !== null) ? 'Draw' : null;
+            };
+
+            const minimaxClassic = (board, isMax, aiMark, humanMark, depth = 0) => {
+                const res = checkClassicWinner(board);
+                if (res === aiMark) return 10 - depth;
+                if (res === humanMark) return depth - 10;
+                if (res === 'Draw') return 0;
+
+                if (isMax) {
+                    let best = -Infinity;
+                    for (let i = 0; i < 9; i++) {
+                        if (board[i]) continue;
+                        board[i] = aiMark;
+                        best = Math.max(best, minimaxClassic(board, false, aiMark, humanMark, depth + 1));
+                        board[i] = null;
+                    }
+                    return best;
+                }
+                let best = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (board[i]) continue;
+                    board[i] = humanMark;
+                    best = Math.min(best, minimaxClassic(board, true, aiMark, humanMark, depth + 1));
+                    board[i] = null;
+                }
+                return best;
+            };
+
+            const getClassicBestMove = () => {
+                const mark = classicXNext ? 'X' : 'O';
+                const humanMark = mark === 'X' ? 'O' : 'X';
+                const available = classicBoard.map((v, i) => v === null ? i : null).filter(v => v !== null);
+                if (!available.length) return null;
+                let bestVal = -Infinity;
+                let bestMove = available[0];
+                for (const idx of available) {
+                    const b = [...classicBoard];
+                    b[idx] = mark;
+                    const val = minimaxClassic(b, false, mark, humanMark, 0);
+                    if (val > bestVal) {
+                        bestVal = val;
+                        bestMove = idx;
+                    }
+                }
+                return bestMove;
+            };
+
+            const handleClassicMove = useCallback((idx) => {
+                if (!started || selectedGame !== 'classic' || classicWinner || classicBoard[idx]) return;
+                if (pieAvailable && !classicXNext) {
+                    setPieAvailable(false);
+                    setPieUsed(true);
+                }
+                const mark = classicXNext ? 'X' : 'O';
+                const nextBoard = classicBoard.map((v, i) => i === idx ? mark : v);
+                const res = checkClassicWinner(nextBoard);
+                setClassicBoard(nextBoard);
+                if (res) setClassicWinner(res);
+                else setClassicXNext(!classicXNext);
+                const nextMoves = classicMoves + 1;
+                setClassicMoves(nextMoves);
+                if (nextMoves === 1 && !pieUsed) setPieAvailable(true);
+            }, [started, selectedGame, classicWinner, classicBoard, classicXNext, classicMoves, pieUsed, pieAvailable]);
+
+            const applyPieRule = useCallback(() => {
+                if (!pieAvailable || pieUsed) return;
+                if (selectedGame === 'classic') {
+                    if (classicMoves !== 1 || classicXNext) return;
+                    setClassicBoard(prev => prev.map(v => (v === 'X' ? 'O' : v === 'O' ? 'X' : null)));
+                    setClassicWinner(null);
+                    setClassicXNext(true);
+                } else if (selectedGame === 'ultimate') {
+                    if (ultimateMoves !== 1 || xNext) return;
+                    setBoards(prev => prev.map(row => row.map(v => (v === 'X' ? 'O' : v === 'O' ? 'X' : null))));
+                    setSmallWinners(prev => prev.map(v => (v === 'X' ? 'O' : v === 'O' ? 'X' : v)));
+                    setWinner(null);
+                    setXNext(true);
+                } else return;
+                setPieAvailable(false);
+                setPieUsed(true);
+            }, [pieAvailable, pieUsed, selectedGame, classicMoves, classicXNext, ultimateMoves, xNext]);
+
+            useEffect(() => {
+                if (!started || selectedGame !== 'classic' || classicWinner) return;
+                const isAiTurn = playMode === 'pve' && !classicXNext;
+                if (!isAiTurn) return;
+                if (pieAvailable && !pieUsed && classicMoves === 1) {
+                    const firstIdx = classicBoard.findIndex(v => v !== null);
+                    if (firstIdx === 4) {
+                        applyPieRule();
+                        return;
+                    }
+                }
+                const t = setTimeout(() => {
+                    const move = getClassicBestMove();
+                    if (move !== null) handleClassicMove(move);
+                }, 120);
+                return () => clearTimeout(t);
+            }, [started, selectedGame, classicWinner, classicXNext, playMode, classicBoard, handleClassicMove, pieAvailable, pieUsed, classicMoves, applyPieRule]);
+
+            const resetGame = () => {
+                stopAiFlag.current = false;
+                setAiStatus({ active: false, depth: 0, time: 0 });
+                setPieAvailable(false);
+                setPieUsed(false);
+                if (selectedGame === 'classic') {
+                    resetClassicState();
+                } else if (selectedGame === 'ultimate') {
+                    resetUltimateState();
+                }
+            };
+
+            return (
+                <div className="page-wrap">
+                    <div className="topbar">
+                        <div className="flex gap-2">
+                            {selectedGame && (
+                                <button onClick={resetGame} className="icon-btn" title="설정 초기화 후 새 게임">
+                                    🔄
+                                </button>
+                            )}
+                            {selectedGame && pieAvailable && !pieUsed && (
+                                <button
+                                    onClick={applyPieRule}
+                                    className="icon-btn"
+                                    title="파이룰 적용(진영 스왑)"
+                                >
+                                    ⇄
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setShowModeModal(true)}
+                                className="icon-btn"
+                                title="게임 모드 선택"
+                            >
+                                🎮
+                            </button>
+                        </div>
+                        <div className="top-center">
+                            <h1 className="title">
+                                {!selectedGame ? '게임 선택' : (selectedGame === 'classic' ? '틱택토' : '얼티밋 틱택토')}
+                            </h1>
+                            <div className="status-card">
+                                <span className={`dot ${((selectedGame === 'classic' ? classicWinner : winner)) ? 'done' : 'live'}`}></span>
+                                <span>
+                                    {selectedGame === 'classic'
+                                        ? (
+                                            classicWinner
+                                                ? (classicWinner === 'Draw' ? '무승부' : `승리: ${classicWinner === 'O' && playMode === 'pve' ? 'AI (O)' : classicWinner}`)
+                                                : `${classicXNext ? 'X' : (playMode === 'pve' ? 'AI (O)' : 'O')}의 차례`
+                                        )
+                                        : (
+                                            winner
+                                                ? (winner === 'Draw' ? '무승부' : `승리: ${winner === 'O' && playMode === 'pve' ? 'AI (O)' : winner}`)
+                                                : `${xNext ? 'X' : (playMode === 'pve' ? 'AI (O)' : 'O')}의 차례`
+                                        )
+                                    }
+                                </span>
+                                {selectedGame === 'ultimate' && aiStatus.active && <span className="helper-text">깊이 {aiStatus.depth} · {aiStatus.time}s</span>}
+                                {selectedGame && <span className="mode-badge">{selectedGame === 'classic' ? '3x3 기본' : '3x3x3 얼티밋'}</span>}
+                            </div>
+                        </div>
+                        <div className="top-right-stack">
+                            <div className="mode-toggle">
+                                <button
+                                    className={`play-mode-btn ${playMode === 'pvp' ? 'active' : ''}`}
+                                    onClick={() => setPlayMode('pvp')}
+                                >
+                                    👥 2인
+                                </button>
+                                <button
+                                    className={`play-mode-btn ${playMode === 'pve' ? 'active' : ''}`}
+                                    onClick={() => setPlayMode('pve')}
+                                >
+                                    🤖 AI
+                                </button>
+                            </div>
+                            <button className="icon-btn" onClick={() => setShowRulesModal(true)} title="게임 규칙">
+                                📖
+                            </button>
+                        </div>
+                    </div>
+
+                    {selectedGame === 'ultimate' && (
+                        <div className="board-wrap">
+                            <div className="grid grid-cols-3 gap-2">
+                                {boards.map((sqs, bIdx) => {
+                                    const isActive = started && !winner && (activeIdx === null || activeIdx === bIdx);
+                                    const isCompleted = smallWinners[bIdx];
+                                    return (
+                                        <div
+                                            key={bIdx}
+                                            className={`sub-board ${isActive ? 'active' : 'disabled'}`}
+                                        >
+                                            {isCompleted && (
+                                                <div className={`win-overlay ${isCompleted === 'X' ? 'text-red-500' : 'text-blue-500'}`}>
+                                                    {isCompleted}
+                                                </div>
+                                            )}
+                                            {sqs.map((val, sIdx) => (
+                                                <button
+                                                    key={sIdx}
+                                                    disabled={!isActive || val || isCompleted || winner}
+                                                    onClick={() => handleUltimateMove(bIdx, sIdx)}
+                                                    className={`cell ${val === 'X' ? 'text-red-500' : val === 'O' ? 'text-blue-500' : 'text-transparent'}`}
+                                                >
+                                                    {val || '.'}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedGame === 'classic' && (
+                        <div className="board-wrap">
+                            <div className="classic-grid">
+                                {classicBoard.map((val, idx) => (
+                                    <button
+                                        key={idx}
+                                        disabled={!!classicWinner || !!val || !started}
+                                        onClick={() => handleClassicMove(idx)}
+                                        className={`classic-cell ${val === 'X' ? 'occupied-x' : val === 'O' ? 'occupied-o' : ''}`}
+                                    >
+                                        <span className={`classic-mark ${val === 'X' ? 'text-red-500' : val === 'O' ? 'text-blue-500' : 'text-transparent'}`}>
+                                            {val || '.'}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div
+                        className={`modal-backdrop ${showModeModal ? 'show' : ''}`}
+                        onClick={() => { if (selectedGame) setShowModeModal(false); }}
+                    >
+                        <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+                            {selectedGame && <button className="modal-close" onClick={() => setShowModeModal(false)}>✕</button>}
+                            <h2 className="modal-title">게임 선택</h2>
+                            <p className="modal-sub">원하는 규칙을 선택하면 즉시 새 게임이 시작됩니다.</p>
+                            <div className="flex flex-col gap-2">
+                                <button className="game-mode-btn" onClick={() => selectGameMode('ultimate')}>
+                                    <span className="h">얼티밋 틱택토</span>
+                                    <span className="d">9개 서브보드 규칙을 사용하는 확장 모드</span>
+                                </button>
+                                <button className="game-mode-btn" onClick={() => selectGameMode('classic')}>
+                                    <span className="h">기본 틱택토 (3x3)</span>
+                                    <span className="d">한 보드에서 X/O를 번갈아 두는 기본 모드</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        className={`modal-backdrop ${showRulesModal ? 'show' : ''}`}
+                        onClick={() => setShowRulesModal(false)}
+                    >
+                        <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+                            <button className="modal-close" onClick={() => setShowRulesModal(false)}>✕</button>
+                            <h2 className="modal-title">📖 게임 규칙</h2>
+                            {selectedGame === 'classic' ? (
+                                <>
+                                    <div className="rule-item">
+                                        <span className="rule-num">1</span>
+                                        <div>3×3 보드에서 X/O를 번갈아 둡니다.</div>
+                                    </div>
+                                    <div className="rule-item">
+                                        <span className="rule-num">2</span>
+                                        <div>가로, 세로, 대각선으로 3개를 먼저 이으면 승리합니다.</div>
+                                    </div>
+                                    <div className="rule-item">
+                                        <span className="rule-num">3</span>
+                                        <div><strong>AI 모드</strong>에서는 O를 컴퓨터가 자동으로 둡니다.</div>
+                                    </div>
+                                    <div className="rule-item">
+                                        <span className="rule-num">4</span>
+                                        <div><b>파이룰:</b> 첫 수 이후 후공은 1회에 한해 <strong>진영을 스왑(⇄)</strong>할 수 있습니다.</div>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="rule-item">
+                                        <span className="rule-num">1</span>
+                                        <div>9개의 서브보드(3×3)로 이루어진 메타 보드에서 플레이합니다.</div>
+                                    </div>
+                                    <div className="rule-item">
+                                        <span className="rule-num">2</span>
+                                        <div>내가 둔 칸 번호가 상대의 다음 서브보드를 지정합니다.</div>
+                                    </div>
+                                    <div className="rule-item">
+                                        <span className="rule-num">3</span>
+                                        <div>작은 보드를 이겨 메타 보드에서 3개를 잇는 쪽이 최종 승리합니다.</div>
+                                    </div>
+                                    <div className="rule-item">
+                                        <span className="rule-num">4</span>
+                                        <div><b>파이룰:</b> 첫 수 이후 후공은 1회에 한해 <strong>진영을 스왑(⇄)</strong>할 수 있습니다.</div>
+                                    </div>
+                                </>
+                            )}
+                            <div className="modal-tip">💡 좌상단 ⇄ 버튼이 활성화되면 파이룰을 사용할 수 있습니다.</div>
+                            <div className="controls-hint">
+                                <b>공통 조작:</b> 좌상단 새 게임, 우상단 모드 전환, 📖 규칙 보기
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+
+    <div class="creator-info">
+        <p>행복한 수학, 함께 만들어요 😊</p>
+        <p>© 행복한윤쌤 | <a href="https://blog.naver.com/happy_yoonssam" target="_blank" rel="noopener noreferrer">https://blog.naver.com/happy_yoonssam</a></p>
+    </div>
+</body>
+</html>

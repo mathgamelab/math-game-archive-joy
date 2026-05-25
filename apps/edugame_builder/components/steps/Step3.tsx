@@ -17,13 +17,42 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const normalizeIdea = (idea: Partial<GameIdea>): GameIdea | null => {
+    const title = typeof idea.title === 'string' ? idea.title.trim() : '';
+    const description = typeof idea.description === 'string' ? idea.description.trim() : '';
+    const keyFeatures = Array.isArray(idea.keyFeatures)
+      ? idea.keyFeatures.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).slice(0, 3)
+      : [];
+    const curriculumAlignment = Array.isArray(idea.curriculumAlignment)
+      ? idea.curriculumAlignment.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      : [];
+    const classroomValue = typeof idea.classroomValue === 'string' ? idea.classroomValue.trim() : '';
+
+    if (!title || !description || keyFeatures.length === 0) {
+      return null;
+    }
+
+    return {
+      title,
+      description,
+      keyFeatures,
+      curriculumAlignment,
+      classroomValue
+    };
+  };
+
   // localStorage에서 저장된 아이디어 불러오기
   const loadSavedIdeas = (): GameIdea[] | null => {
     try {
       const key = `gameIdeas_${formData.learningGoal.trim()}`;
       const saved = localStorage.getItem(key);
       if (saved) {
-        return JSON.parse(saved) as GameIdea[];
+        const parsed = JSON.parse(saved) as unknown;
+        if (!Array.isArray(parsed)) return null;
+        const normalized = parsed
+          .map((item) => normalizeIdea(item as Partial<GameIdea>))
+          .filter((item): item is GameIdea => item !== null);
+        return normalized.length > 0 ? normalized : null;
       }
     } catch (e) {
       console.error('Failed to load saved ideas:', e);
@@ -79,8 +108,16 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) 
     );
 
     if (result && result.length > 0) {
-      setIdeas(result);
-      saveIdeas(result); // 생성된 아이디어 저장
+      const normalized = result
+        .map((item) => normalizeIdea(item))
+        .filter((item): item is GameIdea => item !== null);
+
+      if (normalized.length > 0) {
+        setIdeas(normalized);
+        saveIdeas(normalized); // 생성된 아이디어 저장
+      } else {
+        setError('게임 아이디어 형식이 올바르지 않습니다. 다시 시도해주세요.');
+      }
     } else {
       setError('게임 아이디어를 생성하지 못했습니다. 다시 시도해주세요.');
     }
@@ -104,8 +141,15 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) 
   const handleSelect = (index: number) => {
     setSelectedIndex(index);
     const selectedIdea = ideas[index];
+    const curriculumBlock = selectedIdea.curriculumAlignment.length > 0
+      ? `\n\n성취기준 반영:\n${selectedIdea.curriculumAlignment.map((item) => `- ${item}`).join('\n')}`
+      : '';
+    const classroomValueBlock = selectedIdea.classroomValue
+      ? `\n\n수업 활용 가치:\n${selectedIdea.classroomValue}`
+      : '';
+
     // 선택한 아이디어를 gameConcept에 저장
-    const gameConceptText = `${selectedIdea.title}\n\n${selectedIdea.description}\n\n주요 특징:\n${selectedIdea.keyFeatures.map(f => `- ${f}`).join('\n')}`;
+    const gameConceptText = `${selectedIdea.title}\n\n${selectedIdea.description}\n\n주요 특징:\n${selectedIdea.keyFeatures.map(f => `- ${f}`).join('\n')}${curriculumBlock}${classroomValueBlock}`;
     updateField('gameConcept', gameConceptText);
   };
 
@@ -214,12 +258,12 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) 
                 </h3>
 
                 {/* 설명 */}
-                <p className="text-sm text-slate-600 leading-relaxed mb-4 min-h-[80px]">
+                <p className="text-sm text-slate-600 leading-relaxed mb-4 min-h-[64px]">
                   {idea.description}
                 </p>
 
                 {/* 주요 특징 */}
-                <div className="space-y-2">
+                <div className="space-y-2 mb-4">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">주요 특징</h4>
                   <ul className="space-y-1">
                     {idea.keyFeatures.map((feature, i) => (
@@ -230,6 +274,29 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) 
                     ))}
                   </ul>
                 </div>
+
+                {/* 성취기준 반영 */}
+                {idea.curriculumAlignment.length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wider">성취기준 반영</h4>
+                    <ul className="space-y-1">
+                      {idea.curriculumAlignment.map((alignment, i) => (
+                        <li key={i} className="text-xs text-slate-700 flex items-start gap-2">
+                          <span className="text-emerald-500 mt-1">•</span>
+                          <span>{alignment}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 수업 활용 가치 */}
+                {idea.classroomValue && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                    <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">수업 활용 가치</h4>
+                    <p className="text-xs text-slate-700 leading-relaxed">{idea.classroomValue}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

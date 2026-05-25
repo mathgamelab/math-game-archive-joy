@@ -170,6 +170,8 @@ export interface GameIdea {
   title: string;
   description: string;
   keyFeatures: string[];
+  curriculumAlignment: string[];
+  classroomValue: string;
 }
 
 export const generateGameIdeas = async (apiKey: string | undefined, learningGoal: string, subject: string, curriculumStandard?: string): Promise<GameIdea[] | null> => {
@@ -179,32 +181,44 @@ export const generateGameIdeas = async (apiKey: string | undefined, learningGoal
     return null;
   }
 
-  const standardsText = curriculumStandard 
-    ? `\n선택한 성취기준:\n${curriculumStandard.split('\n').filter(Boolean).map((s, i) => `${i + 1}. ${s}`).join('\n')}`
+  const standards = curriculumStandard
+    ? curriculumStandard.split('\n').map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const standardsText = standards.length > 0
+    ? `\n선택한 성취기준:\n${standards.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
     : '';
 
   const prompt = `교과: "${subject}"
 구체적인 학습 목표: "${learningGoal}"${standardsText}
 
-위의 학습 목표를 달성하기 위한 교육용 웹 게임 아이디어를 3개 제시해주세요.
+위 정보를 바탕으로, 실제 수업에서 바로 활용 가능한 "교육용 웹 게임 아이디어"를 정확히 3개 제시해주세요.
 
-각 아이디어는 다음 형식의 JSON 배열로 반환해주세요:
+중요 품질 기준:
+1) 유치하거나 과하게 장난스러운 톤을 피하고, 학년 수준에 맞는 학습 난이도와 사고 과정을 반영하세요.
+2) 각 아이디어는 선택된 성취기준을 구체적으로 반영해야 합니다.
+3) 세 아이디어는 서로 다른 플레이 구조(예: 전략형, 퍼즐형, 시뮬레이션형 등)로 제안하세요.
+4) 웹 브라우저에서 구현 가능한 상호작용으로 설계하세요.
+
+반드시 아래 JSON 배열 스키마만 반환하세요 (설명 문장/코드블록 금지):
 [
   {
-    "title": "게임 제목",
-    "description": "게임의 핵심 컨셉과 학습 목표 달성 방법을 간결하게 설명 (2-3문장)",
-    "keyFeatures": ["주요 특징 1", "주요 특징 2", "주요 특징 3"]
-  },
-  ...
+    "title": "게임 제목 (간결하고 전문적인 표현)",
+    "description": "핵심 컨셉 + 학습이 일어나는 방식 (2-3문장)",
+    "keyFeatures": ["핵심 기능 1", "핵심 기능 2", "핵심 기능 3"],
+    "curriculumAlignment": [
+      "성취기준 문구 A -> 게임 내 학습 행동/피드백 방식",
+      "성취기준 문구 B -> 게임 내 학습 행동/피드백 방식"
+    ],
+    "classroomValue": "수업에서 활용할 때의 교육적 효과와 평가 가능 포인트"
+  }
 ]
 
-요구사항:
-- 각 게임은 학습 목표를 효과적으로 달성할 수 있어야 함
-- 학생들에게 흥미롭고 재미있는 게임플레이
-- 웹 브라우저에서 실행 가능한 형태
-- 교육적 가치와 게임의 재미가 균형있게 결합
-
-JSON 형식만 반환하고, 다른 설명은 포함하지 마세요.`;
+검증 규칙:
+- keyFeatures는 정확히 3개
+- curriculumAlignment는 최소 2개
+- 각 curriculumAlignment 항목은 '->'를 포함
+- "재미"보다 "학습 정렬성"을 우선하세요.`;
 
   try {
     const response: GenerateContentResponse = await ai.models.generateContent({
@@ -215,26 +229,61 @@ JSON 형식만 반환하고, 다른 설명은 포함하지 마세요.`;
     const text = response.text?.trim() || null;
     if (!text) return null;
 
-    // JSON 파싱 시도
-    try {
-      // JSON 코드 블록이 있는 경우 제거
-      const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const ideas = JSON.parse(jsonText) as GameIdea[];
-      
-      // 3개 아이디어가 있는지 확인
-      if (Array.isArray(ideas) && ideas.length >= 3) {
-        return ideas.slice(0, 3);
-      }
-      
-      // 배열이 아니거나 개수가 부족한 경우
-      console.warn('Invalid game ideas format:', ideas);
-      return null;
-    } catch (parseError) {
-      console.error('Failed to parse game ideas JSON:', parseError);
-      console.error('Response text:', text);
+    const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const parsed = JSON.parse(jsonText) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      console.warn('Game ideas response is not an array:', parsed);
       return null;
     }
+
+    const normalizeStringArray = (value: unknown): string[] => {
+      if (!Array.isArray(value)) return [];
+      return value
+        .map((item) => (typeof item === 'string' ? item.trim() : ''))
+        .filter((item) => item.length > 0);
+    };
+
+    const normalizedIdeas = parsed
+      .map((item): GameIdea | null => {
+        if (!item || typeof item !== 'object') return null;
+        const raw = item as Record<string, unknown>;
+
+        const title = typeof raw.title === 'string' ? raw.title.trim() : '';
+        const description = typeof raw.description === 'string' ? raw.description.trim() : '';
+        const keyFeatures = normalizeStringArray(raw.keyFeatures).slice(0, 3);
+        const curriculumAlignment = normalizeStringArray(raw.curriculumAlignment);
+        const classroomValue = typeof raw.classroomValue === 'string' ? raw.classroomValue.trim() : '';
+
+        const hasEnoughAlignment = standards.length > 0
+          ? curriculumAlignment.length >= 2
+          : curriculumAlignment.length >= 1;
+
+        if (!title || !description || keyFeatures.length < 3 || !hasEnoughAlignment || !classroomValue) {
+          return null;
+        }
+
+        return {
+          title,
+          description,
+          keyFeatures,
+          curriculumAlignment,
+          classroomValue
+        };
+      })
+      .filter((idea): idea is GameIdea => idea !== null);
+
+    if (normalizedIdeas.length === 0) {
+      console.warn('No valid game ideas after normalization:', parsed);
+      return null;
+    }
+
+    return normalizedIdeas.slice(0, 3);
   } catch (error: any) {
+    if (error instanceof SyntaxError) {
+      console.error('Failed to parse game ideas JSON:', error);
+      return null;
+    }
     console.error('Game ideas generation failed:', error);
     return null;
   }

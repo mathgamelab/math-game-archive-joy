@@ -14,7 +14,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
     <div className="space-y-8 animate-in">
       <div className="text-center space-y-4 mb-10">
         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">게임 세부 사항 <span className="text-purple-600">(Details)</span></h2>
-        <p className="text-slate-600 text-lg">입력하신 내용을 바탕으로 AI가 구조를 잡았습니다. 오른쪽의 기술 구조화 초안을 확인하고 필요하면 수정해보세요.</p>
+        <p className="text-slate-600 text-lg">오른쪽의 기술 구조화 초안(핵심 로직/보상, UI 에셋)을 꼼꼼히 다듬어주세요. 이 내용이 Step6의 1차/2차(고급은 3차까지) 프롬프트에 핵심 근거로 반영됩니다.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[600px]">
@@ -89,7 +89,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            초급자용 프롬프트 생성
+            초급자용 2단계 프롬프트 생성
           </button>
           <button 
             onClick={() => {
@@ -104,12 +104,12 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            고급자용 프롬프트 생성
+            고급자용 3단계 프롬프트 생성
           </button>
         </div>
         <p className="text-center text-sm text-slate-500 mt-4">
-          <span className="font-semibold text-purple-600">초급자용:</span> 프론트엔드만 있는 쉽고 직관적인 프롬프트 | 
-          <span className="font-semibold text-blue-600"> 고급자용:</span> 백엔드를 포함한 고성능 프롬프트
+          <span className="font-semibold text-purple-600">초급자용:</span> 1차(시스템/Level1) + 2차(보상강화/다음레벨) 프론트엔드 프롬프트 | 
+          <span className="font-semibold text-blue-600"> 고급자용:</span> 초급 1·2차 + 3차(백엔드 구성/연동) 프롬프트
         </p>
       </div>
     </div>

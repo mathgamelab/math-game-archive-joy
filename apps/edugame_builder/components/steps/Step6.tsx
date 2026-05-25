@@ -12,7 +12,7 @@ interface Step6Props {
 
 const Step6: React.FC<Step6Props> = ({ formData, updateField, apiKey }) => {
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [copiedTarget, setCopiedTarget] = useState<'all' | '1' | '2' | '3' | null>(null);
   const [lastPromptLevel, setLastPromptLevel] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -26,32 +26,61 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, apiKey }) => {
           updateField('editedPrompt', result);
         } else {
           // API 키가 없거나 생성 실패 시 기본 프롬프트 사용
-          const defaultPrompt = `# ${formData.gameConcept || '게임'} 개발 프롬프트
+          const isAdvanced = formData.promptLevel === 'advanced';
+          const defaultPrompt = `# 최종 개발 프롬프트 번들 (${isAdvanced ? '고급자용 3단계' : '초급자용 2단계'})
 
-## 프로젝트 개요
-- 교과: ${formData.subject}
-- 학년: ${formData.grade}
-- 학습 목표: ${formData.learningGoal}
+아래 순서대로 붙여넣어 실행하세요.
 
-## 게임 컨셉
-${formData.gameConcept}
+## 1차 붙여넣기 프롬프트 (게임 시스템 + UI/UX + Level 1)
+\`\`\`md
+당신은 시니어 프론트엔드 게임 개발자입니다.
+아래 기획 정보를 누락 없이 반영해 React + Tailwind 기반의 교육용 웹게임을 구현하세요.
 
-## 게임 설계
-${formData.mechanics}
+[반드시 반영할 입력]
+- 교과/학년/성취기준/학습 목표: ${formData.subject} / ${formData.grade} / ${formData.curriculumStandard} / ${formData.learningGoal}
+- 게임 컨셉: ${formData.gameConcept}
+- 게임 설계: ${formData.mechanics}
+- 디자인 및 분위기: ${formData.vibe}
+- 핵심 로직 및 보상 체계: ${formData.structuredData.gameLogic}
+- UI 에셋 및 시각화 계획: ${formData.structuredData.uiAssets}
+- 기술 규칙: ${formData.rules}
 
-## 디자인 및 분위기
-${formData.vibe}
+[1차 구현 목표]
+1) 핵심 UI/UX 화면 구성 (시작, 플레이, 결과)
+2) Level 1을 끝까지 플레이 가능한 게임 루프 구현
+3) 기본 점수/보상 처리와 피드백(정답/오답/클리어) 구현
+4) 데이터는 프론트엔드 코드 내 JSON 구조로 관리
+\`\`\`
 
-## 기술 요구사항
-${formData.rules}
+## 2차 붙여넣기 프롬프트 (보상 강화 + 다음 레벨 + 미반영 보완)
+\`\`\`md
+이전 결과물(1차)을 기반으로 확장 개발을 진행하세요.
 
-## 게임 로직
-${formData.structuredData.gameLogic}
+[2차 구현 목표]
+1) 보상 체계 강화: 콤보, 배수, 보너스, 성취 보상
+2) 다음 레벨(Level 2+) 추가 및 난이도 곡선 설계
+3) 1차에서 반영되지 않았던 요구사항(특히 Game Logic/UI Assets)을 모두 보완
+4) 밸런싱 파라미터를 상수/설정 객체로 분리해 수정 가능하게 구성
+\`\`\`${isAdvanced ? `
 
-## UI 에셋
-${formData.structuredData.uiAssets}
+## 3차 붙여넣기 프롬프트 (백엔드 구성 및 연동)
+\`\`\`md
+이전 결과물(1차, 2차)에 얹어 백엔드 구조를 설계/구현하세요.
 
-위 내용을 바탕으로 교육용 웹 게임을 개발해주세요.`;
+[3차 구현 목표]
+1) 백엔드 아키텍처 제안 (예: Node.js + Express + DB)
+2) API 엔드포인트 설계: 진행 저장, 점수 기록, 통계 조회
+3) 데이터 스키마 설계: 사용자/세션/레벨/기록
+4) 프론트엔드와의 연동 포인트 및 요청/응답 예시 제시
+5) 로컬 개발/배포를 위한 최소 실행 가이드 포함
+\`\`\`` : ''}
+
+## 반영 체크리스트
+- Step5의 핵심 로직 및 보상 체계 반영
+- Step5의 UI 에셋 및 시각화 계획 반영
+- 성취기준/학습 목표가 게임 플레이 루프에 연결됨
+- 1차/2차 순차 적용으로 점진적 완성 가능
+${isAdvanced ? '- 3차 적용으로 백엔드 확장 가능' : ''}`;
           updateField('geminiPrompt', defaultPrompt);
           updateField('editedPrompt', defaultPrompt);
         }
@@ -64,23 +93,34 @@ ${formData.structuredData.uiAssets}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.promptLevel]);
 
-  const handleCopy = () => {
-    const text = formData.editedPrompt || formData.geminiPrompt;
-    if (text) {
-      navigator.clipboard.writeText(text);
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 2000);
-    }
+  const extractPromptSection = (sectionNumber: '1' | '2' | '3', fullText: string): string | null => {
+    const headingRegex = new RegExp(
+      `##\\s*${sectionNumber}차 붙여넣기 프롬프트[\\s\\S]*?\\\`\\\`\\\`md\\n([\\s\\S]*?)\\n\\\`\\\`\\\``,
+      'm'
+    );
+    const match = fullText.match(headingRegex);
+    const content = match?.[1]?.trim();
+    return content && content.length > 0 ? content : null;
+  };
+
+  const copyWithFeedback = async (text: string, target: 'all' | '1' | '2' | '3') => {
+    if (!text.trim()) return;
+    await navigator.clipboard.writeText(text);
+    setCopiedTarget(target);
+    setTimeout(() => setCopiedTarget(null), 2000);
   };
 
   const currentPrompt = formData.editedPrompt || formData.geminiPrompt || '';
+  const prompt1 = extractPromptSection('1', currentPrompt);
+  const prompt2 = extractPromptSection('2', currentPrompt);
+  const prompt3 = extractPromptSection('3', currentPrompt);
 
   return (
     <div className="space-y-8 animate-in pb-20">
       <div className="text-center space-y-4 mb-10">
         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">최종 프롬프트 생성 <span className="text-green-600">(Result)</span></h2>
         <p className="text-slate-600 text-lg">
-          {loading ? 'Gemini AI가 프롬프트를 생성 중입니다...' : '프롬프트를 편집한 후 복사해서 사용하세요!'}
+          {loading ? 'Gemini AI가 단계별 프롬프트를 생성 중입니다...' : '1차 → 2차(고급은 3차) 순서대로 붙여넣어 사용하세요.'}
         </p>
       </div>
 
@@ -97,13 +137,45 @@ ${formData.structuredData.uiAssets}
                 <span className="text-sm font-mono font-semibold text-slate-400">prompt.md</span>
                 <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">편집 가능</span>
               </div>
-              <button 
-                onClick={handleCopy}
-                className="inline-flex items-center justify-center gap-2 rounded-lg text-base font-bold transition-all bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl h-10 px-6 transform hover:scale-105"
-              >
-                {success ? <Icons.Check className="w-4 h-4" /> : <Icons.Copy className="w-4 h-4" />}
-                {success ? '복사 완료!' : '복사하기'}
-              </button>
+              <div className="flex items-center justify-end gap-2 flex-wrap">
+                <button
+                  onClick={() => prompt1 && copyWithFeedback(prompt1, '1')}
+                  disabled={!prompt1}
+                  className="inline-flex items-center justify-center gap-1 rounded-lg text-xs font-bold transition-all bg-slate-700 hover:bg-slate-600 text-slate-100 h-8 px-3 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="1차 프롬프트만 복사"
+                >
+                  {copiedTarget === '1' ? <Icons.Check className="w-3 h-3" /> : <Icons.Copy className="w-3 h-3" />}
+                  {copiedTarget === '1' ? '1차 복사됨' : '1차만'}
+                </button>
+                <button
+                  onClick={() => prompt2 && copyWithFeedback(prompt2, '2')}
+                  disabled={!prompt2}
+                  className="inline-flex items-center justify-center gap-1 rounded-lg text-xs font-bold transition-all bg-slate-700 hover:bg-slate-600 text-slate-100 h-8 px-3 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="2차 프롬프트만 복사"
+                >
+                  {copiedTarget === '2' ? <Icons.Check className="w-3 h-3" /> : <Icons.Copy className="w-3 h-3" />}
+                  {copiedTarget === '2' ? '2차 복사됨' : '2차만'}
+                </button>
+                {prompt3 && (
+                  <button
+                    onClick={() => copyWithFeedback(prompt3, '3')}
+                    className="inline-flex items-center justify-center gap-1 rounded-lg text-xs font-bold transition-all bg-slate-700 hover:bg-slate-600 text-slate-100 h-8 px-3"
+                    title="3차 프롬프트만 복사"
+                  >
+                    {copiedTarget === '3' ? <Icons.Check className="w-3 h-3" /> : <Icons.Copy className="w-3 h-3" />}
+                    {copiedTarget === '3' ? '3차 복사됨' : '3차만'}
+                  </button>
+                )}
+                <button 
+                  onClick={() => copyWithFeedback(currentPrompt, 'all')}
+                  disabled={!currentPrompt.trim()}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg text-base font-bold transition-all bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl h-10 px-6 transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+                  title="전체 프롬프트 복사"
+                >
+                  {copiedTarget === 'all' ? <Icons.Check className="w-4 h-4" /> : <Icons.Copy className="w-4 h-4" />}
+                  {copiedTarget === 'all' ? '전체 복사 완료!' : '전체 복사'}
+                </button>
+              </div>
             </div>
             
             <textarea 

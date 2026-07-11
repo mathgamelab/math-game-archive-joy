@@ -178,6 +178,28 @@ export const gamesData: Record<string, GameData[]> = {
       estimatedTime: '15분',
       summary: '일차함수의 그래프와 기울기를 시각적으로 학습하는 그래프 게임',
       mobile: '제한'
+    },
+    {
+      id: 'linear-flicking-marbles',
+      title: '일차함수 알까기',
+      description: `🎮게임명 : 일차함수 알까기
+📘 교과명 : 중학교 2학년/일차함수와 그래프
+📂 내용범주 : 일차함수와 그래프
+📌 내용요소 : 기울기, 직선의 방향, 좌표평면, 일차함수의 그래프
+✏️ 학습 가능 용어 : 일차함수, 기울기, 좌표평면, 사분면, 직선
+🎯 성취기준 :
+[8수03-01-01] 일차함수를 이해하고, 그래프를 그릴 수 있다.
+[8수03-01-02] 일차함수의 기울기를 이해하고 활용할 수 있다.
+📚 학습 유형 : 전략 보드게임
+🔥 난이도 : ★★★☆☆`,
+      icon: '⚪',
+      status: 'playable',
+      difficulty: '중급',
+      estimatedTime: '15분',
+      url: '/linear_flicking_marbles.html',
+      type: '전략 보드게임',
+      summary: '기울기를 정해 알을 발사하며 일차함수 그래프를 체감하는 알까기 게임',
+      mobile: '제한'
     }
   ],
   'middle3': [
@@ -361,6 +383,108 @@ export const gamesData: Record<string, GameData[]> = {
       url: '/animal_shogi.html',
       type: '전략 보드게임',
       summary: '동물 모양의 말로 두는 미니 장기 게임',
+      mobile: '지원'
+    },
+    {
+      id: 'dots-and-boxes',
+      title: '점과 상자',
+      description: `🎮게임명 : 점과 상자
+📘 교과명 : 뇌풀기 게임
+📂 내용범주 : 전략/논리
+📌 내용요소 : 선 연결, 상자 완성, 수읽기, 경우의 수
+✏️ 학습 가능 용어 : 전략, 규칙, 경우의 수, 최적화
+🎯 성취기준 : 규칙을 이해하고 상대의 수를 예측하며 최적의 선택을 한다.
+📚 학습 유형 : 전략 보드게임
+🔥 난이도 : ★★☆☆☆`,
+      icon: '⬚',
+      status: 'playable',
+      difficulty: '초급',
+      estimatedTime: '10분',
+      url: '/dots_and_boxes.html',
+      type: '전략 보드게임',
+      summary: '점을 이어서 상자를 만들고 점수를 겨루는 클래식 전략 게임',
+      mobile: '지원'
+    },
+    {
+      id: 'suyeon',
+      title: '수연',
+      description: `🎮게임명 : 수연
+📘 교과명 : 뇌풀기 게임
+📂 내용범주 : 전략/논리
+📌 내용요소 : 인접 칸 확장, 수열 증가, 영역 확보
+✏️ 학습 가능 용어 : 인접, 수열, 최댓값, 전략, 공간
+🎯 성취기준 : 공간적 확장과 수 증가를 동시에 고려하는 전략적 사고를 기른다.
+📚 학습 유형 : 전략 보드게임
+🔥 난이도 : ★★★☆☆`,
+      icon: '🔢',
+      status: 'playable',
+      difficulty: '중급',
+      estimatedTime: '12분',
+      url: '/suyeon.html',
+      type: '전략 보드게임',
+      summary: '인접 칸에 숫자를 이어 놓으며 최댓값을 겨루는 영역 전략 게임',
+      mobile: '지원'
+    }
+  ],
+  'mathday': [
+    {
+      id: 'pi-bulloon',
+      title: 'π 풍선 슈팅',
+      description: `🎮게임명 : π 풍선 슈팅
+📘 교과명 : 파이데이
+📂 내용범주 : 원주율·수 감각
+📌 내용요소 : 원주율(π) 자릿수 순서, 빠른 판단, 집중력
+✏️ 학습 가능 용어 : 원주율, π, 자리값
+🎯 성취기준 : 원주율의 자릿수 순서를 기억하고 빠르게 적용한다.
+📚 학습 유형 : 파이데이 체험 게임
+🔥 난이도 : ★★☆☆☆`,
+      icon: '🎈',
+      status: 'playable',
+      difficulty: '초급',
+      estimatedTime: '5분',
+      url: '/pi_bulloon.html',
+      type: '파이데이 체험 게임',
+      summary: '원주율 순서에 맞는 숫자 풍선을 쏘아 막는 슈팅 디펜스 게임',
+      mobile: '지원'
+    },
+    {
+      id: 'pi-draw',
+      title: 'π그리기',
+      description: `🎮게임명 : π그리기
+📘 교과명 : 파이데이
+📂 내용범주 : 원주율·기하 감각
+📌 내용요소 : 원의 모양, 원주율 체감, 손 감각
+✏️ 학습 가능 용어 : 원, 원주율, π, 반지름
+🎯 성취기준 : 원을 직접 그리며 원과 원주율의 의미를 체감한다.
+📚 학습 유형 : 파이데이 체험 게임
+🔥 난이도 : ★★☆☆☆`,
+      icon: '⭕',
+      status: 'playable',
+      difficulty: '초급',
+      estimatedTime: '5분',
+      url: '/pi_draw.html',
+      type: '파이데이 체험 게임',
+      summary: '손으로 정확한 원을 그리며 원주율을 체험하는 게임',
+      mobile: '지원'
+    },
+    {
+      id: 'pi-timer',
+      title: 'π를 맞춰라!',
+      description: `🎮게임명 : π를 맞춰라!
+📘 교과명 : 파이데이
+📂 내용범주 : 원주율·시간 감각
+📌 내용요소 : 원주율 숫자 3.141, 시간 감각, 집중력
+✏️ 학습 가능 용어 : 원주율, π, 초
+🎯 성취기준 : 원주율의 값을 시간으로 체감하며 기억한다.
+📚 학습 유형 : 파이데이 체험 게임
+🔥 난이도 : ★☆☆☆☆`,
+      icon: '⏱️',
+      status: 'playable',
+      difficulty: '초급',
+      estimatedTime: '3분',
+      url: '/pi_timer.html',
+      type: '파이데이 체험 게임',
+      summary: '정확히 3.141초에 멈추며 원주율을 체감하는 타이머 게임',
       mobile: '지원'
     }
   ],

@@ -1,0 +1,514 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>π를 맞춰라!</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #ffffff; 
+            color: #242830;
+            box-sizing: border-box;
+            overflow-x: hidden;
+        }
+
+        .top-banner {
+            background-color: #ffffff;
+            color: #242830;
+            text-align: center;
+            padding: 16px 20px 12px;
+            font-size: clamp(1.2rem, 4vw, 1.6rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            border-bottom: 1px solid #e1e4ea;
+            box-shadow: none;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+        }
+
+        .game-wrapper {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            /* 숫자가 들어갈 공간을 위해 전체 최대 너비를 조금 더 늘렸습니다 */
+            max-width: 950px; 
+            flex-direction: row;
+            justify-content: center;
+            align-items: stretch;
+        }
+
+        .container, .history-container {
+            background: white;
+            border-radius: 0.75rem;
+            border: 1px solid #e1e4ea;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .container {
+            flex: 1.8;
+            text-align: center;
+            /* 좌우 여백을 30px -> 20px로 줄여 숫자 공간 확보 */
+            padding: 40px 20px 50px 20px; 
+            min-width: 0; /* Flex 환경에서 내용물이 컨테이너를 강제로 늘리는 것 방지 */
+            overflow: hidden; /* 배경 영역 밖으로 텍스트가 삐져나가는 것 완벽 차단 */
+        }
+        
+        .history-container {
+            flex: 1;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            min-width: 250px;
+        }
+        
+        h1, h2 { margin-top: 0; color: #242830; }
+        h1 { font-size: 1.75rem; margin-bottom: 5px; font-weight: 700; letter-spacing: -0.02em; }
+        h2 { font-size: 1.1rem; margin-bottom: 15px; border-bottom: 1px solid #e1e4ea; padding-bottom: 10px; font-weight: 600;}
+        
+        .target-time { font-size: 1.1rem; color: #616b7a; margin-bottom: 10px; }
+
+        #time-display {
+            /* 반응형 마법 공식 적용: 
+               최소 4rem ~ 화면 넓이에 맞춰 유동적으로 변함 ~ 최대 10.5rem까지만 커짐 
+            */
+            font-size: clamp(4rem, 11vw, 10.5rem); 
+            white-space: nowrap; /* 숫자가 두 줄로 꺾이는 현상 방지 */
+            font-weight: 800;
+            font-family: 'Courier New', Courier, monospace;
+            color: #2c3e50; 
+            margin: 10px 0;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            display: inline-block;
+            transition: color 0.3s;
+            letter-spacing: -0.05em; /* 글자 사이 간격을 살짝 좁혀 더 꽉 찬 느낌 부여 */
+        }
+
+        .running { animation: heartbeat 0.8s infinite; color: #457a68 !important; }
+        @keyframes heartbeat {
+            0% { transform: scale(1); text-shadow: none; }
+            50% { transform: scale(1.02); text-shadow: 0 0 12px rgba(69, 122, 104, 0.25); }
+            100% { transform: scale(1); text-shadow: none; }
+        }
+
+        .tada { animation: tada 1s ease-in-out; color: #457a68 !important; }
+        @keyframes tada {
+            0% { transform: scale(1); }
+            10%, 20% { transform: scale(0.9) rotate(-2deg); }
+            30%, 50%, 70%, 90% { transform: scale(1.1) rotate(2deg); }
+            40%, 60%, 80% { transform: scale(1.1) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+
+        .shake { animation: shake 0.5s ease-in-out; color: #7f8c8d !important; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-15px); }
+            20%, 40%, 60%, 80% { transform: translateX(15px); }
+        }
+
+        #message {
+            min-height: 4rem;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            font-weight: 600;
+            color: #555;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .feedback-text { animation: slideUpPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+        @keyframes slideUpPop {
+            0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .score-text { color: #E74C3C; font-weight: bold; }
+        .success-text { color: #457a68; font-weight: 800; font-size: 1.5rem; }
+
+        button {
+            font-family: inherit; cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            touch-action: manipulation; 
+        }
+        button:active { transform: scale(0.92); }
+        
+        #action-btn {
+            background-color: #2b313c; color: white; border: 1px solid #2b313c;
+            padding: 16px 0; font-size: 1.25rem; font-weight: 600;
+            border-radius: 9999px; width: 85%;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            position: relative; overflow: hidden;
+        }
+        #action-btn:hover { background-color: #3d4554; border-color: #3d4554; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
+        
+        #action-btn.stop {
+            background-color: #dc2626; border-color: #dc2626; box-shadow: 0 8px 20px rgba(220, 38, 38, 0.25);
+            animation: pulse-red 1.5s infinite;
+        }
+        #action-btn.stop:hover { background-color: #b91c1c; }
+        
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+        
+        .history-list-wrapper { flex: 1; overflow-y: auto; max-height: 350px; margin-bottom: 20px; padding-right: 5px; }
+        .history-list-wrapper::-webkit-scrollbar { width: 6px; }
+        .history-list-wrapper::-webkit-scrollbar-thumb { background: #e1e4ea; border-radius: 10px; }
+        
+        #history-list { list-style: none; padding: 0; margin: 0; }
+        #history-list li {
+            padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 1rem;
+            display: flex; justify-content: space-between; align-items: center;
+            animation: slideInLeft 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+        }
+        @keyframes slideInLeft {
+            0% { opacity: 0; transform: translateX(-30px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        #history-list li:first-child { background-color: #f1f3f6; color: #242830; font-weight: bold; border-radius: 8px; border-bottom: none; margin-bottom: 5px; }
+        .high-score { color: #457a68; font-weight: 800; }
+        
+        #reset-btn {
+            background-color: #f1f3f6; color: #616b7a; border: 1px solid #e1e4ea;
+            padding: 12px; font-size: 0.95rem; font-weight: 600; border-radius: 9999px; width: 100%;
+        }
+        #reset-btn:hover { background-color: #e1e4ea; color: #242830; }
+
+        @media (max-width: 768px) {
+            .top-banner { font-size: 1.3rem; padding: 15px; }
+            .game-wrapper { flex-direction: column; align-items: center; }
+            .container, .history-container { width: 100%; box-sizing: border-box; }
+            .history-container { max-height: 400px; }
+            .main-content { padding: 20px 10px; }
+            
+            /* 모바일 화면에서는 숫자가 가로 넓이의 20% 단위로 유연하게 설정됩니다. */
+            #time-display { font-size: 20vw; } 
+        }
+    </style>
+  <style>
+    .creator-info {
+      flex-shrink: 0;
+      position: relative;
+      text-align: center;
+      color: #4a5568;
+      font-size: 0.8rem;
+      background: #ffffff;
+      padding: 6px 16px calc(6px + env(safe-area-inset-bottom));
+      border-top: 1px solid #e1e4ea;
+      z-index: 1;
+      width: 100%;
+      box-sizing: border-box;
+      line-height: 1.35;
+      pointer-events: none;
+      margin-top: auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .creator-info p { margin: 0; display: inline; }
+    .creator-info .sep { margin: 0 0.45em; color: #94a3b8; }
+    @media (max-width: 768px) {
+      .creator-info { font-size: 0.72rem; padding: 5px 10px calc(5px + env(safe-area-inset-bottom)); }
+    }
+
+  </style>
+</head>
+<body>
+
+    <div class="top-banner">
+        π를 맞춰라!
+    </div>
+
+    <div class="main-content">
+        <div class="game-wrapper">
+            <div class="container">
+                <h1>π (파이) 스톱워치</h1>
+                <div class="target-time">목표: <b>3.141초</b></div>
+                <div id="time-display">0.000</div>
+                <div id="message"><div class="feedback-text">버튼을 눌러 시작하세요!</div></div>
+                <button id="action-btn">시작</button>
+            </div>
+
+            <div class="history-container">
+                <h2>도전 기록</h2>
+                <div class="history-list-wrapper">
+                    <ul id="history-list"></ul>
+                </div>
+                <button id="reset-btn">기록 전체 초기화</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let startTime, timerInterval, tickInterval;
+        let isRunning = false;
+        let audioCtx;
+        let roundCount = 0;
+
+        const display = document.getElementById('time-display');
+        const btn = document.getElementById('action-btn');
+        const msg = document.getElementById('message');
+        const historyList = document.getElementById('history-list');
+        const resetBtn = document.getElementById('reset-btn');
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playStartSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playStopSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        function playResetSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.3);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function playTick() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.05);
+            gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        function playSuccessSound() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                const noteTime = now + (i * 0.15);
+                gain.gain.setValueAtTime(0, noteTime);
+                gain.gain.linearRampToValueAtTime(0.15, noteTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, noteTime + 0.6);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(noteTime);
+                osc.stop(noteTime + 0.6);
+            });
+
+            const bufferSize = audioCtx.sampleRate * 2.0;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1; 
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1500;
+            filter.frequency.exponentialRampToValueAtTime(200, now + 1.5); 
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0, now);
+            noiseGain.gain.linearRampToValueAtTime(0.3, now + 0.1); 
+            noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5); 
+            noise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noise.start(now);
+        }
+
+        function updateTime() {
+            const currentTime = performance.now();
+            display.textContent = ((currentTime - startTime) / 1000).toFixed(3);
+            timerInterval = requestAnimationFrame(updateTime);
+        }
+
+        function triggerConfetti() {
+            const duration = 3000;
+            const end = Date.now() + duration;
+            (function frame() {
+                confetti({
+                    particleCount: 5, angle: 60, spread: 55, origin: { x: 0 },
+                    colors: ['#FF9800', '#E67E22', '#F1C40F', '#E74C3C', '#D35400'] 
+                });
+                confetti({
+                    particleCount: 5, angle: 120, spread: 55, origin: { x: 1 },
+                    colors: ['#FF9800', '#E67E22', '#F1C40F', '#E74C3C', '#D35400']
+                });
+                if (Date.now() < end) requestAnimationFrame(frame);
+            }());
+        }
+
+        function calculateScore(time) {
+            const target = 3.141;
+            const diff = Math.abs(target - time);
+            roundCount++;
+            
+            let score = Math.max(0, 100 - Math.round(diff * 100));
+            display.className = '';
+            void display.offsetWidth; 
+
+            let innerHTML = '';
+            if (time === target) {
+                display.classList.add('tada');
+                innerHTML = '<div class="feedback-text"><span class="success-text">🎉 기적의 타이밍! 100점! 🎉<br>정확히 3.141초입니다!</span></div>';
+            } else {
+                let feedback = '';
+                if (score >= 90) {
+                    display.classList.add('tada');
+                    feedback = '<span style="color:#457a68;font-weight:bold;">대단합니다! 엄청난 집중력이네요!</span>';
+                } else if (score >= 70) {
+                    feedback = '오, 훌륭한 감각입니다!';
+                } else if (score >= 50) {
+                    feedback = '조금만 더 집중해 보세요!';
+                } else {
+                    display.classList.add('shake');
+                    feedback = '타이밍을 다시 맞춰보세요!';
+                }
+                innerHTML = `<div class="feedback-text">${feedback}<br>오차: <span class="score-text">${diff.toFixed(3)}초</span> | 점수: <span class="score-text">${score}점</span></div>`;
+            }
+
+            msg.innerHTML = innerHTML;
+
+            if (score >= 90) {
+                triggerConfetti();
+                playSuccessSound(); 
+            }
+
+            addHistoryRow(roundCount, time, score);
+        }
+
+        function addHistoryRow(round, time, score) {
+            const li = document.createElement('li');
+            const roundSpan = document.createElement('span');
+            roundSpan.textContent = `${round}회차`;
+            const detailSpan = document.createElement('span');
+            const scoreClass = score >= 90 ? 'high-score' : '';
+            detailSpan.innerHTML = `${time.toFixed(3)}초 (<span class="${scoreClass}" style="color:${score >= 70 && score < 90 ? '#A04000' : ''}">${score}점</span>)`;
+            li.appendChild(roundSpan);
+            li.appendChild(detailSpan);
+            historyList.insertBefore(li, historyList.firstChild);
+        }
+
+        btn.addEventListener('click', () => {
+            initAudio();
+
+            if (!isRunning) {
+                playStartSound();
+                
+                isRunning = true;
+                btn.textContent = '정지';
+                btn.classList.add('stop');
+                msg.innerHTML = '<div class="feedback-text">정확히 <b>3.141초</b>에 멈추세요...</div>';
+                display.textContent = '0.000';
+                display.className = 'running';
+                
+                tickInterval = setInterval(playTick, 100);
+                startTime = performance.now();
+                timerInterval = requestAnimationFrame(updateTime);
+            } else {
+                playStopSound();
+                
+                isRunning = false;
+                btn.textContent = '다시 시작';
+                btn.classList.remove('stop');
+                cancelAnimationFrame(timerInterval);
+                clearInterval(tickInterval);
+                
+                const finalTime = parseFloat(((performance.now() - startTime) / 1000).toFixed(3));
+                display.textContent = finalTime.toFixed(3);
+                display.className = ''; 
+                
+                calculateScore(finalTime);
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            initAudio();
+            playResetSound();
+            
+            if(isRunning) {
+                isRunning = false;
+                btn.classList.remove('stop');
+                cancelAnimationFrame(timerInterval);
+                clearInterval(tickInterval);
+            }
+            btn.textContent = '시작';
+            roundCount = 0;
+            historyList.innerHTML = '';
+            display.textContent = '0.000';
+            display.className = '';
+            msg.innerHTML = '<div class="feedback-text">버튼을 눌러 시작하세요!</div>';
+        });
+    </script>
+
+  <div class="creator-info">
+    <p>행복한 수학, 함께 만들어요 😊<span class="sep">·</span>© 세종 중등수학교육 연구회 | 최OO 선생님</p>
+  </div>
+
+</body>
+</html>

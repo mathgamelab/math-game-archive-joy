@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>수연 — 보드게임</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    --bg: #ffffff;
+    --board-bg: #ffffff;
+    --board-border: #e1e4ea;
+    --cell-bg: #f1f3f6;
+    --cell-hover: #e8ecf2;
+    --p1: #c2410c;
+    --p1-soft: rgba(194,65,12,0.08);
+    --p1-glow: rgba(194,65,12,0.16);
+    --p2: #0e7490;
+    --p2-soft: rgba(14,116,144,0.08);
+    --p2-glow: rgba(14,116,144,0.16);
+    --selected: #2b313c;
+    --highlight: rgba(69,122,104,0.12);
+    --highlight-border: #457a68;
+    --text: #242830;
+    --text-dim: #616b7a;
+    --radius: 0.75rem;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* ─── 타이틀 ─── */
+  .title-wrap {
+    text-align: center;
+    margin-bottom: 22px;
+  }
+  .title-wrap h1 {
+    font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+  .title-wrap p {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.06em;
+    margin-top: 4px;
+  }
+
+  /* ─── 상단 정보바 ─── */
+  .info-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 480px;
+    margin-bottom: 16px;
+    gap: 10px;
+  }
+  .player-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--board-bg);
+    border: 1px solid var(--board-border);
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    flex: 1;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .player-info.active-p1 {
+    border-color: var(--p1);
+    box-shadow: 0 0 0 1px var(--p1), 0 8px 24px var(--p1-glow);
+  }
+  .player-info.active-p2 {
+    border-color: var(--p2);
+    box-shadow: 0 0 0 1px var(--p2), 0 8px 24px var(--p2-glow);
+  }
+  .player-info .label {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .player-info .max-val {
+    font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-top: 2px;
+  }
+  .player-info.p1 .max-val { color: var(--p1); }
+  .player-info.p2 .max-val { color: var(--p2); }
+  .player-info .turn-badge {
+    position: absolute;
+    top: 5px; right: 7px;
+    font-size: 0.6rem;
+    background: var(--p1);
+    color: #fff;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    display: none;
+  }
+  .player-info.p2 .turn-badge { background: var(--p2); color: #fff; }
+  .player-info.active-p1.p1 .turn-badge,
+  .player-info.active-p2.p2 .turn-badge { display: block; }
+
+  .turn-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .turn-center .round-label {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .turn-center .turn-num {
+    font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* ─── 지시 메시지 ─── */
+  .instruction {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 12px;
+    min-height: 20px;
+    letter-spacing: 0.04em;
+    transition: color 0.3s;
+  }
+  .instruction.p1-msg { color: var(--p1); }
+  .instruction.p2-msg { color: var(--p2); }
+
+  /* ─── 보드 ─── */
+  .board-wrap {
+    position: relative;
+  }
+  .board {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 5px;
+    background: var(--board-bg);
+    padding: 12px;
+    border-radius: 0.75rem;
+    border: 1px solid var(--board-border);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+  }
+
+  .cell {
+    width: 68px;
+    height: 68px;
+    background: var(--cell-bg);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    border: 2px solid transparent;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s, box-shadow 0.15s;
+    user-select: none;
+  }
+  .cell:hover:not(.no-hover) {
+    background: var(--cell-hover);
+    transform: scale(1.04);
+  }
+  .cell.no-hover { cursor: default; }
+
+  /* 숫자 표시 */
+  .cell-num {
+    font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: transform 0.2s;
+  }
+  .cell.p1 .cell-num { color: var(--p1); }
+  .cell.p2 .cell-num { color: var(--p2); }
+
+  /* 플레이어 점 */
+  .cell-dot {
+    position: absolute;
+    bottom: 5px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .cell.p1 .cell-dot { background: var(--p1); }
+  .cell.p2 .cell-dot { background: var(--p2); }
+
+  /* 선택된 칸 */
+  .cell.selected {
+    border-color: var(--selected);
+    box-shadow: 0 0 0 2px rgba(43,49,60,0.15);
+    background: #e8ecf2;
+    animation: pulse-selected 1.2s ease-in-out infinite;
+  }
+  .cell.selected.p1 { border-color: var(--p1); box-shadow: 0 0 16px var(--p1-glow); }
+  .cell.selected.p2 { border-color: var(--p2); box-shadow: 0 0 16px var(--p2-glow); }
+
+  /* 놓을 수 있는 칸 */
+  .cell.placeable {
+    background: var(--highlight);
+    border-color: var(--highlight-border);
+    animation: pulse-place 1s ease-in-out infinite;
+  }
+  .cell.placeable:hover {
+    background: rgba(69,122,104,0.22);
+    transform: scale(1.06);
+  }
+
+  /* 클릭 가능한 내 칸 */
+  .cell.my-turn {
+    border-color: rgba(255,255,255,0.08);
+  }
+  .cell.my-turn.p1:hover { border-color: var(--p1); box-shadow: 0 0 10px var(--p1-glow); }
+  .cell.my-turn.p2:hover { border-color: var(--p2); box-shadow: 0 0 10px var(--p2-glow); }
+
+  /* 새로 놓인 칸 애니메이션 */
+  .cell.just-placed .cell-num {
+    animation: pop-in 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes pulse-selected {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.75; }
+  }
+  @keyframes pulse-place {
+    0%, 100% { border-color: var(--highlight-border); }
+    50% { border-color: rgba(100,220,120,0.5); }
+  }
+  @keyframes pop-in {
+    0% { transform: scale(0.3); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ─── 좌표 레이블 ─── */
+  .coord-col, .coord-row {
+    display: flex;
+    gap: 5px;
+  }
+  .coord-col {
+    padding: 0 12px;
+    margin-bottom: 2px;
+  }
+  .coord-row {
+    flex-direction: column;
+    padding: 12px 0;
+    margin-right: 2px;
+    position: absolute;
+    left: -20px;
+    top: 0;
+  }
+  .coord-label {
+    width: 68px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── 토스트 ─── */
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-80px);
+    background: #ffffff;
+    border: 1px solid var(--board-border);
+    border-radius: 30px;
+    padding: 10px 24px;
+    font-size: 0.82rem;
+    color: var(--text);
+    letter-spacing: 0.04em;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ─── 모달 ─── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+    backdrop-filter: blur(6px);
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--board-bg);
+    border: 1px solid var(--board-border);
+    border-radius: 0.75rem;
+    padding: 40px 50px;
+    text-align: center;
+    transform: scale(0.85);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 340px;
+    width: 90%;
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+  }
+  .modal-overlay.show .modal { transform: scale(1); }
+  .modal .winner-label {
+    font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .modal .winner-name {
+    font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .modal .winner-name.p1 { color: var(--p1); }
+  .modal .winner-name.p2 { color: var(--p2); }
+  .modal .winner-name.draw { color: var(--text); }
+  .modal .score-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin: 20px 0 28px;
+  }
+  .modal .score-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .modal .score-item .slabel {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+  }
+  .modal .score-item .sval {
+    font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+  }
+  .modal .score-item.p1 .sval { color: var(--p1); }
+  .modal .score-item.p2 .sval { color: var(--p2); }
+  .modal .divider { color: var(--text-dim); font-size: 1.5rem; align-self: center; }
+
+  .btn-restart {
+    background: #2b313c;
+    border: 1px solid #2b313c;
+    color: #fff;
+    border-radius: 9999px;
+    padding: 10px 28px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.18s;
+  }
+  .btn-restart:hover {
+    background: #3d4554;
+    border-color: #3d4554;
+  }
+
+  /* ─── 하단 로그 ─── */
+  .log-wrap {
+    width: 100%;
+    max-width: 480px;
+    margin-top: 14px;
+    background: var(--board-bg);
+    border: 1px solid var(--board-border);
+    border-radius: var(--radius);
+    padding: 8px 14px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .log-entry {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    animation: slide-in 0.3s ease;
+  }
+  .log-entry .p1t { color: var(--p1); font-weight: 600; }
+  .log-entry .p2t { color: var(--p2); font-weight: 600; }
+  .log-sep { color: rgba(255,255,255,0.1); font-size: 0.6rem; }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 500px) {
+    .cell { width: 52px; height: 52px; }
+    .cell-num { font-size: 1.3rem; }
+    .coord-label { width: 52px; height: 52px; }
+    .board { gap: 4px; padding: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="title-wrap">
+  <h1>수 연</h1>
+  <p>SUYEON — 숫자 영역 전략 게임</p>
+</div>
+
+<div class="info-bar">
+  <div class="player-info p1" id="info-p1">
+    <span class="turn-badge">턴</span>
+    <span class="label">1P · 주황</span>
+    <span class="max-val" id="max-p1">3</span>
+  </div>
+  <div class="turn-center">
+    <span class="round-label">턴</span>
+    <span class="turn-num" id="turn-num">1</span>
+  </div>
+  <div class="player-info p2" id="info-p2">
+    <span class="turn-badge">턴</span>
+    <span class="label">2P · 청록</span>
+    <span class="max-val" id="max-p2">3</span>
+  </div>
+</div>
+
+<div class="instruction" id="instruction">1P — 자신의 숫자 칸을 선택하세요</div>
+
+<div class="board-wrap">
+  <div class="board" id="board"></div>
+</div>
+
+<div class="log-wrap" id="log-wrap">
+  <span class="log-entry" id="log-initial">게임 시작!</span>
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<!-- 종료 모달 -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="winner-label">게임 종료</div>
+    <div class="winner-name" id="winner-name"></div>
+    <div class="score-wrap">
+      <div class="score-item p1">
+        <span class="slabel">1P 최고</span>
+        <span class="sval" id="modal-p1-score"></span>
+      </div>
+      <div class="divider score-item">vs</div>
+      <div class="score-item p2">
+        <span class="slabel">2P 최고</span>
+        <span class="sval" id="modal-p2-score"></span>
+      </div>
+    </div>
+    <button class="btn-restart" onclick="restartGame()">다시 하기</button>
+  </div>
+</div>
+
+<script>
+// ─── 상태 ───────────────────────────────────────────────────
+let board = [];
+let currentPlayer = 1;
+let selectedCell = null;
+let phase = 'select'; // 'select' | 'place'
+let gameOver = false;
+let turnCount = 1;
+let justPlaced = null;
+let logs = [];
+
+// ─── 초기화 ─────────────────────────────────────────────────
+function initBoard() {
+  board = Array.from({length: 6}, () => Array(6).fill(null));
+  board[0][0] = {player: 1, value: 1};
+  board[1][1] = {player: 1, value: 2};
+  board[2][2] = {player: 1, value: 3};
+  board[5][5] = {player: 2, value: 1};
+  board[4][4] = {player: 2, value: 2};
+  board[3][3] = {player: 2, value: 3};
+  currentPlayer = 1;
+  selectedCell = null;
+  phase = 'select';
+  gameOver = false;
+  turnCount = 1;
+  justPlaced = null;
+  logs = [];
+}
+
+// ─── 유틸 ────────────────────────────────────────────────────
+function getAdj(r, c) {
+  const res = [];
+  for (let dr = -1; dr <= 1; dr++)
+    for (let dc = -1; dc <= 1; dc++) {
+      if (dr === 0 && dc === 0) continue;
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < 6 && nc >= 0 && nc < 6) res.push([nr, nc]);
+    }
+  return res;
+}
+
+function isAdj(r1, c1, r2, c2) {
+  return Math.abs(r1-r2) <= 1 && Math.abs(c1-c2) <= 1 && !(r1===r2 && c1===c2);
+}
+
+function hasValidMoves(player) {
+  for (let r = 0; r < 6; r++)
+    for (let c = 0; c < 6; c++)
+      if (board[r][c]?.player === player)
+        if (getAdj(r, c).some(([nr, nc]) => !board[nr][nc])) return true;
+  return false;
+}
+
+function getValidSourceCells(player) {
+  // 자신의 칸 중 인접 빈 칸이 있는 칸 목록
+  const cells = [];
+  for (let r = 0; r < 6; r++)
+    for (let c = 0; c < 6; c++)
+      if (board[r][c]?.player === player)
+        if (getAdj(r, c).some(([nr, nc]) => !board[nr][nc]))
+          cells.push([r, c]);
+  return cells;
+}
+
+function getMaxValue(player) {
+  let max = 0;
+  for (let r = 0; r < 6; r++)
+    for (let c = 0; c < 6; c++)
+      if (board[r][c]?.player === player) max = Math.max(max, board[r][c].value);
+  return max;
+}
+
+// ─── 클릭 핸들러 ─────────────────────────────────────────────
+function handleClick(r, c) {
+  if (gameOver) return;
+
+  const cell = board[r][c];
+
+  if (phase === 'select') {
+    if (cell?.player === currentPlayer) {
+      // 인접 빈칸이 있는 칸만 선택 가능
+      const emptyAdj = getAdj(r, c).filter(([nr, nc]) => !board[nr][nc]);
+      if (emptyAdj.length > 0) {
+        selectedCell = [r, c];
+        phase = 'place';
+        render();
+      }
+    }
+  } else { // phase === 'place'
+    if (selectedCell) {
+      const [sr, sc] = selectedCell;
+
+      if (r === sr && c === sc) {
+        // 같은 칸 클릭 → 선택 해제
+        selectedCell = null;
+        phase = 'select';
+        render();
+        return;
+      }
+
+      if (cell?.player === currentPlayer) {
+        // 다른 내 칸 클릭 → 재선택
+        const emptyAdj = getAdj(r, c).filter(([nr, nc]) => !board[nr][nc]);
+        if (emptyAdj.length > 0) {
+          selectedCell = [r, c];
+          render();
+          return;
+        }
+      }
+
+      // 빈 칸이고 인접한 경우 → 배치
+      if (!cell && isAdj(sr, sc, r, c)) {
+        const newVal = board[sr][sc].value + 1;
+        board[r][c] = {player: currentPlayer, value: newVal};
+        justPlaced = [r, c];
+
+        // 로그 추가
+        const col = String.fromCharCode(65 + c);
+        const logMsg = `${currentPlayer}P: (${r+1},${col}) → ${newVal}`;
+        addLog(logMsg, currentPlayer);
+
+        selectedCell = null;
+        phase = 'select';
+        doTurnSwitch();
+      }
+    }
+  }
+}
+
+// ─── 턴 전환 ─────────────────────────────────────────────────
+function doTurnSwitch() {
+  const next = currentPlayer === 1 ? 2 : 1;
+  const nextHas = hasValidMoves(next);
+  const currHas = hasValidMoves(currentPlayer);
+
+  if (!nextHas && !currHas) {
+    endGame();
+    return;
+  }
+
+  if (!nextHas) {
+    // 상대 스킵, 현재 플레이어 계속
+    showToast(`${next}P 이동 불가 — 턴 스킵!`);
+    turnCount++;
+    render();
+    return;
+  }
+
+  currentPlayer = next;
+  turnCount++;
+  render();
+}
+
+// ─── 게임 종료 ───────────────────────────────────────────────
+function endGame() {
+  gameOver = true;
+  render();
+  setTimeout(() => {
+    const m1 = getMaxValue(1), m2 = getMaxValue(2);
+    document.getElementById('modal-p1-score').textContent = m1;
+    document.getElementById('modal-p2-score').textContent = m2;
+    const wname = document.getElementById('winner-name');
+    if (m1 > m2) {
+      wname.textContent = '1P 승리';
+      wname.className = 'winner-name p1';
+    } else if (m2 > m1) {
+      wname.textContent = '2P 승리';
+      wname.className = 'winner-name p2';
+    } else {
+      wname.textContent = '무 승 부';
+      wname.className = 'winner-name draw';
+    }
+    document.getElementById('modal-overlay').classList.add('show');
+  }, 400);
+}
+
+// ─── 렌더링 ─────────────────────────────────────────────────
+function render() {
+  const boardEl = document.getElementById('board');
+  boardEl.innerHTML = '';
+
+  // 선택된 칸의 인접 빈칸 목록
+  const placeableSet = new Set();
+  if (selectedCell) {
+    const [sr, sc] = selectedCell;
+    getAdj(sr, sc).forEach(([nr, nc]) => {
+      if (!board[nr][nc]) placeableSet.add(`${nr},${nc}`);
+    });
+  }
+
+  // 현재 플레이어의 선택 가능한 소스 칸
+  const validSources = new Set();
+  if (!gameOver && phase === 'select') {
+    getValidSourceCells(currentPlayer).forEach(([r, c]) => validSources.add(`${r},${c}`));
+  }
+
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 6; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      const key = `${r},${c}`;
+      const data = board[r][c];
+
+      if (data) {
+        cell.classList.add(`p${data.player}`);
+        const num = document.createElement('span');
+        num.className = 'cell-num';
+        num.textContent = data.value;
+        cell.appendChild(num);
+        const dot = document.createElement('div');
+        dot.className = 'cell-dot';
+        cell.appendChild(dot);
+
+        if (justPlaced && justPlaced[0] === r && justPlaced[1] === c) {
+          cell.classList.add('just-placed');
+        }
+
+        if (selectedCell && selectedCell[0] === r && selectedCell[1] === c) {
+          cell.classList.add('selected');
+        } else if (!gameOver && validSources.has(key)) {
+          cell.classList.add('my-turn');
+        }
+      } else {
+        if (placeableSet.has(key)) {
+          cell.classList.add('placeable');
+          // 미리보기 숫자
+          if (selectedCell) {
+            const [sr, sc] = selectedCell;
+            const preview = document.createElement('span');
+            preview.style.cssText = `
+              font-family:'Pretendard','Noto Sans KR',system-ui,sans-serif;
+              font-size:1rem;
+              color:rgba(69,122,104,0.75);
+              font-weight:700;
+            `;
+            preview.textContent = board[sr][sc].value + 1;
+            cell.appendChild(preview);
+          }
+        } else {
+          cell.classList.add('no-hover');
+        }
+      }
+
+      cell.addEventListener('click', () => handleClick(r, c));
+      boardEl.appendChild(cell);
+    }
+  }
+
+  // 정보 업데이트
+  document.getElementById('max-p1').textContent = getMaxValue(1);
+  document.getElementById('max-p2').textContent = getMaxValue(2);
+  document.getElementById('turn-num').textContent = turnCount;
+
+  const ip1 = document.getElementById('info-p1');
+  const ip2 = document.getElementById('info-p2');
+  ip1.className = `player-info p1${currentPlayer === 1 && !gameOver ? ' active-p1' : ''}`;
+  ip2.className = `player-info p2${currentPlayer === 2 && !gameOver ? ' active-p2' : ''}`;
+
+  // 지시 메시지
+  const inst = document.getElementById('instruction');
+  if (!gameOver) {
+    const pColor = currentPlayer === 1 ? 'p1-msg' : 'p2-msg';
+    if (phase === 'select') {
+      inst.textContent = `${currentPlayer}P — 자신의 숫자 칸을 선택하세요`;
+      inst.className = `instruction ${pColor}`;
+    } else {
+      const [sr, sc] = selectedCell;
+      inst.textContent = `${currentPlayer}P — 초록 칸에 놓으세요 (선택: ${board[sr][sc].value} → ${board[sr][sc].value+1})`;
+      inst.className = `instruction ${pColor}`;
+    }
+  } else {
+    inst.textContent = '게임 종료!';
+    inst.className = 'instruction';
+  }
+
+  justPlaced = null;
+}
+
+// ─── 로그 ────────────────────────────────────────────────────
+function addLog(msg, player) {
+  logs.unshift({msg, player});
+  if (logs.length > 5) logs.pop();
+
+  const wrap = document.getElementById('log-wrap');
+  wrap.innerHTML = '';
+  logs.forEach((l, i) => {
+    if (i > 0) {
+      const sep = document.createElement('span');
+      sep.className = 'log-sep';
+      sep.textContent = '·';
+      wrap.appendChild(sep);
+    }
+    const entry = document.createElement('span');
+    entry.className = 'log-entry';
+    const cls = `p${l.player}t`;
+    entry.innerHTML = `<span class="${cls}">${l.msg}</span>`;
+    wrap.appendChild(entry);
+  });
+}
+
+// ─── 토스트 ─────────────────────────────────────────────────
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ─── 리스타트 ────────────────────────────────────────────────
+function restartGame() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  document.getElementById('log-wrap').innerHTML = '<span class="log-entry">게임 시작!</span>';
+  initBoard();
+  render();
+}
+
+// ─── 시작 ────────────────────────────────────────────────────
+initBoard();
+render();
+</script>
+</body>
+</html>

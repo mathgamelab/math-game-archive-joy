@@ -1,0 +1,966 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>π그리기</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg-main: #ffffff;
+            --bg-panel: #ffffff;
+            --primary: #2b313c;
+            --primary-hover: #3d4554;
+            --accent: #457a68;
+            --text-main: #242830;
+            --text-muted: #616b7a;
+            --success: #457a68;
+            --danger: #dc2626;
+            --border-light: #e1e4ea;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; 
+            height: 100dvh; 
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        #game-shell {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            width: 100%;
+            position: relative;
+        }
+
+        #confetti-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; 
+            z-index: 9999; 
+            background: transparent;
+        }
+
+        /* 🌟 극적인 파이(π) 효과 CSS */
+        #dramatic-pi {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 35vh; 
+            font-family: 'Times New Roman', Times, serif; 
+            font-weight: bold;
+            color: rgba(69, 122, 104, 0.22); 
+            pointer-events: none;
+            z-index: 50; 
+            opacity: 0;
+            text-shadow: none;
+        }
+        #dramatic-pi.show-pi {
+            animation: piExplosion 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        #main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 20px 20px 20px;
+            box-sizing: border-box;
+            z-index: 10; 
+            width: 100%;
+            position: relative;
+        }
+
+        #top-banner {
+            width: calc(100% + 40px);
+            margin: 0 -20px 16px -20px;
+            background: #ffffff;
+            color: var(--text-main);
+            text-align: center;
+            padding: 14px 0 10px;
+            font-size: clamp(1.2rem, 4vw, 1.6rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            border-bottom: 1px solid var(--border-light);
+            box-shadow: none;
+            animation: none;
+        }
+        
+        #ui-layer {
+            text-align: center;
+            margin-bottom: 10px;
+            animation: slideDown 0.5s ease-out;
+            width: 100%;
+        }
+        #ui-layer h2 { margin: 0 0 5px 0; color: var(--text-main); text-shadow: none; font-size: 1.05rem; font-weight: 600; }
+        #ui-layer p { margin: 0; color: var(--text-muted); font-weight: 500; font-size: 0.9rem; }
+        
+        #canvas-wrapper {
+            flex: 1;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+            position: relative;
+        }
+
+        canvas#drawCanvas {
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+            border: 1px solid var(--border-light);
+            border-radius: 0.75rem;
+            cursor: crosshair;
+            transition: box-shadow 0.3s, transform 0.3s;
+            position: relative;
+            z-index: 10; 
+        }
+        canvas#drawCanvas:active {
+            transform: scale(0.995);
+        }
+
+        canvas#drawCanvas.drawing-active {
+            animation: pulseGlow 1.2s infinite alternate;
+        }
+
+        #result-board {
+            width: 90%;
+            max-width: 850px;
+            background-color: rgba(255, 255, 255, 0.94); 
+            border-radius: 20px;
+            border: 1px solid var(--border-light);
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
+            padding: 20px 30px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
+            position: absolute;
+            top: auto;
+            bottom: 30px; 
+            left: 50%;
+            z-index: 1000;
+            
+            opacity: 0;
+            transform: translate(-50%, 30px);
+            pointer-events: none;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #result-board.show {
+            opacity: 1;
+            transform: translate(-50%, 0); 
+            pointer-events: auto;
+        }
+
+        .score-section { text-align: center; border-right: 2px dashed var(--border-light); padding-right: 25px; min-width: 160px; }
+        .score-title { font-size: 15px; color: var(--text-muted); font-weight: bold; margin-bottom: 5px; }
+        .score-value { font-size: 52px; font-weight: 900; color: var(--accent); text-shadow: none; line-height: 1; }
+        
+        .score-value.pop-anim {
+            animation: popScore 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .stat-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 14px;
+            flex: 1;
+            padding: 0 20px;
+        }
+        .stat-box {
+            background-color: #f1f3f6;
+            padding: 10px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-label { color: var(--text-muted); font-weight: bold; }
+        .stat-val { color: var(--text-main); font-weight: 800; font-family: monospace; font-size: 16px;}
+        .highlight { color: var(--danger); }
+        .highlight-pi { color: var(--primary); }
+
+        .action-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-left: 10px;
+        }
+        .play-again-btn {
+            background: #2b313c;
+            color: white;
+            border: 1px solid #2b313c;
+            padding: 14px 22px;
+            border-radius: 9999px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .play-again-btn:hover { background: #3d4554; border-color: #3d4554; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
+        .play-again-btn:active { transform: translateY(0); }
+
+        #mobile-history-toggle {
+            display: none;
+            position: absolute;
+            top: 75px; 
+            right: 20px;
+            background: var(--bg-panel);
+            border: 2px solid var(--border-light);
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            z-index: 100;
+            cursor: pointer;
+        }
+
+        #history-panel {
+            width: 320px;
+            background-color: var(--bg-panel);
+            border-left: 2px solid var(--border-light);
+            box-shadow: -5px 0 30px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 2000;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .history-header h3 { margin: 0; color: var(--primary); font-size: 18px; }
+        
+        .close-history-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .reset-btn {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid #dddddd;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        #history-list { list-style: none; padding: 0; margin: 0; overflow-y: auto; flex: 1; }
+        .history-item {
+            background-color: #fffaf5;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid var(--primary);
+            animation: slideInRight 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .history-item .score { font-size: 22px; font-weight: bold; color: var(--success); }
+
+        @media (max-width: 850px) {
+            /* 🌟 모바일 기록보기 버튼 위치 대폭 하향 조정 (충분한 공간 확보) */
+            #mobile-history-toggle { 
+                display: block; 
+                top: 190px;  /* 기존 130px에서 190px로 더 깊게 내림 */
+                right: 15px;
+                padding: 6px 12px;
+                font-size: 13px;
+                z-index: 1000; 
+            }
+            #history-panel {
+                position: fixed;
+                top: 0;
+                right: -320px; 
+                height: 100vh;
+                height: 100dvh;
+            }
+            #history-panel.open { right: 0; }
+            .close-history-btn { display: block; }
+
+            #ui-layer h2 { font-size: 18px; margin-top: 10px; padding: 0 10px; }
+            #ui-layer p { font-size: 12px; }
+
+            #result-board {
+                position: absolute; 
+                width: 92%; 
+                flex-direction: row; 
+                flex-wrap: wrap; 
+                gap: 10px;
+                padding: 15px; 
+                bottom: 12px;
+                transform: translate(-50%, 50px);
+            }
+            #result-board.show {
+                transform: translate(-50%, 0);
+            }
+
+            .score-section { 
+                width: 40%;
+                border-right: 2px dashed var(--border-light); 
+                border-bottom: none; 
+                padding-right: 10px; 
+                padding-bottom: 0; 
+                min-width: 0;
+            }
+            .score-value { font-size: 40px; } 
+            
+            .stat-section { 
+                width: 50%;
+                flex: 1;
+                padding: 0 0 0 10px; 
+            }
+            .stat-box { padding: 6px 8px; gap: 5px; flex-direction: column; align-items: flex-start;}
+            .stat-label { font-size: 11px; }
+            .stat-val { font-size: 13px; }
+            
+            .action-section { 
+                width: 100%; 
+                padding-left: 0; 
+                margin-top: 8px; 
+            }
+            .play-again-btn { width: 100%; padding: 14px; font-size: 17px; }
+        }
+
+        @keyframes slideDownBanner { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes pulseGlow { 
+            from { box-shadow: 0 15px 35px rgba(255, 140, 0, 0.1), inset 0 0 10px rgba(0,0,0,0.02); } 
+            to { box-shadow: 0 0 35px rgba(255, 140, 0, 0.5), inset 0 0 15px rgba(255, 140, 0, 0.1); border-color: var(--primary); } 
+        }
+        @keyframes popScore {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* 🌟 파이 폭발 키프레임 */
+        @keyframes piExplosion {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            20% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            35% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.9; }
+            60% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(4.0); opacity: 0; }
+        }
+    </style>
+  <style>
+    .creator-info {
+      flex-shrink: 0;
+      position: relative;
+      text-align: center;
+      color: #4a5568;
+      font-size: 0.8rem;
+      background: #ffffff;
+      padding: 6px 16px calc(6px + env(safe-area-inset-bottom));
+      border-top: 1px solid #e1e4ea;
+      z-index: 1;
+      width: 100%;
+      box-sizing: border-box;
+      line-height: 1.35;
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .creator-info p { margin: 0; display: inline; }
+    .creator-info .sep { margin: 0 0.45em; color: #94a3b8; }
+    @media (max-width: 768px) {
+      .creator-info { font-size: 0.72rem; padding: 5px 10px calc(5px + env(safe-area-inset-bottom)); }
+    }
+
+  </style>
+</head>
+<body>
+    
+    <canvas id="confetti-layer"></canvas>
+
+    <div id="dramatic-pi">π</div>
+
+    <div id="game-shell">
+    <div id="main-area">
+        <div id="top-banner">π그리기</div>
+
+        <button id="mobile-history-toggle" onclick="toggleHistory()">🏆 기록 보기</button>
+        
+        <div id="ui-layer">
+            <h2>매번 바뀌는 가이드 선분에 맞춰 원을 그려보세요!</h2>
+            <p>화면을 터치하여 바로 도전을 시작하세요.</p>
+        </div>
+        
+        <div id="canvas-wrapper">
+            <canvas id="drawCanvas"></canvas>
+        </div>
+
+        <div id="result-board">
+            <div class="score-section">
+                <div class="score-title">최종 평가 점수</div>
+                <div class="score-value" id="board-score-val">0<span style="font-size:20px;">점</span></div>
+            </div>
+            
+            <div class="stat-section">
+                <div class="stat-box">
+                    <span class="stat-label">오차 편차(σ) / 최대</span>
+                    <span class="stat-val"><span id="board-stddev">0px</span> <span style="color:#ccc">|</span> <span class="highlight" id="board-maxerr">0px</span></span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">추정된 <b>π</b> / 오차</span>
+                    <span class="stat-val"><span class="highlight-pi" id="board-pi-val">0</span> <span style="color:#ccc">|</span> <span class="highlight" id="board-pi-diff">0</span></span>
+                </div>
+            </div>
+
+            <div class="action-section">
+                <button class="play-again-btn" onclick="triggerNewGame()">다시 하기 ↺</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-panel">
+        <div class="history-header">
+            <h3>도전 기록</h3>
+            <div>
+                <button class="reset-btn" onclick="resetHistory()">초기화</button>
+                <button class="close-history-btn" onclick="toggleHistory()">×</button>
+            </div>
+        </div>
+        <ul id="history-list"></ul>
+    </div>
+    </div>
+
+<script>
+    const customConfetti = confetti.create(document.getElementById('confetti-layer'), {
+        resize: true,
+        useWorker: true
+    });
+
+    function toggleHistory() {
+        playEffect('click');
+        const panel = document.getElementById('history-panel');
+        panel.classList.toggle('open');
+    }
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx;
+    let noiseSource = null, noiseFilter = null, noiseGain = null;
+    let isNoiseInitialized = false;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        if (!isNoiseInitialized) {
+            const bufferSize = audioCtx.sampleRate * 2;
+            const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = noiseBuffer.getChannelData(0);
+            
+            let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+            for (let i = 0; i < bufferSize; i++) {
+                let white = Math.random() * 2 - 1;
+                b0 = 0.99886 * b0 + white * 0.0555179;
+                b1 = 0.99332 * b1 + white * 0.0750759;
+                b2 = 0.96900 * b2 + white * 0.1538520;
+                b3 = 0.86650 * b3 + white * 0.3104856;
+                b4 = 0.55000 * b4 + white * 0.5329522;
+                b5 = -0.7616 * b5 - white * 0.0168980;
+                output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                output[i] *= 0.11; 
+                b6 = white * 0.115926;
+            }
+
+            noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+            noiseSource.loop = true;
+            noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'lowpass';
+            noiseFilter.frequency.value = 800; 
+            noiseGain = audioCtx.createGain();
+            noiseGain.gain.value = 0;
+
+            noiseSource.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            
+            noiseSource.start();
+            isNoiseInitialized = true;
+        }
+    }
+
+    function startDrawingSound() {
+        if (!audioCtx) initAudio();
+        if (noiseGain) noiseGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.05);
+    }
+
+    function updateDrawingSound(speed) {
+        if (noiseGain && noiseFilter && audioCtx) {
+            let targetVol = Math.min(0.8, 0.1 + (speed * 0.04));
+            let targetFreq = Math.min(2000, 600 + (speed * 40));
+            noiseGain.gain.setTargetAtTime(targetVol, audioCtx.currentTime, 0.1);
+            noiseFilter.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
+        }
+    }
+
+    function stopDrawingSound() {
+        if (noiseGain && audioCtx) noiseGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+    }
+
+    function playEffect(type) {
+        if (!audioCtx) initAudio(); 
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const now = audioCtx.currentTime;
+
+        if (type === 'success') {
+            const freqs = [523.25, 659.25, 783.99, 1046.50];
+            freqs.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                gainNode.gain.setValueAtTime(0, now + i*0.1);
+                gainNode.gain.linearRampToValueAtTime(0.15, now + i*0.1 + 0.05);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.8 + i*0.1);
+                osc.start(now + i*0.1);
+                osc.stop(now + 1.0 + i*0.1);
+            });
+        } else if (type === 'firework') {
+            const bufferSize = audioCtx.sampleRate * 0.4;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(1500, now);
+            filter.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+            
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.6, now); 
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            
+            noise.connect(filter).connect(gain).connect(audioCtx.destination);
+            noise.start(now);
+        } else if (type === 'click') {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(600, now);
+            osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.05);
+        } else if (type === 'error' || type === 'trash') {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.type = type === 'error' ? 'sawtooth' : 'square';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(80, now + 0.2);
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        }
+    }
+
+    const canvasWrapper = document.getElementById('canvas-wrapper');
+    const canvas = document.getElementById('drawCanvas');
+    const ctx = canvas.getContext('2d');
+    const historyList = document.getElementById('history-list');
+    const resultBoard = document.getElementById('result-board');
+    const dramaticPi = document.getElementById('dramatic-pi'); 
+
+    let isDrawing = false;
+    let points = [];
+    let centerX, centerY;
+    let targetRadius, targetAngle;
+    let hue = 15;
+    let attemptCount = 0;
+
+    function setRandomTarget(size) {
+        let minR = size * 0.15;
+        let maxR = size * 0.42;
+        targetRadius = Math.round(minR + Math.random() * (maxR - minR));
+        targetAngle = Math.random() * 2 * Math.PI; 
+    }
+
+    function resizeCanvas() {
+        const wrapperW = canvasWrapper.clientWidth;
+        const wrapperH = canvasWrapper.clientHeight;
+        const size = Math.min(wrapperW * 0.95, wrapperH * 0.9, 800); 
+        
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = size * dpr;
+        canvas.height = size * dpr;
+        canvas.style.width = size + 'px';
+        canvas.style.height = size + 'px';
+        
+        ctx.scale(dpr, dpr);
+
+        centerX = size / 2;
+        centerY = size / 2;
+        
+        setRandomTarget(size);
+        resetCanvas(size);
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function resetCanvas(size) {
+        if(!size) size = Math.min(canvasWrapper.clientWidth * 0.95, canvasWrapper.clientHeight * 0.9, 800);
+        ctx.clearRect(0, 0, size, size);
+        points = [];
+        isDrawing = false;
+        hue = Math.random() * 360; 
+        
+        resultBoard.classList.remove('show');
+        canvas.classList.remove('drawing-active');
+        dramaticPi.classList.remove('show-pi'); 
+
+        customConfetti.reset(); 
+
+        const targetX = centerX + targetRadius * Math.cos(targetAngle);
+        const targetY = centerY + targetRadius * Math.sin(targetAngle);
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(targetX, targetY);
+        ctx.strokeStyle = 'rgba(255, 140, 0, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 6]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.closePath();
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#457a68';
+        ctx.fill();
+        ctx.closePath();
+    }
+
+    function triggerNewGame() {
+        playEffect('click'); 
+        const size = Math.min(canvasWrapper.clientWidth * 0.95, canvasWrapper.clientHeight * 0.9, 800);
+        setRandomTarget(size);
+        resetCanvas(size);
+    }
+
+    function startDrawing(e) {
+        initAudio();
+        if (resultBoard.classList.contains('show') && points.length > 0) {
+            triggerNewGame();
+        } else if (points.length > 0) {
+            resetCanvas();
+        }
+        
+        startDrawingSound();
+        isDrawing = true;
+        canvas.classList.add('drawing-active'); 
+        addPoint(e);
+    }
+
+    function draw(e) {
+        if (!isDrawing) return;
+        addPoint(e);
+        
+        const p1 = points[points.length - 2];
+        const p2 = points[points.length - 1];
+        const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+        
+        updateDrawingSound(dist);
+
+        let targetWidth = Math.max(1.5, 6 - (dist * 0.3)); 
+        let lastWidth = p1.width || 4; 
+        let currentWidth = lastWidth + (targetWidth - lastWidth) * 0.3;
+        p2.width = currentWidth;
+
+        hue = (hue + 1.5) % 360;
+
+        ctx.beginPath();
+        ctx.strokeStyle = `hsl(${hue}, 90%, 55%)`;
+        ctx.lineWidth = currentWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+        ctx.closePath();
+
+        if (points.length > 45) { 
+            const startPoint = points[0];
+            const distToStart = Math.hypot(p2.x - startPoint.x, p2.y - startPoint.y);
+            if (distToStart < 15) { 
+                isDrawing = false;
+                stopDrawingSound();
+                evaluateCircle();
+            }
+        }
+    }
+
+    function stopDrawing() {
+        if (!isDrawing) return;
+        isDrawing = false;
+        stopDrawingSound();
+        evaluateCircle();
+    }
+
+    function addPoint(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        points.push({ x: clientX - rect.left, y: clientY - rect.top, width: 4 }); 
+    }
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stopDrawing);
+    
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); }, {passive: false});
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); }, {passive: false});
+    window.addEventListener('touchend', stopDrawing);
+
+    function evaluateCircle() {
+        canvas.classList.remove('drawing-active'); 
+
+        if (points.length < 25) {
+            playEffect('error');
+            alert("조금 더 길게 원을 그려주세요!");
+            resetCanvas();
+            return;
+        }
+
+        let totalDist = 0, distances = [], jitterPenalty = 0;
+        let maxErrorDist = 0;
+        let totalSweep = 0;
+        let prevAngle = Math.atan2(points[0].y - centerY, points[0].x - centerX);
+
+        for (let i = 0; i < points.length; i++) {
+            const dx = points[i].x - centerX, dy = points[i].y - centerY;
+            const dist = Math.hypot(dx, dy);
+            distances.push(dist);
+            totalDist += dist;
+            
+            let currAngle = Math.atan2(dy, dx);
+            if (i > 0) {
+                let diff = currAngle - prevAngle;
+                if (diff > Math.PI) diff -= 2 * Math.PI;
+                if (diff < -Math.PI) diff += 2 * Math.PI;
+                totalSweep += diff;
+            }
+            prevAngle = currAngle;
+
+            if (i > 1) jitterPenalty += Math.abs(Math.abs(distances[i] - distances[i-1]) - Math.abs(distances[i-1] - distances[i-2]));
+        }
+
+        const avgRadius = totalDist / points.length;
+
+        if (avgRadius < targetRadius * 0.6) {
+            playEffect('error');
+            alert("원이 너무 작습니다! 가이드 선분에 맞춰 다시 시도해주세요.");
+            resetCanvas();
+            return;
+        }
+
+        let varianceSum = 0;
+        for (let d of distances) {
+            let err = Math.abs(d - avgRadius); 
+            if (err > maxErrorDist) maxErrorDist = err;
+            varianceSum += Math.pow(err, 2);
+        }
+        
+        const stdDev = Math.sqrt(varianceSum / points.length);
+        
+        let pathLength = 0;
+        const step = 3;
+        for (let i = step; i < points.length; i += step) {
+            pathLength += Math.hypot(points[i].x - points[i-step].x, points[i].y - points[i-step].y);
+        }
+        const piEstimate = pathLength / (2 * avgRadius * (points.length / (points.length - step)));
+
+        const actualPi = Math.PI;
+        const safePiEstimate = isNaN(piEstimate) ? 0 : piEstimate;
+        const piDifference = Math.abs(actualPi - safePiEstimate);
+
+        let sizeErrorRatio = Math.abs(avgRadius - targetRadius) / targetRadius;
+        let sizeScore = Math.max(0, 100 - (sizeErrorRatio * 165));
+        let shapeScore = Math.max(0, 100 - (stdDev / avgRadius) * 165);
+        let maxErrRatio = maxErrorDist / avgRadius;
+        let maxErrPenalty = maxErrRatio > 0.10 ? (maxErrRatio - 0.10) * 165 : 0; 
+        let smoothScore = Math.max(0, 100 - (jitterPenalty / points.length) * 25);
+
+        let rawScore = (sizeScore * 0.3) + (shapeScore * 0.5) + (smoothScore * 0.2) - maxErrPenalty;
+
+        let sweptDegrees = Math.abs(totalSweep * 180 / Math.PI);
+        if (sweptDegrees < 320) {
+            rawScore -= (360 - sweptDegrees) * 0.3;
+        }
+
+        let finalScore = Math.max(0, Math.min(100, Math.pow(Math.max(0, rawScore) / 100, 0.72) * 100));
+        
+        let displayScore = Math.round(finalScore * 10) / 10;
+
+        let densePoints = [];
+        for (let i = 0; i < points.length - 1; i++) {
+            let p1 = points[i];
+            let p2 = points[i+1];
+            let d = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+            let steps = Math.max(1, Math.floor(d / 1.5)); 
+            for (let j = 0; j < steps; j++) {
+                densePoints.push({
+                    x: p1.x + (p2.x - p1.x) * (j / steps),
+                    y: p1.y + (p2.y - p1.y) * (j / steps)
+                });
+            }
+        }
+        densePoints.push(points[points.length - 1]);
+
+        ctx.globalCompositeOperation = 'destination-over';
+        for (let i = 0; i < densePoints.length; i++) { 
+            const pt = densePoints[i];
+            const dist = Math.hypot(pt.x - centerX, pt.y - centerY);
+            const angle = Math.atan2(pt.y - centerY, pt.x - centerX);
+            
+            const idealX = centerX + Math.cos(angle) * targetRadius;
+            const idealY = centerY + Math.sin(angle) * targetRadius;
+            
+            ctx.beginPath();
+            ctx.moveTo(idealX, idealY);
+            ctx.lineTo(pt.x, pt.y);
+            
+            if (dist < targetRadius) {
+                ctx.strokeStyle = 'rgba(67, 97, 238, 0.4)'; 
+            } else {
+                ctx.strokeStyle = 'rgba(230, 57, 70, 0.4)'; 
+            }
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            ctx.closePath();
+        }
+        ctx.globalCompositeOperation = 'source-over';
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, targetRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 140, 0, 0.9)';
+        ctx.lineWidth = 1.0; 
+        ctx.stroke();
+        ctx.closePath();
+
+        const scoreElement = document.getElementById('board-score-val');
+        scoreElement.innerHTML = displayScore.toFixed(1) + '<span style="font-size:24px; color:var(--text-muted);">점</span>';
+        
+        scoreElement.classList.remove('pop-anim');
+        void scoreElement.offsetWidth; 
+        scoreElement.classList.add('pop-anim');
+
+        document.getElementById('board-stddev').innerText = `±${stdDev.toFixed(1)}`;
+        document.getElementById('board-maxerr').innerText = `${maxErrorDist.toFixed(1)}px`;
+        document.getElementById('board-pi-val').innerText = safePiEstimate.toFixed(4);
+        document.getElementById('board-pi-diff').innerText = piDifference.toFixed(4);
+        
+        resultBoard.classList.add('show');
+        
+        if (displayScore >= 90.0) {
+            playEffect('success'); 
+            
+            dramaticPi.classList.remove('show-pi');
+            void dramaticPi.offsetWidth; 
+            dramaticPi.classList.add('show-pi');
+
+            setTimeout(() => playEffect('firework'), 100);
+            setTimeout(() => playEffect('firework'), 350);
+            setTimeout(() => playEffect('firework'), 700);
+
+            const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+            const isMobile = vw <= 850;
+            const originY = isMobile ? 0.4 : 0.5; 
+
+            customConfetti({
+                particleCount: 80, spread: 70, origin: { x: 0.1, y: originY },
+                angle: 60, colors: ['#ff8c00', '#ffb703', '#4CAF50', '#2196F3', '#e63946'], startVelocity: 40
+            });
+            customConfetti({
+                particleCount: 80, spread: 70, origin: { x: 0.9, y: originY },
+                angle: 120, colors: ['#ff8c00', '#ffb703', '#4CAF50', '#2196F3', '#e63946'], startVelocity: 40
+            });
+            
+            setTimeout(() => {
+                customConfetti({
+                    particleCount: 120, spread: 100, origin: { x: 0.5, y: originY },
+                    colors: ['#ff8c00', '#ffb703', '#ffd166', '#ef476f', '#4CAF50'], startVelocity: 50
+                });
+            }, 300);
+        }
+
+        attemptCount++;
+        const li = document.createElement('li');
+        li.className = 'history-item';
+        li.innerHTML = `
+            <div>
+                <span style="color:var(--text-muted); font-size:12px;">도전 #${attemptCount}</span><br>
+                추정 <b>π</b>: ${safePiEstimate.toFixed(4)}
+            </div>
+            <div class="score">${displayScore.toFixed(1)}</div>
+        `;
+        historyList.insertBefore(li, historyList.firstChild);
+    }
+
+    function resetHistory() {
+        playEffect('trash');
+        historyList.innerHTML = '';
+        attemptCount = 0;
+    }
+
+    setTimeout(resizeCanvas, 100);
+</script>
+
+  <div class="creator-info">
+    <p>행복한 수학, 함께 만들어요 😊<span class="sep">·</span>© 세종 중등수학교육 연구회 | 최OO 선생님</p>
+  </div>
+
+</body>
+</html>

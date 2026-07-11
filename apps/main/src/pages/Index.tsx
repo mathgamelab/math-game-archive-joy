@@ -27,6 +27,10 @@ const breakGameTabs: TabData[] = [
   { id: 'break-game', label: '뇌풀기 게임', description: '두뇌를 말랑말랑하게 만드는 게임' },
 ];
 
+const mathDayTabs: TabData[] = [
+  { id: 'mathday', label: 'MathDay', description: 'MathDay 행사·체험용 수학 게임' },
+];
+
 const classManagementTabs: TabData[] = [
   { id: 'class-management', label: '학급운영', description: '학급운영 도구 및 활동' },
 ];
@@ -35,6 +39,7 @@ const gradeTabs = [
   { id: 'middle', label: '중학수학' },
   { id: 'high', label: '고등수학' },
   { id: 'break-game', label: '뇌풀기 게임' },
+  { id: 'mathday', label: 'MathDay' },
   { id: 'class-management', label: '학급운영' },
 ];
 
@@ -59,6 +64,7 @@ const Index = () => {
       if (section === 'middle') setActiveTab('middle1');
       else if (section === 'high') setActiveTab('common-math');
       else if (section === 'break-game') setActiveTab('break-game');
+      else if (section === 'mathday') setActiveTab('mathday');
       else if (section === 'class-management') setActiveTab('class-management');
     }
   }, []);
@@ -72,6 +78,7 @@ const Index = () => {
   if (activeSection === 'middle') currentTabs = middleSchoolTabs;
   else if (activeSection === 'high') currentTabs = highSchoolTabs;
   else if (activeSection === 'break-game') currentTabs = breakGameTabs;
+  else if (activeSection === 'mathday') currentTabs = mathDayTabs;
   else if (activeSection === 'class-management') currentTabs = classManagementTabs;
 
   const currentGames = gamesData[activeTab] || [];
@@ -132,6 +139,7 @@ const Index = () => {
     if (gradeId === 'middle') setActiveTab('middle1');
     else if (gradeId === 'high') setActiveTab('common-math');
     else if (gradeId === 'break-game') setActiveTab('break-game');
+    else if (gradeId === 'mathday') setActiveTab('mathday');
     else if (gradeId === 'class-management') setActiveTab('class-management');
   };
 

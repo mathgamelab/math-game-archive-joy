@@ -1,0 +1,1223 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>π 풍선 슈팅</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  
+  <style>
+    * { font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif; }
+    html, body {
+      height: 100%; margin: 0; overflow: hidden; background-color: #ffffff;
+      display: flex; flex-direction: column;
+    }
+    
+    .game-bg {
+      background: linear-gradient(180deg, #ffffff 0%, #f1f3f6 55%, #eef7f3 100%);
+      width: 100%; flex: 1; min-height: 0; position: relative; overflow: hidden;
+      transition: background 0.3s;
+    }
+    
+    .fever-bg {
+      background: linear-gradient(45deg, #ff1b6b, #45caff, #ff930f, #ff1b6b, #8a2be2);
+      background-size: 400% 400%;
+      animation: gradientFever 1s ease infinite;
+      box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.5);
+    }
+    @keyframes gradientFever {
+      0% { background-position: 0% 50%; } 
+      50% { background-position: 100% 50%; } 
+      100% { background-position: 0% 50%; }
+    }
+    .fever-active { animation: feverPulse 0.8s alternate infinite ease-in-out; }
+    @keyframes feverPulse { 0% { filter: contrast(1) brightness(1); } 100% { filter: contrast(1.05) brightness(1.05); } }
+
+    .cloud { position: absolute; opacity: 0.7; animation: floatCloud 25s linear infinite; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05)); }
+    .cloud::before, .cloud::after { content: ''; position: absolute; background: white; border-radius: 50%; }
+    .cloud::before { width: 50px; height: 50px; top: -25px; left: 10px; }
+    .cloud::after { width: 40px; height: 40px; top: -20px; right: 15px; }
+    .cloud-body { position: absolute; width: 100px; height: 35px; background: white; border-radius: 50px; top: 0; left: 0; }
+    @keyframes floatCloud { from { transform: translateX(-150px); } to { transform: translateX(calc(100vw + 150px)); } }
+    
+    .number-bubble {
+      position: absolute; width: 110px; height: 130px;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      cursor: pointer; transition: transform 0.1s; user-select: none;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+    }
+    .number-bubble:hover { transform: scale(1.15) translateY(-5px); z-index: 60; }
+    
+    .balloon {
+      position: relative; width: 90px; height: 90px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5), transparent);
+      box-shadow: inset -2px -2px 6px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.2);
+      transition: all 0.2s;
+    }
+    .number-bubble:hover .balloon { transform: scale(1.1); }
+    
+    .balloon::before {
+      content: ''; position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
+      width: 2px; height: 25px; background: #ccc; border-radius: 1px;
+    }
+    .balloon.hint::before { background: #e91e63; }
+    .balloon.golden::before { background: #FBC02D; bottom: -20px; }
+    .balloon.freeze::before { background: #00bcd4; bottom: -20px; }
+    
+    .balloon-text { font-size: 36px; font-weight: bold; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); color: white; z-index: 10; }
+    
+    @keyframes heartBeat { 0% { transform: scale(1); } 25% { transform: scale(1.05); } 50% { transform: scale(1); } 75% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    
+    .hint-glow { box-shadow: 0 0 40px 15px #00E676 !important; animation: pulseGlow 0.6s infinite; z-index: 45;}
+    @keyframes pulseGlow { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+    @keyframes piFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes freezeFloat { 0%,100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-5px) rotate(5deg); } }
+
+    .wand {
+      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+      width: 128px; height: 220px; z-index: 50; overflow: visible;
+      display: flex; flex-direction: column; align-items: center; pointer-events: none;
+    }
+    .wand-face-wrap {
+      width: 118px; height: 118px; display: flex; align-items: center; justify-content: center;
+      filter: drop-shadow(0 4px 8px rgba(15,23,42,0.15));
+      animation: piFloat 2.4s ease-in-out infinite;
+    }
+    .wand-face { width: 118px; height: 118px; object-fit: contain; user-select: none; pointer-events: none; }
+    .wand-stick { width: 36px; height: 120px; margin-top: -10px; }
+    
+    .projectile {
+      position: absolute; width: 40px; height: 40px; border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffb6d9, #ff69b4);
+      box-shadow: 0 0 15px #ff69b4; pointer-events: none; z-index: 40;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+    }
+    .projectile.fever-proj { 
+      background: radial-gradient(circle at 35% 35%, #ffffff, #ffeb3b); 
+      box-shadow: 0 0 20px #ff9800, 0 0 10px #ffeb3b; 
+    }
+    
+    .particle { position: absolute; width: 10px; height: 10px; border-radius: 50%; pointer-events: none; z-index: 60; animation: particleBurst 0.6s ease-out forwards; }
+    @keyframes particleBurst { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0) translateY(-30px); opacity: 0; } }
+    
+    .pop-burst { position: absolute; width: 90px; height: 105px; pointer-events: none; animation: balloonPop 0.4s ease-out forwards; z-index: 80; }
+    @keyframes balloonPop { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.8; } 100% { opacity: 0; transform: scale(0) rotate(360deg); } }
+    
+    .hint-box { background: rgba(255,255,255,0.95); border-radius: 20px; backdrop-filter: blur(5px); }
+    
+    .score-popup { position: absolute; font-weight: 900; color: #e91e63; font-size: 32px; pointer-events: none; animation: scoreUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; z-index: 95; white-space: nowrap; text-shadow: 3px 3px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;}
+    @keyframes scoreUp { 0% { opacity:1; transform:translateY(0) scale(0.8); } 50% { transform:translateY(-40px) scale(1.2); } 100% { opacity:0; transform:translateY(-80px) scale(1); } }
+    
+    .shake { animation: shake 0.3s; }
+    @keyframes shake { 0%,100%{transform:translateX(-50%)} 25%{transform:translateX(calc(-50% - 10px))} 75%{transform:translateX(calc(-50% + 10px))} }
+    
+    .screen-shake { animation: screenShake 0.4s; }
+    @keyframes screenShake { 0%,100%{transform:translate(0,0)} 20%{transform:translate(-20px,15px)} 40%{transform:translate(20px,-15px)} 60%{transform:translate(-20px,-15px)} 80%{transform:translate(20px,15px)} }
+
+    .combo-flash { animation: comboFlash 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes comboFlash { 0%{transform:scale(1)} 50%{transform:scale(1.5)} 100%{transform:scale(1)} }
+    
+    .pulse-text { animation: pulseText 1.5s infinite; }
+    @keyframes pulseText { 0% { transform: scale(1); } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); } }
+    
+    .fever-text { background: linear-gradient(to right, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff); -webkit-background-clip: text; color: transparent; animation: rainbow 1s linear infinite; }
+    @keyframes rainbow { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+
+    @keyframes popNewDigit {
+      0% { transform: scale(1.5) translateY(-5px); color: #FFC107; text-shadow: 0 0 15px #FF9800; opacity: 0; }
+      50% { transform: scale(1.8) translateY(-10px); color: #FFEB3B; text-shadow: 0 0 25px #FFEB3B; opacity: 1; }
+      100% { transform: scale(1) translateY(0); color: #e91e63; text-shadow: none; opacity: 1; }
+    }
+    .new-digit {
+      display: inline-block;
+      animation: popNewDigit 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      font-weight: 900;
+      color: #e91e63;
+    }
+
+    .ranking-scroll::-webkit-scrollbar { width: 6px; }
+    .ranking-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+    .ranking-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+    .ranking-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+  </style>
+  <style>
+    .creator-info {
+      flex-shrink: 0;
+      position: relative;
+      text-align: center;
+      color: #4a5568;
+      font-size: 0.8rem;
+      background: #ffffff;
+      padding: 6px 16px calc(6px + env(safe-area-inset-bottom));
+      border-top: 1px solid #e1e4ea;
+      z-index: 1;
+      width: 100%;
+      box-sizing: border-box;
+      line-height: 1.35;
+      pointer-events: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .creator-info p { margin: 0; display: inline; }
+    .creator-info .sep { margin: 0 0.45em; color: #94a3b8; }
+    @media (max-width: 768px) {
+      .creator-info { font-size: 0.72rem; padding: 5px 10px calc(5px + env(safe-area-inset-bottom)); }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="game-bg" id="gameArea">
+    <div id="freezeOverlay" class="absolute inset-0 bg-blue-300 opacity-0 pointer-events-none transition-opacity duration-300 z-[45]"></div>
+
+    <div class="cloud" style="top:8%;left:-150px;animation-delay:0s"><div class="cloud-body"></div></div>
+    <div class="cloud" style="top:20%;left:-150px;animation-delay:5s;transform:scale(0.7)"><div class="cloud-body"></div></div>
+    <div class="cloud" style="top:35%;left:-150px;animation-delay:10s;transform:scale(0.85)"><div class="cloud-body"></div></div>
+
+    <div class="absolute top-4 left-4 right-4 flex justify-between items-start z-50 pointer-events-none">
+      
+      <div id="hintPanel" class="flex flex-col items-center hidden" style="visibility:hidden">
+        <div class="hint-box text-center pointer-events-auto border-4 border-pink-300 shadow-xl px-8 py-4 mb-3">
+          <div class="text-base text-gray-500 font-extrabold mb-1 tracking-wide">타겟 숫자</div>
+          <div id="nextDigit" class="text-[5.5rem] leading-none font-black text-pink-500 pulse-text drop-shadow-md">3</div>
+        </div>
+        <div class="hint-box text-center pointer-events-auto shadow-md px-5 py-2 border-2 border-gray-100">
+          <div class="text-xs text-gray-500 font-bold mb-1">다음 10자리</div>
+          <div id="next10Digits" class="text-base font-black text-purple-600 tracking-widest">3141592653</div>
+        </div>
+      </div>
+
+      <div class="text-center bg-white/80 backdrop-blur-md rounded-3xl p-4 shadow-xl border-2 border-white/90 transform origin-top scale-105 mt-2 hidden md:block w-80 relative z-40">
+        <div id="gameTitle" class="text-2xl font-bold text-slate-800 drop-shadow-sm mb-2">
+          π 풍선 슈팅
+        </div>
+        <div id="feverStatus" class="text-lg font-black opacity-0 transition-opacity mb-2 fever-text drop-shadow-md transform scale-110">
+          🔥🔥 FEVER TIME! x3 🔥🔥
+        </div>
+        <div class="bg-purple-50 rounded-2xl p-4 border border-purple-200 shadow-inner">
+          <div class="text-xs text-purple-400 font-extrabold mb-2 uppercase tracking-wider">달성한 원주율</div>
+          <div class="text-left mx-auto text-[24px] leading-[1.3] font-black text-purple-700 min-h-[60px]" style="word-break: break-all;">
+            <span id="piProgressFull" class="drop-shadow-sm">?</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint-box text-right pointer-events-auto border-4 border-purple-300 shadow-xl px-8 py-5 min-w-[160px]">
+        <div class="text-base text-gray-500 font-extrabold mb-2 tracking-wide">남은 시간</div>
+        <div id="timer" class="text-[4.5rem] leading-none font-black text-purple-600 mb-4 drop-shadow-md">30</div>
+        <div class="text-sm text-gray-500 font-bold mb-1">
+          점수 <span id="scoreDisplay" class="font-black text-pink-500 text-xl ml-1">0</span>
+        </div>
+        <div class="text-xs text-gray-400 font-bold flex items-center justify-end">
+          <span class="mr-1">🏆 1위:</span>
+          <span id="topScoreDisplay" class="text-gray-600">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="absolute top-[38%] left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+      <div id="comboDisplay" class="text-5xl font-black text-orange-500 opacity-0 transition-opacity drop-shadow-[0_4px_4px_rgba(255,255,255,0.8)]">
+        🔥 <span id="comboCount">0</span> COMBO
+      </div>
+    </div>
+
+    <div class="wand" id="wand">
+      <div class="wand-face-wrap">
+        <img src="/images/pi-mascot-face.png" alt="" class="wand-face" width="118" height="118" draggable="false" />
+      </div>
+      <svg class="wand-stick" viewBox="0 0 40 140" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="14" y="0" width="12" height="110" rx="6" fill="#8D6E63" stroke="#5D4E37" stroke-width="2"/>
+        <g transform="translate(20 122)">
+          <path d="M 0,-10 L 2.5,-3.5 L 10,-2.5 L 4,2.5 L 6,10 L 0,6 L -6,10 L -4,2.5 L -10,-2.5 L -2.5,-3.5 Z" fill="#FFD700" stroke="#F57F17" stroke-width="1.5"/>
+        </g>
+      </svg>
+    </div>
+
+    <div id="damageOverlay" class="absolute inset-0 bg-red-500 opacity-0 pointer-events-none transition-opacity duration-200 z-[90]"></div>
+
+    <div id="startScreen" class="absolute inset-0 flex items-center justify-center z-[100] bg-white/80 backdrop-blur-sm">
+      <div class="text-center bg-white rounded-2xl p-8 shadow-[0_16px_40px_rgba(15,23,42,0.14)] max-w-lg w-full border border-slate-200 transform transition-all flex flex-col max-h-[90vh]">
+        <div class="text-5xl mb-2 mt-2">🎯</div>
+        <h2 class="text-3xl font-bold text-slate-800 mb-2 tracking-tight">π 풍선 슈팅</h2>
+        <div class="text-sm font-semibold text-slate-600 mb-4 bg-slate-100 py-1.5 px-4 rounded-full inline-block mx-auto border border-slate-200">
+          Pi Day 특별 이벤트
+        </div>
+        
+        <ul class="text-left text-slate-700 text-sm mb-4 space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-200 flex-shrink-0">
+          <li class="flex items-center">✨ <strong class="ml-2">정답:</strong> <span class="ml-2">원주율 순서에 맞는 숫자 쏘기</span></li>
+          <li class="flex items-center">⏳ <strong class="ml-2">타임 어택:</strong> <span class="ml-2">제한 시간 <strong class="text-slate-800 mx-1">30초!</strong></span></li>
+          <li class="flex items-center">🔥 <strong class="ml-2">피버/스피드:</strong> <span class="ml-2">5콤보 피버! / 10콤보부터 +2초 연장!</span></li>
+          <li class="flex items-center">🎁 <strong class="ml-2">특수 기호:</strong> <span class="ml-2">💣(오답제거), 💖(힌트), ❄️(2.5초 얼음!)</span></li>
+          <li class="flex items-center mt-1 pt-1 border-t border-slate-200">❌ <strong class="ml-2 text-red-600">페널티:</strong> <span class="ml-2 text-red-500 font-bold">오답 시 시간 -2초 즉시 감소!</span></li>
+        </ul>
+
+        <div id="startLeaderboardSection" class="mb-4 bg-slate-50 p-3 rounded-xl border border-slate-200 overflow-hidden flex-1 flex flex-col min-h-[100px]">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-base font-bold text-slate-800">🏆 명예의 전당 (Top 3)</h3>
+            <button onclick="resetLeaderboard(true)" class="text-xs bg-white text-slate-600 px-2 py-1 rounded-full hover:bg-slate-100 transition-colors font-semibold border border-slate-200 active:scale-95 pointer-events-auto">기록 초기화</button>
+          </div>
+          <ul id="startLeaderboardList" class="space-y-1.5 text-sm text-left ranking-scroll overflow-y-auto pr-2 flex-1">
+             <li class="text-center text-slate-400 text-xs mt-2">아직 기록이 없습니다. 첫 번째 도전자가 되어보세요!</li>
+          </ul>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 flex-shrink-0 mt-2 w-full">
+          <button id="practiceBtn" type="button" class="flex-1 bg-white hover:bg-slate-50 text-slate-800 font-bold py-3.5 px-6 rounded-full text-lg shadow-sm border border-slate-200 transition-all hover:scale-[1.02] active:scale-95">
+            📖 암기하기
+          </button>
+          <button id="challengeBtn" type="button" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-6 rounded-full text-lg shadow-sm transition-all hover:scale-[1.02] active:scale-95">
+            🎯 도전하기
+          </button>
+        </div>
+        <p class="text-xs text-slate-500 mt-3 leading-relaxed">
+          암기하기: 타겟·다음 자리 힌트 표시 · 기록 미저장<br/>
+          도전하기: 힌트 없음 · 기록 저장
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PI_DIGITS = "31415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679";
+    const BUBBLE_COLORS = ['#FFB3D9','#B3E5FC','#C5E1A5','#FFE0B2','#F8BBD0','#D1C4E9','#B2DFDB','#FFD1B3','#E1BEE7','#C8E6C9'];
+    const BUBBLE_COLORS_DARK = ['#FF69B4','#00BCD4','#9CCC65','#FF9800','#EC407A','#7C4DFF','#009688','#FF7043','#BA68C8','#66BB6A'];
+    
+    let gameRunning = false;
+    let gameMode = 'challenge'; // 'practice' | 'challenge'
+    let currentIndex = 0;
+    let score = 0;
+    let combo = 0;
+    let maxCombo = 0;
+    let bubbles = [];
+    let animFrameId = null;
+    let gameEndTime = 0;
+    
+    let pauseRegenTime = 0;
+    let feverMode = false;
+    let feverTimeout = null;
+    let fireworkInterval = null;
+    let piExplosionInterval = null;
+    
+    let freezeEndTime = 0; 
+    let lastTickSecond = -1;
+    let numberBag = [];
+    let pendingSpecials = []; 
+    
+    function playButtonSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        osc.start(); osc.stop(ctx.currentTime + 0.2);
+      } catch(e){}
+    }
+
+    function handleRestart() {
+      playButtonSound();
+      setTimeout(() => location.reload(), 200); 
+    }
+
+    function loadLeaderboard() {
+      try { return JSON.parse(localStorage.getItem('piLeaderboard') || '[]'); }
+      catch(e) { return []; }
+    }
+    
+    function saveToLeaderboard(newScore, newTitle, newMaxCombo) {
+      let board = loadLeaderboard();
+      board.push({ score: newScore, title: newTitle, maxCombo: newMaxCombo });
+      board = board.sort((a, b) => b.score - a.score).slice(0, 50); 
+      localStorage.setItem('piLeaderboard', JSON.stringify(board));
+      return board;
+    }
+
+    function resetLeaderboard(isStartScreen) {
+      playResetSound();
+      localStorage.removeItem('piLeaderboard');
+      document.getElementById('topScoreDisplay').textContent = '0';
+      if (isStartScreen) {
+        renderLeaderboardToElement('startLeaderboardList', 3);
+      } else {
+        renderLeaderboardToElement('endLeaderboardList', 50);
+      }
+    }
+
+    function renderLeaderboardToElement(elementId, limit = 10) {
+      const list = document.getElementById(elementId);
+      let board = loadLeaderboard();
+      if (!list) return;
+      
+      if (board.length > 0) {
+        document.getElementById('topScoreDisplay').textContent = board[0].score.toLocaleString();
+      }
+
+      if (board.length === 0) {
+        list.innerHTML = `<li class="text-center text-gray-400 text-xs mt-2">아직 기록이 없습니다. 첫 주인공이 되어보세요!</li>`;
+        return;
+      }
+      
+      list.innerHTML = '';
+      board.slice(0, limit).forEach((record, idx) => {
+        let medal = '🔹';
+        let rowClass = "text-gray-600";
+        if (idx === 0) { medal = '🥇'; rowClass = "font-black text-yellow-600 bg-yellow-50 rounded px-2 py-1"; }
+        else if (idx === 1) { medal = '🥈'; rowClass = "font-bold text-gray-600 bg-gray-100 rounded px-2 py-1"; }
+        else if (idx === 2) { medal = '🥉'; rowClass = "font-bold text-amber-700 bg-orange-50 rounded px-2 py-1"; }
+        
+        list.innerHTML += `
+          <li class="flex justify-between items-center ${rowClass} mb-1 py-1">
+            <span class="pr-2 flex-1 whitespace-nowrap overflow-visible">${medal} ${record.title}</span>
+            <div class="flex items-center text-right flex-shrink-0">
+              <span class="text-[11px] text-orange-500 font-black mr-2 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 flex-shrink-0">🔥${record.maxCombo || 0}</span>
+              <span class="font-bold flex-shrink-0 min-w-[50px]">${record.score.toLocaleString()}점</span>
+            </div>
+          </li>`;
+      });
+    }
+
+    renderLeaderboardToElement('startLeaderboardList', 3);
+
+    function getNextNumber() {
+      if (numberBag.length === 0) {
+        numberBag = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        for (let i = numberBag.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [numberBag[i], numberBag[j]] = [numberBag[j], numberBag[i]];
+        }
+      }
+      return numberBag.pop();
+    }
+
+    const gameArea = document.getElementById('gameArea');
+    const timerEl = document.getElementById('timer');
+    const wand = document.getElementById('wand');
+    
+    document.getElementById('practiceBtn').addEventListener('click', () => startGame('practice'));
+    document.getElementById('challengeBtn').addEventListener('click', () => startGame('challenge'));
+
+    function startGame(mode) {
+      playButtonSound();
+      gameMode = mode === 'practice' ? 'practice' : 'challenge';
+      document.getElementById('startScreen').style.display = 'none';
+      if (fireworkInterval) { clearInterval(fireworkInterval); fireworkInterval = null; }
+      if (piExplosionInterval) { clearInterval(piExplosionInterval); piExplosionInterval = null; }
+      
+      gameRunning = true;
+      currentIndex = 0; score = 0; combo = 0; maxCombo = 0; feverMode = false; pauseRegenTime = 0;
+      freezeEndTime = 0;
+      lastTickSecond = -1; 
+      numberBag = []; 
+      pendingSpecials = []; 
+      
+      document.getElementById('scoreDisplay').textContent = '0';
+      document.getElementById('comboDisplay').style.opacity = '0';
+      document.getElementById('feverStatus').style.opacity = '0';
+      gameArea.classList.remove('fever-bg', 'fever-active');
+      document.getElementById('freezeOverlay').style.opacity = '0';
+
+      const hintPanel = document.getElementById('hintPanel');
+      if (gameMode === 'practice') {
+        hintPanel.classList.remove('hidden');
+        hintPanel.style.visibility = 'visible';
+      } else {
+        hintPanel.classList.add('hidden');
+        hintPanel.style.visibility = 'hidden';
+      }
+      
+      updateProgressDisplay();
+      document.getElementById('nextDigit').textContent = PI_DIGITS[0];
+      updateNext10Digits();
+      
+      gameEndTime = Date.now() + 30000;
+      
+      clearBubbles();
+      spawnInitialBubbles();
+      gameLoop();
+    }
+
+    function clearBubbles() {
+      bubbles.forEach(b => b.el && b.el.remove());
+      bubbles = [];
+    }
+
+    function updateNext10Digits() {
+      document.getElementById('next10Digits').textContent = PI_DIGITS.slice(currentIndex, Math.min(currentIndex + 10, PI_DIGITS.length));
+    }
+
+    function updateProgressDisplay() {
+      const displayEl = document.getElementById('piProgressFull');
+      if (currentIndex === 0) { displayEl.innerHTML = '<span class="text-gray-400">?</span>'; }
+      else if (currentIndex === 1) { displayEl.innerHTML = '<span class="new-digit">3.</span>'; } 
+      else {
+        const fullStr = "3." + PI_DIGITS.slice(1, currentIndex);
+        const prevStr = fullStr.slice(0, -1);
+        const lastChar = fullStr.slice(-1);
+        displayEl.innerHTML = prevStr + `<span class="new-digit">${lastChar}</span>`;
+      }
+    }
+
+    function spawnBubble(forcedType = null) {
+      const rand = Math.random();
+      let type = 'number';
+      let value = '';
+      
+      if (forcedType) {
+        type = forcedType;
+        if (type === 'golden') value = 'π';
+        else if (type === 'freeze') value = '❄️';
+        else if (type === 'hint') value = '힌트';
+      } else {
+        // 🔥 총점 2만점 이상부터 4천점 단위로 황금파이 극한 하향 패치 (콤보 너프 삭제)
+        let goldenProb = 0.04; // 기본 4%
+        if (score >= 32000) { goldenProb = 0.002; } 
+        else if (score >= 28000) { goldenProb = 0.005; } 
+        else if (score >= 24000) { goldenProb = 0.01; }  
+        else if (score >= 20000) { goldenProb = 0.015; } 
+
+        let baseFreezeProb = 0.03; // 기본 3%
+        if (score >= 40000) { baseFreezeProb = 0.005; } 
+        else if (score >= 36000) { baseFreezeProb = 0.01; } 
+        else if (score >= 32000) { baseFreezeProb = 0.02; } 
+
+        let freezeProb = goldenProb + baseFreezeProb; 
+        let hintProb = freezeProb + 0.07;   
+        let bombProb = hintProb + 0.02;     
+
+        if (rand < goldenProb && !bubbles.some(b => b.type === 'golden')) { type = 'golden'; value = 'π'; }
+        else if (rand < freezeProb && !bubbles.some(b => b.type === 'freeze')) { type = 'freeze'; value = '❄️'; }
+        else if (rand < hintProb && !bubbles.some(b => b.type === 'hint')) { type = 'hint'; value = '힌트'; }
+        else if (rand < bombProb && !bubbles.some(b => b.type === 'bomb')) { type = 'bomb'; value = '💣'; }
+        else { type = 'number'; value = getNextNumber(); }
+      }
+
+      const el = document.createElement('div');
+      el.className = 'number-bubble';
+      const balloonDiv = document.createElement('div');
+      balloonDiv.className = `balloon ${type !== 'number' ? type : ''}`;
+      
+      if (type === 'number') {
+        balloonDiv.style.background = `radial-gradient(circle at 35% 35%, ${BUBBLE_COLORS[value]}, ${BUBBLE_COLORS_DARK[value]})`;
+        const textSpan = document.createElement('span');
+        textSpan.className = 'balloon-text';
+        textSpan.textContent = value;
+        balloonDiv.appendChild(textSpan);
+      } else if (type === 'bomb') {
+        const textSpan = document.createElement('span');
+        textSpan.className = 'balloon-text';
+        textSpan.textContent = value;
+        balloonDiv.appendChild(textSpan);
+      } else if (type === 'freeze') {
+        balloonDiv.style.background = 'radial-gradient(circle at 35% 35%, #e0f7fa, #00bcd4)';
+        balloonDiv.style.boxShadow = '0 0 15px #00bcd4';
+        balloonDiv.innerHTML = `<div style="animation: freezeFloat 2s ease-in-out infinite;"><span style="font-size:45px; filter:drop-shadow(0 2px 4px rgba(0,188,212,0.5));">❄️</span></div>`;
+      } else if (type === 'hint') {
+        balloonDiv.style.background = 'transparent';
+        balloonDiv.style.boxShadow = 'none';
+        balloonDiv.innerHTML = `
+          <svg class="heart-svg" viewBox="0 0 100 100" style="position:absolute; inset:-5px; width:100px; height:100px; z-index:0; filter:drop-shadow(0 4px 6px rgba(233,30,99,0.5)); animation: heartBeat 1.2s infinite;">
+             <defs>
+               <radialGradient id="heartGrad" cx="35%" cy="35%" r="60%">
+                 <stop offset="0%" stop-color="#ff8a80"/><stop offset="100%" stop-color="#d50000"/>
+               </radialGradient>
+             </defs>
+             <path d="M50 85 C50 85 10 60 10 30 C10 10 30 5 50 25 C70 5 90 10 90 30 C90 60 50 85 50 85 Z" fill="url(#heartGrad)"/>
+          </svg>
+          <span class="balloon-text" style="font-size:20px; text-shadow:1px 1px 2px rgba(0,0,0,0.5);">힌트</span>
+        `;
+      } else if (type === 'golden') {
+        balloonDiv.style.background = 'transparent';
+        balloonDiv.style.boxShadow = 'none';
+        balloonDiv.innerHTML = `
+          <div style="animation: piFloat 2s ease-in-out infinite; transform: scale(1.25); width: 100%; height: 100%; position: relative;">
+            <svg viewBox="0 0 100 100" style="position:absolute; inset:-10px; width:110px; height:110px; z-index:0; filter:drop-shadow(0 6px 8px rgba(251, 192, 45, 0.6));">
+               <defs>
+                 <linearGradient id="piGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                   <stop offset="0%" stop-color="#FFF59D"/><stop offset="100%" stop-color="#FBC02D"/>
+                 </linearGradient>
+               </defs>
+               <text x="50" y="85" font-family="'Times New Roman', Georgia, serif" font-size="105" font-weight="bold" fill="url(#piGrad)" text-anchor="middle" stroke="#F57F17" stroke-width="2.5">π</text>
+            </svg>
+            <div style="position:absolute; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; top: 22px; left: 50%; transform: translateX(-50%); width: 100%;">
+               <span style="font-size:18px; font-weight:900; color:#bf360c; text-shadow: 0px 0px 5px rgba(255,255,255,1), 0px 0px 2px rgba(255,255,255,0.8);">2π</span>
+               <span style="font-size:13px; font-weight:900; color:#bf360c; text-shadow: 0px 0px 5px rgba(255,255,255,1), 0px 0px 2px rgba(255,255,255,0.8); margin-top:-2px;">6.28</span>
+            </div>
+          </div>
+        `;
+      }
+      el.appendChild(balloonDiv);
+      
+      const areaW = gameArea.clientWidth; const areaH = gameArea.clientHeight;
+      let x, y; let overlap = true; let attempts = 0;
+      while (overlap && attempts < 10) {
+        x = 50 + Math.random() * (areaW - 150);
+        y = 100 + Math.random() * (areaH - 300);
+        overlap = bubbles.some(b => {
+          let dx = b.x - x; let dy = b.y - y;
+          return Math.sqrt(dx*dx + dy*dy) < 60; 
+        });
+        attempts++;
+      }
+      
+      el.style.left = x + 'px'; el.style.top = y + 'px';
+      
+      let vx, vy;
+      if (type === 'golden') {
+          vx = (Math.random() > 0.5 ? 1 : -1) * (3.0 + Math.random() * 2.0);
+          vy = (Math.random() > 0.5 ? 1 : -1) * (3.0 + Math.random() * 2.0);
+      } else {
+          vx = (Math.random() - 0.5) * 2.4;
+          vy = (Math.random() - 0.5) * 2.4;
+      }
+      
+      const bubble = { el, type, value, x, y, vx, vy };
+      el.addEventListener('click', (e) => { e.stopPropagation(); shootAt(bubble); });
+      gameArea.appendChild(el); bubbles.push(bubble);
+    }
+
+    function maintainBalloons() {
+      if (Date.now() < pauseRegenTime) return;
+      
+      while (pendingSpecials.length > 0) {
+        let sType = pendingSpecials.pop();
+        spawnBubble(sType);
+      }
+
+      if (bubbles.length < 28) {
+        const needed = 28 - bubbles.length;
+        for (let i = 0; i < needed; i++) spawnBubble();
+        ensureTargetExists();
+      }
+    }
+
+    function spawnInitialBubbles() {
+      for (let i = 0; i < 28; i++) spawnBubble();
+      ensureTargetExists();
+    }
+
+    function ensureTargetExists() {
+      const target = parseInt(PI_DIGITS[currentIndex]);
+      if (!bubbles.some(b => b.type === 'number' && b.value === target)) {
+        spawnBubble();
+        const lastBubble = bubbles[bubbles.length-1];
+        lastBubble.type = 'number'; lastBubble.value = target;
+        lastBubble.el.querySelector('.balloon').className = 'balloon';
+        lastBubble.el.querySelector('.balloon').innerHTML = `<span class="balloon-text">${target}</span>`;
+        lastBubble.el.querySelector('.balloon').style.background = `radial-gradient(circle at 35% 35%, ${BUBBLE_COLORS[target]}, ${BUBBLE_COLORS_DARK[target]})`;
+      }
+    }
+
+    function activateFever() {
+      feverMode = true;
+      gameArea.classList.add('fever-bg', 'fever-active');
+      document.getElementById('feverStatus').style.opacity = '1';
+      showScorePopup(gameArea.clientWidth/2, gameArea.clientHeight/2 - 50, "🔥🔥 피버 타임! 5초 갱신! 🔥🔥");
+      
+      playFeverSound();
+      if(feverTimeout) clearTimeout(feverTimeout);
+      feverTimeout = setTimeout(() => {
+        feverMode = false;
+        gameArea.classList.remove('fever-bg', 'fever-active');
+        document.getElementById('feverStatus').style.opacity = '0';
+      }, 5000); 
+    }
+
+    function checkMilestone() {
+      if(currentIndex === 3 || currentIndex === 6 || currentIndex === 28) {
+        gameEndTime += 5000; showScorePopup(gameArea.clientWidth/2, 150, "🎉 랜드마크 돌파! 시간 +5초 🎉");
+      }
+    }
+
+    function triggerPenalty(bubble) {
+      gameEndTime -= 2000; showScorePopup(bubble.x, bubble.y, "⏳ -2초!");
+      combo = 0; document.getElementById('comboDisplay').style.opacity = '0';
+      
+      feverMode = false;
+      if (feverTimeout) clearTimeout(feverTimeout);
+      gameArea.classList.remove('fever-bg', 'fever-active');
+      document.getElementById('feverStatus').style.opacity = '0';
+      
+      wand.classList.remove('shake'); void wand.offsetWidth; wand.classList.add('shake');
+      gameArea.classList.add('screen-shake');
+      setTimeout(()=> gameArea.classList.remove('screen-shake'), 400);
+      const overlay = document.getElementById('damageOverlay');
+      overlay.style.opacity = '0.5';
+      setTimeout(()=> overlay.style.opacity = '0', 200);
+      playFailSound();
+    }
+
+    function triggerScreenFlash(color = 'white') {
+      const flash = document.createElement('div');
+      flash.style.cssText = `position:absolute;inset:0;background:${color};z-index:99;opacity:0.8;transition:opacity 0.3s ease-out;pointer-events:none;`;
+      gameArea.appendChild(flash);
+      requestAnimationFrame(() => { flash.style.opacity = '0'; setTimeout(() => flash.remove(), 300); });
+    }
+
+    function shootAt(bubble) {
+      if (!gameRunning) return;
+      const target = parseInt(PI_DIGITS[currentIndex]);
+      createProjectile(bubble);
+      
+      if (bubble.type === 'freeze') {
+        freezeEndTime = Date.now() + 2500;
+        showScorePopup(bubble.x, bubble.y, "❄️ 얼음! 2.5초 정지!");
+        playFreezeSound();
+        triggerScreenFlash('#e0f7fa');
+        removeBubble(bubble); maintainBalloons(); return;
+      }
+      
+      if (bubble.type === 'golden') {
+        gameEndTime += 4000; score += feverMode ? 1500 : 500; updateScore();
+        triggerScreenFlash('#fff59d');
+        showScorePopup(bubble.x, bubble.y, feverMode ? "✨ +1500점 & 4초 추가! ✨" : "✨ +500점 & 4초 추가! ✨");
+        createBurstParticles(bubble.x + 40, bubble.y + 40, true);
+        playTimeExtensionSound(); 
+        removeBubble(bubble); maintainBalloons();
+        return;
+      }
+      
+      if (bubble.type === 'bomb') {
+        showScorePopup(bubble.x, bubble.y, "💣 싹쓸이! (특수풍선 생존)"); playBombSound(); triggerScreenFlash();
+        
+        const toRemove = bubbles.filter(b => {
+          if (b.type === 'number' && b.value === target) return false; 
+          if (b.type === 'hint') return false; 
+          if (b === bubble) return false; 
+          return true; 
+        });
+        
+        toRemove.forEach(b => { 
+          if (['golden', 'freeze'].includes(b.type)) {
+            pendingSpecials.push(b.type);
+          }
+          createBalloonPopEffect(b); 
+          removeBubble(b); 
+        });
+        
+        removeBubble(bubble); pauseRegenTime = Date.now() + 3000; return; 
+      }
+      
+      if (bubble.type === 'hint') {
+        showScorePopup(bubble.x, bubble.y, "💖 힌트 발동!"); playHintSound();
+        bubbles.forEach(b => {
+          if(b.type === 'number' && b.value === target) {
+            b.el.querySelector('.balloon').classList.add('hint-glow');
+            setTimeout(()=> { if (b && b.el) b.el.querySelector('.balloon').classList.remove('hint-glow'); }, 3000);
+          }
+        });
+        removeBubble(bubble); maintainBalloons(); return;
+      }
+
+      if (bubble.type === 'number' && bubble.value === target) {
+        document.querySelectorAll('.hint-glow').forEach(el => el.classList.remove('hint-glow'));
+        combo++;
+        
+        if (combo > maxCombo) { maxCombo = combo; }
+
+        if (combo > 0 && combo % 5 === 0) {
+            activateFever();
+            // 🔥 10콤보 이상부터 5단위로 2초씩 시간 연장 패치
+            if (combo >= 10) {
+                gameEndTime += 2000;
+                setTimeout(() => showScorePopup(bubble.x, bubble.y - 50, "⏰ +2초 연장!"), 150);
+            }
+        }
+        
+        let basePoints = Math.floor(120 * (1 + combo * 0.2)); 
+        if (combo >= 20) {
+            basePoints += (combo - 19) * 150; 
+        }
+
+        const points = feverMode ? basePoints * 3 : basePoints;
+        score += points; updateScore();
+        
+        document.getElementById('comboCount').textContent = combo;
+        const cDisplay = document.getElementById('comboDisplay');
+        cDisplay.style.opacity = combo > 0 ? '1' : '0';
+        cDisplay.classList.remove('combo-flash'); void cDisplay.offsetWidth; cDisplay.classList.add('combo-flash');
+        
+        showScorePopup(bubble.x, bubble.y, `+${points} Perfect!`);
+        createBurstParticles(bubble.x + 40, bubble.y + 40);
+        createBalloonPopEffect(bubble); playSuccessSound(); removeBubble(bubble);
+        
+        pauseRegenTime = 0; 
+        currentIndex++;
+        if (currentIndex >= PI_DIGITS.length) currentIndex = 0;
+        
+        document.getElementById('nextDigit').textContent = PI_DIGITS[currentIndex];
+        updateNext10Digits(); updateProgressDisplay(); checkMilestone();
+        maintainBalloons();
+      } else {
+        triggerPenalty(bubble); createBalloonPopEffect(bubble); removeBubble(bubble); maintainBalloons();
+      }
+    }
+    
+    function updateScore() {
+      document.getElementById('scoreDisplay').textContent = score;
+    }
+
+    function removeBubble(bubble) {
+      if (bubble && bubble.el) bubble.el.remove();
+      bubbles = bubbles.filter(b => b !== bubble);
+    }
+
+    function createProjectile(bubble) {
+      const proj = document.createElement('div');
+      proj.className = feverMode ? 'projectile fever-proj' : 'projectile';
+      proj.textContent = feverMode ? '🔥' : '✨';
+      proj.style.left = (wand.offsetLeft + wand.offsetWidth / 2 - 20) + 'px';
+      proj.style.top = (wand.offsetTop) + 'px';
+      gameArea.appendChild(proj);
+      
+      const targetX = bubble.x + 25; const targetY = bubble.y + 25;
+      proj.style.transition = 'all 0.1s ease-out';
+      requestAnimationFrame(() => { proj.style.left = targetX + 'px'; proj.style.top = targetY + 'px'; });
+      setTimeout(() => proj.remove(), 150);
+    }
+
+    function createBurstParticles(cx, cy, isGold = false) {
+      const colors = isGold ? ['#FFF59D', '#FBC02D', '#FFD54F'] : ['#FFB3D9','#B3E5FC','#C5E1A5','#FFE0B2','#F8BBD0'];
+      for (let i = 0; i < 15; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.background = colors[i % colors.length];
+        p.style.left = (cx + (Math.random()-0.5)*60) + 'px';
+        p.style.top = (cy + (Math.random()-0.5)*60) + 'px';
+        gameArea.appendChild(p);
+        setTimeout(() => p.remove(), 600);
+      }
+    }
+
+    function createBalloonPopEffect(bubble) {
+      const popEl = document.createElement('div');
+      popEl.className = 'pop-burst';
+      popEl.style.left = bubble.x + 'px'; popEl.style.top = bubble.y + 'px';
+      popEl.innerHTML = '💥'; popEl.style.fontSize = '70px';
+      popEl.style.display = 'flex'; popEl.style.alignItems = 'center'; popEl.style.justifyContent = 'center';
+      gameArea.appendChild(popEl);
+      setTimeout(() => popEl.remove(), 400);
+    }
+
+    function showScorePopup(x, y, text) {
+      const el = document.createElement('div');
+      el.className = 'score-popup'; el.textContent = text;
+      el.style.left = x + 'px'; el.style.top = y + 'px';
+      gameArea.appendChild(el); setTimeout(() => el.remove(), 1000);
+    }
+
+    function createFireworkParticle(x, y) {
+      const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#FF9800', '#E91E63'];
+      for (let i = 0; i < 30; i++) {
+        const p = document.createElement('div');
+        p.style.position = 'absolute';
+        p.style.width = '6px'; p.style.height = '6px';
+        p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        p.style.borderRadius = '50%';
+        p.style.left = x + 'px'; p.style.top = y + 'px';
+        p.style.zIndex = '102'; p.style.pointerEvents = 'none';
+        p.style.boxShadow = `0 0 6px ${p.style.backgroundColor}`;
+        gameArea.appendChild(p);
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 30 + Math.random() * 120;
+        const tx = Math.cos(angle) * velocity;
+        const ty = Math.sin(angle) * velocity + 50;
+        p.animate([
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+        ], { duration: 800 + Math.random() * 600, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' }).onfinish = () => p.remove();
+      }
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100 + Math.random()*200, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(10, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.05, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.start(); osc.stop(ctx.currentTime + 0.3);
+      } catch(e){}
+    }
+
+    function createPiExplosion(tier) {
+      let maxCount = 0;
+      let intervalMs = 150;
+      
+      if (tier === 4) { maxCount = 15; intervalMs = 350; } 
+      else if (tier === 5) { maxCount = 30; intervalMs = 250; } 
+      else if (tier === 6) { maxCount = 45; intervalMs = 200; } 
+      else if (tier === 7) { maxCount = 60; intervalMs = 150; } 
+      else if (tier === 8) { maxCount = 80; intervalMs = 100; } 
+      else if (tier >= 9) { maxCount = 120; intervalMs = 60; } 
+
+      const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#00c3ff', '#4b0082', '#ff00ff'];
+      let currentCount = 0;
+      
+      piExplosionInterval = setInterval(() => {
+        if (currentCount >= maxCount) {
+          clearInterval(piExplosionInterval);
+          return;
+        }
+        currentCount++;
+        
+        const el = document.createElement('div');
+        el.textContent = 'π';
+        el.style.position = 'absolute';
+        el.style.left = (Math.random() * gameArea.clientWidth) + 'px';
+        el.style.top = (Math.random() * gameArea.clientHeight) + 'px';
+        el.style.fontSize = '30px'; el.style.fontWeight = '900'; el.style.zIndex = '103'; el.style.pointerEvents = 'none';
+        
+        const c1 = colors[Math.floor(Math.random() * colors.length)];
+        const c2 = colors[Math.floor(Math.random() * colors.length)];
+        el.style.background = `linear-gradient(45deg, ${c1}, ${c2})`;
+        el.style.webkitBackgroundClip = 'text'; el.style.color = 'transparent';
+        
+        gameArea.appendChild(el);
+        
+        el.animate([
+          { transform: 'translate(-50%, -50%) scale(0.5) rotate(0deg)', opacity: 0 },
+          { transform: `translate(-50%, -50%) scale(5) rotate(${(Math.random()-0.5)*90}deg)`, opacity: 0.9, offset: 0.4 },
+          { transform: `translate(-50%, -50%) scale(15) rotate(${(Math.random()-0.5)*180}deg)`, opacity: 0 }
+        ], { duration: 1200 + Math.random() * 800, easing: 'ease-out' }).onfinish = () => el.remove();
+      }, intervalMs);
+    }
+    
+    function playNote(ctx, freq, delay, duration, type) {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = type; osc.frequency.value = freq;
+        const startTime = ctx.currentTime + delay;
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.2, startTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        osc.start(startTime); osc.stop(startTime + duration);
+    }
+
+    function playResultSound(tier) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (tier >= 9) { 
+           const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.00];
+           notes.forEach((f, i) => playNote(ctx, f, i*0.1, 0.5, 'square'));
+        } else if (tier >= 5) { 
+           const notes = [523.25, 659.25, 783.99, 1046.50];
+           notes.forEach((f, i) => playNote(ctx, f, i*0.15, 0.4, 'square'));
+        } else if (tier >= 2) { 
+           const notes = [523.25, 659.25, 783.99];
+           notes.forEach((f, i) => playNote(ctx, f, i*0.15, 0.3, 'sine'));
+        } else if (tier === 1) { 
+           const notes = [523.25, 659.25];
+           notes.forEach((f, i) => playNote(ctx, f, i*0.15, 0.3, 'triangle'));
+        } else { 
+           const notes = [392.00, 370.00, 349.23, 329.63];
+           notes.forEach((f, i) => playNote(ctx, f, i*0.3, 0.4, 'sawtooth'));
+        }
+      } catch(e) {}
+    }
+
+    function playResetSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start(); osc.stop(ctx.currentTime + 0.4);
+      } catch(e){}
+    }
+
+    function playFeverSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]; 
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.type = 'sawtooth'; 
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+          gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.08);
+          gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + i * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.08 + 0.2);
+          osc.start(ctx.currentTime + i * 0.08);
+          osc.stop(ctx.currentTime + i * 0.08 + 0.2);
+        });
+        
+        const boomOsc = ctx.createOscillator();
+        const boomGain = ctx.createGain();
+        boomOsc.connect(boomGain); boomGain.connect(ctx.destination);
+        boomOsc.type = 'square';
+        boomOsc.frequency.setValueAtTime(150, ctx.currentTime + 0.4);
+        boomOsc.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.8);
+        boomGain.gain.setValueAtTime(0.3, ctx.currentTime + 0.4);
+        boomGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+        boomOsc.start(ctx.currentTime + 0.4);
+        boomOsc.stop(ctx.currentTime + 0.8);
+      } catch(e){}
+    }
+    
+    function playFreezeSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(1200, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        osc.start(); osc.stop(ctx.currentTime + 0.5);
+      } catch(e){}
+    }
+
+    function playTimeExtensionSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [1046.50, 1318.51, 1567.98, 2093.00]; 
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.08);
+          gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.08);
+          gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + i * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.08 + 0.2);
+          osc.start(ctx.currentTime + i * 0.08);
+          osc.stop(ctx.currentTime + i * 0.08 + 0.2);
+        });
+      } catch(e){}
+    }
+
+    function playSuccessSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        osc.start(); osc.stop(ctx.currentTime + 0.2);
+      } catch(e){}
+    }
+    function playFailSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc1 = ctx.createOscillator(); const osc2 = ctx.createOscillator(); const gain = ctx.createGain();
+        osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
+        osc1.type = 'sawtooth'; osc2.type = 'square';
+        osc1.frequency.setValueAtTime(150, ctx.currentTime); osc2.frequency.setValueAtTime(110, ctx.currentTime);
+        osc1.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.3); osc2.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.4, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc1.start(); osc2.start(); osc1.stop(ctx.currentTime + 0.3); osc2.stop(ctx.currentTime + 0.3);
+      } catch(e){}
+    }
+    function playHintSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, i) => playNote(ctx, freq, i*0.08, 0.2, 'sine'));
+      } catch(e){}
+    }
+    function playBombSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'square'; osc.frequency.setValueAtTime(100, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.4);
+        gain.gain.setValueAtTime(0.5, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+        osc.start(); osc.stop(ctx.currentTime + 0.4);
+      } catch(e){}
+    }
+    function playTickSound() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(800, ctx.currentTime);
+        gain.gain.setValueAtTime(0.5, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+        osc.start(); osc.stop(ctx.currentTime + 0.05);
+      } catch(e){}
+    }
+
+    function gameLoop() {
+      if (!gameRunning) return;
+      
+      let isFrozen = Date.now() < freezeEndTime;
+      document.getElementById('freezeOverlay').style.opacity = isFrozen ? '0.35' : '0';
+
+      const remaining = Math.max(0, Math.ceil((gameEndTime - Date.now()) / 1000));
+      timerEl.textContent = remaining;
+      
+      if (remaining <= 5 && remaining > 0 && remaining !== lastTickSecond) {
+        playTickSound(); lastTickSecond = remaining;
+      }
+      
+      if (remaining <= 10) {
+        timerEl.style.color = remaining <= 5 ? '#e91e63' : '#ff9800';
+        if (remaining <= 5) timerEl.classList.add('shake');
+      } else {
+        timerEl.style.color = '#9333ea'; timerEl.classList.remove('shake');
+      }
+      
+      if (remaining === 0) { endGame(); return; }
+      
+      const areaW = gameArea.clientWidth; const areaH = gameArea.clientHeight;
+      
+      let speedMultiplier = 1;
+      if (combo >= 40) speedMultiplier = 3.5;
+      else if (combo >= 30) speedMultiplier = 2.8;
+      else if (combo >= 20) speedMultiplier = 2.0;
+      else if (combo >= 15) speedMultiplier = 1.5;
+      else if (combo >= 10) speedMultiplier = 1.2;
+
+      let currentMaxSpeed = speedMultiplier;
+
+      if (feverMode) {
+        if (combo >= 30) { speedMultiplier *= 2.5; currentMaxSpeed = 8.0; }
+        else if (combo >= 25) { speedMultiplier *= 2.1; currentMaxSpeed = 6.0; }
+        else if (combo >= 20) { speedMultiplier *= 1.8; currentMaxSpeed = 5.0; }
+        else if (combo >= 15) { speedMultiplier *= 1.5; currentMaxSpeed = 4.0; }
+        else { speedMultiplier *= 1.4; currentMaxSpeed = 3.5; }
+      }
+
+      speedMultiplier = Math.min(speedMultiplier, currentMaxSpeed);
+      
+      bubbles.forEach(b => {
+        if (!isFrozen) { 
+          b.x += b.vx * speedMultiplier; 
+          b.y += b.vy * speedMultiplier;
+        }
+        
+        if (b.x < 20 || b.x > areaW - 110) b.vx *= -1;
+        if (b.y < 100 || b.y > areaH - 200) b.vy *= -1;
+        b.x = Math.max(20, Math.min(areaW - 110, b.x));
+        b.y = Math.max(100, Math.min(areaH - 200, b.y));
+        b.el.style.left = b.x + 'px'; b.el.style.top = b.y + 'px';
+      });
+      
+      for (let i = 0; i < bubbles.length; i++) {
+        for (let j = i + 1; j < bubbles.length; j++) {
+          let b1 = bubbles[i]; let b2 = bubbles[j];
+          let dx = b1.x - b2.x; let dy = b1.y - b2.y;
+          let dist = Math.sqrt(dx * dx + dy * dy);
+          let minDist = 60; 
+          if (dist < minDist && dist > 0 && !isFrozen) {
+            let overlap = minDist - dist;
+            let forceX = (dx / dist) * overlap * 0.015; 
+            let forceY = (dy / dist) * overlap * 0.015;
+            b1.x += forceX; b1.y += forceY;
+            b2.x -= forceX; b2.y -= forceY;
+            b1.vx += forceX * 0.05; b1.vy += forceY * 0.05;
+            b2.vx -= forceX * 0.05; b2.vy -= forceY * 0.05;
+          }
+        }
+      }
+      
+      if (Math.random() < 0.03 && bubbles.length < 35 && Date.now() > pauseRegenTime && !isFrozen) {
+        spawnBubble(); ensureTargetExists();
+      }
+      animFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function endGame() {
+      gameRunning = false;
+      cancelAnimationFrame(animFrameId);
+      clearBubbles();
+      
+      let finalStr = currentIndex === 1 ? "3." : (currentIndex > 1 ? "3." + PI_DIGITS.slice(1, currentIndex) : "?");
+      
+      let title = ""; let titleColor = ""; let tierIndex = 0;
+      if (score >= 40000) { title = "🌌 파이의 신"; titleColor = "#ff0000"; tierIndex = 9; }
+      else if (score >= 36000) { title = "🌟 우주 대폭발 파이"; titleColor = "#ff1744"; tierIndex = 8; }
+      else if (score >= 32000) { title = "👑 빛나는 파이 유니버스"; titleColor = "#e91e63"; tierIndex = 7; }
+      else if (score >= 28000) { title = "💫 전설의 파이 마스터"; titleColor = "#f50057"; tierIndex = 6; }
+      else if (score >= 24000) { title = "💎 파이 그랜드 마스터"; titleColor = "#ff9800"; tierIndex = 5; }
+      else if (score >= 20000) { title = "🏅 위대한 파이 수집가"; titleColor = "#ffb300"; tierIndex = 4; }
+      else if (score >= 16000) { title = "🏆 영광의 파이 마스터"; titleColor = "#9c27b0"; tierIndex = 3; }
+      else if (score >= 8000) { title = "🚀 멈출 수 없는 탐험가"; titleColor = "#03a9f4"; tierIndex = 2; }
+      else if (score >= 4000) { title = "🗺️ 호기심 많은 여행자"; titleColor = "#00bcd4"; tierIndex = 1; }
+      else { title = "🌱 귀여운 파이 초심자"; titleColor = "#4caf50"; tierIndex = 0; }
+
+      if (gameMode === 'challenge') {
+        saveToLeaderboard(score, title, maxCombo);
+      }
+      playResultSound(tierIndex);
+
+      if (score >= 16000) {
+        fireworkInterval = setInterval(() => {
+          createFireworkParticle(50 + Math.random() * (gameArea.clientWidth - 100), 100 + Math.random() * (gameArea.clientHeight / 2));
+        }, 300);
+      }
+      
+      if (tierIndex >= 4) { 
+        createPiExplosion(tierIndex); 
+      }
+
+      const endScreen = document.createElement('div');
+      endScreen.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;z-index:101;backdrop-filter:blur(5px); flex-direction: column; padding: 20px; box-sizing: border-box;';
+      endScreen.innerHTML = `
+        <div class="flex flex-col md:flex-row gap-6 items-center justify-center w-full max-w-[1200px] h-full max-h-[90vh]">
+          <div style="background:white;border-radius:30px;padding:40px;box-shadow:0 10px 30px rgba(0,0,0,0.2);border:5px solid #fce4ec;text-align:center; flex: 1; min-width: 320px; max-width: 450px;">
+            <div style="font-size:60px;margin-bottom:10px">⏱️</div>
+            <h2 style="font-size:32px;font-weight:900;color:#880e4f;margin-bottom:12px">도전 종료!</h2>
+            
+            <div style="background:#f3f4f6; border-radius:20px; padding:15px; margin-bottom: 20px;">
+               <div style="font-size:16px; font-weight:bold; color:#666;">획득 칭호</div>
+               <div style="font-size:24px; font-weight:900; color:${titleColor}; letter-spacing:-0.5px;">${title}</div>
+            </div>
+
+            <div style="margin-bottom:15px">
+              <div style="font-size:18px;font-weight:bold;color:#666;margin-bottom:5px">최종 점수</div>
+              <div style="font-size:56px;font-weight:900;color:#7c4dff;line-height:1;">${score.toLocaleString()}</div>
+              
+              <div style="margin-top: 10px; font-size: 15px; font-weight: bold; color: #ff9800; background: #fff3e0; display: inline-block; padding: 6px 16px; border-radius: 20px; border: 1px solid #ffe0b2;">
+                🔥 최대 연속 정답: <span style="font-size: 20px; font-weight: 900; color: #e65100;">${maxCombo}</span> 콤보
+              </div>
+            </div>
+            
+            <div style="margin-bottom:30px;font-size:14px;color:#666;line-height:1.6">
+              <div style="font-weight:bold;">최종 달성 원주율: <br><strong style="color:#e91e63;font-size:18px;word-break:break-all;display:inline-block;margin-top:3px;">π = ${finalStr}</strong></div>
+              ${gameMode === 'practice' ? '<div style="margin-top:10px;color:#64748b;font-size:13px;">📖 암기하기 모드 · 기록은 저장되지 않습니다</div>' : ''}
+            </div>
+            <button onclick="handleRestart()" style="background:linear-gradient(to right, #ff6b9d, #e91e63);color:white;border:none;padding:16px 40px;border-radius:40px;font-size:20px;font-weight:900;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 20px rgba(233,30,99,0.5);width:100%;">
+              처음으로 / 다시 도전!
+            </button>
+          </div>
+          
+          <div class="bg-white rounded-[30px] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.15)] border-4 border-purple-200 flex flex-col flex: 1.5; w-full max-w-[700px] h-[90%] max-h-[600px]">
+             <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-black text-purple-700 text-center flex-1">🏆 명예의 전당</h3>
+                <button onclick="resetLeaderboard(false)" class="text-sm bg-red-100 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-200 transition-colors font-bold whitespace-nowrap shadow-sm active:scale-95">기록 초기화</button>
+             </div>
+             <ul id="endLeaderboardList" class="space-y-2 text-base text-left ranking-scroll overflow-y-auto pr-3 flex-1">
+             </ul>
+          </div>
+        </div>
+      `;
+      gameArea.appendChild(endScreen);
+      
+      renderLeaderboardToElement('endLeaderboardList', 50);
+    }
+  </script>
+
+  <div class="creator-info">
+    <p>행복한 수학, 함께 만들어요 😊<span class="sep">·</span>© 세종 중등수학교육 연구회 | 김OO 선생님</p>
+  </div>
+
+</body>
+</html>

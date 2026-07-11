@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>점과 상자 게임</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Pretendard','Noto Sans KR',system-ui,sans-serif;
+  background:#ffffff;color:#242830;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:1.5rem 1rem;user-select:none;
+}
+h1{
+  font-size:1.9rem;font-weight:700;letter-spacing:-0.02em;
+  color:#242830;
+  margin-bottom:.15rem;
+}
+.sub{font-size:.75rem;color:#616b7a;margin-bottom:1.2rem;letter-spacing:.06em}
+
+/* ── 플레이어 설정 패널 ── */
+.setup{
+  display:grid;grid-template-columns:1fr auto 1fr;gap:.5rem;
+  align-items:center;width:100%;max-width:500px;
+  background:#f1f3f6;border:1px solid #e1e4ea;border-radius:0.75rem;
+  padding:.9rem 1rem;margin-bottom:.9rem;
+  box-shadow:0 1px 2px rgba(15,23,42,0.04);
+}
+.setup-col{display:flex;flex-direction:column;gap:.35rem;align-items:center}
+.setup-vs{font-size:.85rem;font-weight:700;color:#616b7a;padding:0 .25rem}
+.setup-label{font-size:.6rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.setup-label.c1{color:#2563eb}.setup-label.c2{color:#db2777}
+.setup select{
+  background:#fff;border:1px solid #e1e4ea;border-radius:0.5rem;
+  padding:.4rem .5rem;font-size:.78rem;cursor:pointer;outline:none;
+  color:#242830;width:100%;max-width:160px;font-family:inherit;
+}
+.setup select:hover{border-color:#94a0b0}
+
+/* ── 스코어보드 ── */
+.scoreboard{
+  display:grid;grid-template-columns:1fr auto 1fr;gap:.6rem;
+  align-items:center;margin-bottom:.9rem;width:100%;max-width:500px;
+}
+.p-card{
+  background:#ffffff;border:1px solid #e1e4ea;border-radius:0.75rem;
+  padding:.7rem .9rem;text-align:center;
+  transition:border-color .2s,background .2s,transform .15s;
+  box-shadow:0 1px 2px rgba(15,23,42,0.04),0 8px 24px rgba(15,23,42,0.05);
+}
+.p-card.active-1{border-color:#2563eb;background:#eff6ff;transform:scale(1.04)}
+.p-card.active-2{border-color:#db2777;background:#fdf2f8;transform:scale(1.04)}
+.p-label{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem}
+.p-label.c1{color:#2563eb}.p-label.c2{color:#db2777}
+.p-name{font-size:.75rem;color:#616b7a;margin-bottom:.2rem;min-height:.95rem}
+.p-score{font-size:2.4rem;font-weight:800;line-height:1}
+.score-1{color:#2563eb}.score-2{color:#db2777}
+.turn-badge{text-align:center;font-size:.72rem;color:#616b7a;line-height:1.5}
+.turn-dot{width:9px;height:9px;border-radius:50%;margin:0 auto .3rem;transition:background .3s}
+
+/* ── 보드 ── */
+.board-wrap{
+  background:#ffffff;border:1px solid #e1e4ea;border-radius:0.75rem;
+  padding:1rem;margin-bottom:1rem;
+  box-shadow:0 1px 2px rgba(15,23,42,0.04),0 8px 24px rgba(15,23,42,0.05);
+}
+svg{display:block}
+
+/* ── 하단 컨트롤 ── */
+.controls{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;justify-content:center;margin-bottom:.5rem}
+select.grid-sel{
+  background:#f1f3f6;color:#242830;border:1px solid #e1e4ea;
+  border-radius:0.5rem;padding:.42rem .75rem;font-size:.8rem;cursor:pointer;outline:none;font-family:inherit;
+}
+select.grid-sel:hover{border-color:#94a0b0}
+.btn{
+  background:#f1f3f6;color:#242830;border:1px solid #e1e4ea;
+  border-radius:0.5rem;padding:.42rem .9rem;font-size:.8rem;font-weight:500;
+  cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit;
+}
+.btn:hover{background:#e1e4ea;border-color:#94a0b0}
+.btn:active{transform:scale(.97)}
+.btn-start{
+  background:#2b313c;color:#fff;border-color:#2b313c;font-weight:600;
+}
+.btn-start:hover{background:#3d4554;border-color:#3d4554}
+
+.msg{min-height:1.4rem;font-size:.95rem;font-weight:600;text-align:center;color:#242830;margin-top:.15rem}
+.thinking{color:#616b7a;font-size:.82rem;font-style:italic}
+@keyframes pulse{from{opacity:.7}to{opacity:1}}
+.winner-glow{animation:pulse .6s ease-in-out infinite alternate}
+</style>
+</head>
+<body>
+
+<h1>점과 상자</h1>
+<p class="sub">DOTS &amp; BOXES</p>
+
+<!-- 플레이어 설정 -->
+<div class="setup">
+  <div class="setup-col">
+    <div class="setup-label c1">플레이어 1</div>
+    <select id="p1Sel">
+      <option value="human">👤 사람</option>
+      <option value="easy">🤖 컴퓨터 (쉬움)</option>
+      <option value="medium">🤖 컴퓨터 (보통)</option>
+      <option value="hard">🤖 컴퓨터 (어려움)</option>
+      <option value="super">🧠 컴퓨터 (슈퍼)</option>
+    </select>
+  </div>
+  <div class="setup-vs">VS</div>
+  <div class="setup-col">
+    <div class="setup-label c2">플레이어 2</div>
+    <select id="p2Sel">
+      <option value="human">👤 사람</option>
+      <option value="easy">🤖 컴퓨터 (쉬움)</option>
+      <option value="medium" selected>🤖 컴퓨터 (보통)</option>
+      <option value="hard">🤖 컴퓨터 (어려움)</option>
+      <option value="super">🧠 컴퓨터 (슈퍼)</option>
+    </select>
+  </div>
+</div>
+
+<!-- 스코어보드 -->
+<div class="scoreboard">
+  <div class="p-card" id="card1">
+    <div class="p-label c1">플레이어 1</div>
+    <div class="p-name" id="p1name"></div>
+    <div class="p-score score-1" id="score1">0</div>
+  </div>
+  <div class="turn-badge">
+    <div class="turn-dot" id="tdot"></div>
+    <div id="turn-txt">P1 차례</div>
+  </div>
+  <div class="p-card" id="card2">
+    <div class="p-label c2">플레이어 2</div>
+    <div class="p-name" id="p2name"></div>
+    <div class="p-score score-2" id="score2">0</div>
+  </div>
+</div>
+
+<div class="board-wrap"><svg id="svg"></svg></div>
+
+<div class="controls">
+  <select id="gridSel" class="grid-sel">
+    <option value="4">3×3</option>
+    <option value="5" selected>4×4</option>
+    <option value="6">5×5</option>
+    <option value="7">6×6</option>
+  </select>
+  <button class="btn" onclick="initGame()">🔄 새 게임</button>
+  <button class="btn btn-start" onclick="startGame()">▶ 게임 시작</button>
+</div>
+<div class="msg" id="msg"></div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const C1='#2563eb',C2='#db2777';
+const BOX1='rgba(37,99,235,0.12)',BOX2='rgba(219,39,119,0.12)';
+const GHOST='#e1e4ea',DOT='#2b313c';
+const DIFF_LABEL={'human':'사람','easy':'쉬움','medium':'보통','hard':'어려움','super':'슈퍼'};
+const DIFF_ICON={'human':'👤','easy':'🤖','medium':'🤖','hard':'🤖','super':'🧠'};
+
+let N=5,SP=80,PAD=36;
+let hLines,vLines,boxes,cur,scores,gameOver;
+let hLineEls,vLineEls,boxEls;
+let p1Diff='human',p2Diff='medium';
+let aiThinking=false;
+
+function isHuman(p){return p===1?p1Diff==='human':p2Diff==='human';}
+function diffOf(p){return p===1?p1Diff:p2Diff;}
+
+function px(c){return PAD+c*SP;}
+function py(r){return PAD+r*SP;}
+function svgW(){return (N-1)*SP+2*PAD;}
+function computeSP(){
+  const maxW=Math.min(window.innerWidth-80,520);
+  SP=Math.floor((maxW-2*PAD)/(N-1));
+  SP=Math.min(SP,90);SP=Math.max(SP,52);
+}
+function mkEl(tag,attrs){
+  const e=document.createElementNS(NS,tag);
+  for(const[k,v] of Object.entries(attrs))e.setAttribute(k,v);
+  return e;
+}
+
+// 게임 시작 버튼: 설정 읽어서 새 게임
+function startGame(){
+  p1Diff=document.getElementById('p1Sel').value;
+  p2Diff=document.getElementById('p2Sel').value;
+  N=parseInt(document.getElementById('gridSel').value);
+  resetGame();
+}
+// 새 게임: 현재 설정 유지하고 리셋
+function initGame(){
+  N=parseInt(document.getElementById('gridSel').value);
+  resetGame();
+}
+
+function resetGame(){
+  computeSP();
+  hLines=Array.from({length:N},()=>Array(N-1).fill(0));
+  vLines=Array.from({length:N-1},()=>Array(N).fill(0));
+  boxes=Array.from({length:N-1},()=>Array(N-1).fill(0));
+  cur=1;scores=[0,0,0];gameOver=false;aiThinking=false;
+  document.getElementById('msg').innerHTML='';
+  updateNameBadges();
+  buildSVG();
+  updateUI();
+  // P1이 AI면 바로 AI 턴 시작
+  if(!isHuman(1))scheduleAI();
+}
+
+function updateNameBadges(){
+  document.getElementById('p1name').textContent=DIFF_ICON[p1Diff]+' '+DIFF_LABEL[p1Diff];
+  document.getElementById('p2name').textContent=DIFF_ICON[p2Diff]+' '+DIFF_LABEL[p2Diff];
+}
+
+// ─── SVG BUILD ───────────────────────────────────────────
+function buildSVG(){
+  const svg=document.getElementById('svg');
+  const w=svgW();
+  svg.setAttribute('width',w);svg.setAttribute('height',w);
+  svg.setAttribute('viewBox','0 0 '+w+' '+w);
+  svg.innerHTML='';
+  const lw=Math.max(4,SP*0.07);
+  const gBox=mkEl('g',{});const gGhost=mkEl('g',{'pointer-events':'none'});
+  const gDot=mkEl('g',{'pointer-events':'none'});const gHit=mkEl('g',{});
+  svg.append(gBox,gGhost,gDot,gHit);
+
+  boxEls=Array.from({length:N-1},(_,r)=>Array.from({length:N-1},(_,c)=>{
+    const rect=mkEl('rect',{x:px(c)+3,y:py(r)+3,width:SP-6,height:SP-6,fill:'none',rx:4});
+    const txt=mkEl('text',{x:px(c)+SP/2,y:py(r)+SP/2+Math.floor(SP*.12),
+      'text-anchor':'middle','font-size':Math.floor(SP*0.38),'font-weight':'800',fill:'none',opacity:'.55'});
+    txt.textContent='';
+    gBox.append(rect,txt);return{rect,txt};
+  }));
+
+  hLineEls=Array.from({length:N},(_,r)=>Array.from({length:N-1},(_,c)=>{
+    const l=mkEl('line',{x1:px(c)+5,y1:py(r),x2:px(c+1)-5,y2:py(r),
+      stroke:GHOST,'stroke-width':2,'stroke-linecap':'round','stroke-dasharray':'5 5'});
+    gGhost.appendChild(l);return l;
+  }));
+  vLineEls=Array.from({length:N-1},(_,r)=>Array.from({length:N},(_,c)=>{
+    const l=mkEl('line',{x1:px(c),y1:py(r)+5,x2:px(c),y2:py(r+1)-5,
+      stroke:GHOST,'stroke-width':2,'stroke-linecap':'round','stroke-dasharray':'5 5'});
+    gGhost.appendChild(l);return l;
+  }));
+
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++)
+    gDot.appendChild(mkEl('circle',{cx:px(c),cy:py(r),r:Math.max(5,SP*0.075),fill:DOT}));
+
+  // hit areas - horizontal
+  for(let r=0;r<N;r++)for(let c=0;c<N-1;c++){
+    const rr=r,cc=c;
+    const hit=mkEl('rect',{x:px(c),y:py(r)-18,width:SP,height:36,fill:'rgba(0,0,0,0.001)'});
+    hit.style.cursor='pointer';
+    hit.addEventListener('mouseenter',()=>{
+      if(gameOver||hLines[rr][cc]||aiThinking||!isHuman(cur))return;
+      const l=hLineEls[rr][cc];
+      l.setAttribute('x1',px(cc));l.setAttribute('x2',px(cc+1));
+      l.setAttribute('stroke',cur===1?C1:C2);
+      l.setAttribute('stroke-width',lw);l.setAttribute('stroke-dasharray','none');l.setAttribute('opacity','0.45');
+    });
+    hit.addEventListener('mouseleave',()=>{
+      if(hLines[rr][cc])return;
+      const l=hLineEls[rr][cc];
+      l.setAttribute('x1',px(cc)+5);l.setAttribute('x2',px(cc+1)-5);
+      l.setAttribute('stroke',GHOST);l.setAttribute('stroke-width','2');
+      l.setAttribute('stroke-dasharray','5 5');l.setAttribute('opacity','1');
+    });
+    hit.addEventListener('click',()=>{
+      if(gameOver||hLines[rr][cc]||aiThinking||!isHuman(cur))return;
+      commitH(rr,cc);processTurn(rr,cc,'h');
+    });
+    gHit.appendChild(hit);
+  }
+  // hit areas - vertical
+  for(let r=0;r<N-1;r++)for(let c=0;c<N;c++){
+    const rr=r,cc=c;
+    const hit=mkEl('rect',{x:px(c)-18,y:py(r),width:36,height:SP,fill:'rgba(0,0,0,0.001)'});
+    hit.style.cursor='pointer';
+    hit.addEventListener('mouseenter',()=>{
+      if(gameOver||vLines[rr][cc]||aiThinking||!isHuman(cur))return;
+      const l=vLineEls[rr][cc];
+      l.setAttribute('y1',py(rr));l.setAttribute('y2',py(rr+1));
+      l.setAttribute('stroke',cur===1?C1:C2);
+      l.setAttribute('stroke-width',lw);l.setAttribute('stroke-dasharray','none');l.setAttribute('opacity','0.45');
+    });
+    hit.addEventListener('mouseleave',()=>{
+      if(vLines[rr][cc])return;
+      const l=vLineEls[rr][cc];
+      l.setAttribute('y1',py(rr)+5);l.setAttribute('y2',py(rr+1)-5);
+      l.setAttribute('stroke',GHOST);l.setAttribute('stroke-width','2');
+      l.setAttribute('stroke-dasharray','5 5');l.setAttribute('opacity','1');
+    });
+    hit.addEventListener('click',()=>{
+      if(gameOver||vLines[rr][cc]||aiThinking||!isHuman(cur))return;
+      commitV(rr,cc);processTurn(rr,cc,'v');
+    });
+    gHit.appendChild(hit);
+  }
+}
+
+function commitH(r,c){
+  hLines[r][c]=cur;
+  const l=hLineEls[r][c],lw=Math.max(4,SP*0.07);
+  l.setAttribute('x1',px(c));l.setAttribute('x2',px(c+1));
+  l.setAttribute('stroke',cur===1?C1:C2);
+  l.setAttribute('stroke-width',lw);l.setAttribute('stroke-dasharray','none');l.setAttribute('opacity','1');
+}
+function commitV(r,c){
+  vLines[r][c]=cur;
+  const l=vLineEls[r][c],lw=Math.max(4,SP*0.07);
+  l.setAttribute('y1',py(r));l.setAttribute('y2',py(r+1));
+  l.setAttribute('stroke',cur===1?C1:C2);
+  l.setAttribute('stroke-width',lw);l.setAttribute('stroke-dasharray','none');l.setAttribute('opacity','1');
+}
+
+// ─── GAME LOGIC ──────────────────────────────────────────
+function processTurn(r,c,type){
+  let scored=0;
+  if(type==='h'){if(r>0)scored+=checkBox(r-1,c);if(r<N-1)scored+=checkBox(r,c);}
+  else{if(c>0)scored+=checkBox(r,c-1);if(c<N-1)scored+=checkBox(r,c);}
+  scores[cur]+=scored;
+  if(scores[1]+scores[2]===(N-1)*(N-1)){gameOver=true;updateUI();return;}
+  if(scored===0)cur=cur===1?2:1;
+  updateUI();
+  if(!isHuman(cur)&&!gameOver)scheduleAI();
+}
+
+function checkBox(r,c){
+  if(boxes[r][c])return 0;
+  if(hLines[r][c]&&hLines[r+1][c]&&vLines[r][c]&&vLines[r][c+1]){
+    boxes[r][c]=cur;
+    boxEls[r][c].rect.setAttribute('fill',cur===1?BOX1:BOX2);
+    boxEls[r][c].txt.setAttribute('fill',cur===1?C1:C2);
+    boxEls[r][c].txt.textContent=cur===1?'1':'2';
+    return 1;
+  }
+  return 0;
+}
+
+function sideCount(r,c){
+  return (hLines[r][c]?1:0)+(hLines[r+1][c]?1:0)+(vLines[r][c]?1:0)+(vLines[r][c+1]?1:0);
+}
+function allMoves(){
+  const m=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N-1;c++)if(!hLines[r][c])m.push({type:'h',r,c});
+  for(let r=0;r<N-1;r++)for(let c=0;c<N;c++)if(!vLines[r][c])m.push({type:'v',r,c});
+  return m;
+}
+function movesCompletes(mv){
+  let cnt=0;
+  if(mv.type==='h'){if(mv.r>0&&sideCount(mv.r-1,mv.c)===3)cnt++;if(mv.r<N-1&&sideCount(mv.r,mv.c)===3)cnt++;}
+  else{if(mv.c>0&&sideCount(mv.r,mv.c-1)===3)cnt++;if(mv.c<N-1&&sideCount(mv.r,mv.c)===3)cnt++;}
+  return cnt;
+}
+function adjacentBoxes(mv){
+  const res=[];
+  if(mv.type==='h'){if(mv.r>0)res.push([mv.r-1,mv.c]);if(mv.r<N-1)res.push([mv.r,mv.c]);}
+  else{if(mv.c>0)res.push([mv.r,mv.c-1]);if(mv.c<N-1)res.push([mv.r,mv.c]);}
+  return res;
+}
+function donateCount(mv){
+  if(mv.type==='h')hLines[mv.r][mv.c]=99;else vLines[mv.r][mv.c]=99;
+  let cnt=0;
+  for(const[r,c] of adjacentBoxes(mv))if(sideCount(r,c)===3)cnt++;
+  if(mv.type==='h')hLines[mv.r][mv.c]=0;else vLines[mv.r][mv.c]=0;
+  return cnt;
+}
+function movesDonates(mv){return donateCount(mv)>0;}
+function createsTwoSided(mv){
+  if(mv.type==='h')hLines[mv.r][mv.c]=99;else vLines[mv.r][mv.c]=99;
+  let risky=false;
+  for(const[r,c] of adjacentBoxes(mv))if(sideCount(r,c)===2){risky=true;break;}
+  if(mv.type==='h')hLines[mv.r][mv.c]=0;else vLines[mv.r][mv.c]=0;
+  return risky;
+}
+
+// ─── AI SCHEDULING ───────────────────────────────────────
+function scheduleAI(){
+  aiThinking=true;
+  const d=diffOf(cur);
+  const icon=d==='super'?'🧠':'🤖';
+  const label=DIFF_LABEL[d];
+  document.getElementById('msg').innerHTML=`<span class="thinking">${icon} P${cur} (${label}) 생각 중...</span>`;
+  // AI vs AI는 빠르게, 사람 vs AI는 약간 딜레이
+  const hasHuman=isHuman(1)||isHuman(2);
+  const delay=d==='super'?150:hasHuman?500:200;
+  setTimeout(()=>{
+    const mv=pickMoveForPlayer(cur);
+    if(mv){
+      if(mv.type==='h')commitH(mv.r,mv.c);else commitV(mv.r,mv.c);
+      aiThinking=false;
+      document.getElementById('msg').innerHTML='';
+      processTurn(mv.r,mv.c,mv.type);
+    }
+  },delay);
+}
+
+function pickMoveForPlayer(p){
+  const moves=allMoves();
+  if(!moves.length)return null;
+  const d=diffOf(p);
+  if(d==='easy')return easyPick(moves);
+  if(d==='medium')return mediumPick(moves);
+  if(d==='hard')return hardPick(moves);
+  return superPick(moves,p);
+}
+
+// ─── EASY ────────────────────────────────────────────────
+function easyPick(moves){return moves[Math.floor(Math.random()*moves.length)];}
+
+// ─── MEDIUM ──────────────────────────────────────────────
+function mediumPick(moves){
+  const complete=moves.filter(m=>movesCompletes(m)>0);
+  if(complete.length)return complete.sort((a,b)=>movesCompletes(b)-movesCompletes(a))[0];
+  const safe=moves.filter(m=>!movesDonates(m));
+  if(safe.length)return safe[Math.floor(Math.random()*safe.length)];
+  moves.sort((a,b)=>donateCount(a)-donateCount(b));
+  return moves[0];
+}
+
+// ─── HARD ────────────────────────────────────────────────
+function hardPick(moves){
+  const complete=moves.filter(m=>movesCompletes(m)>0);
+  if(complete.length)return complete.sort((a,b)=>movesCompletes(b)-movesCompletes(a))[0];
+  const safe=moves.filter(m=>!movesDonates(m));
+  if(safe.length){
+    const veryS=safe.filter(m=>!createsTwoSided(m));
+    return veryS.length?veryS[Math.floor(Math.random()*veryS.length)]:safe[Math.floor(Math.random()*safe.length)];
+  }
+  return doubleDealer(moves);
+}
+function doubleDealer(moves){
+  const chains=findChains();
+  chains.sort((a,b)=>a.length-b.length);
+  for(const chain of chains){const mv=findOpeningMove(chain);if(mv)return mv;}
+  moves.sort((a,b)=>donateCount(a)-donateCount(b));
+  return moves[0];
+}
+function findChains(){
+  const threes=[];
+  for(let r=0;r<N-1;r++)for(let c=0;c<N-1;c++)
+    if(!boxes[r][c]&&sideCount(r,c)===3)threes.push([r,c]);
+  if(!threes.length)return[];
+  const visited=new Set(),chains=[];
+  for(const[sr,sc] of threes){
+    const key=sr+','+sc;if(visited.has(key))continue;
+    const chain=[],q=[[sr,sc]];
+    while(q.length){
+      const[r,c]=q.shift(),k=r+','+c;if(visited.has(k))continue;
+      visited.add(k);chain.push([r,c]);
+      for(const[nr,nc] of[[r-1,c],[r+1,c],[r,c-1],[r,c+1]])
+        if(nr>=0&&nr<N-1&&nc>=0&&nc<N-1&&!boxes[nr][nc]&&sideCount(nr,nc)===3&&!visited.has(nr+','+nc))q.push([nr,nc]);
+    }
+    chains.push(chain);
+  }
+  return chains;
+}
+function findOpeningMove(chain){
+  for(const[r,c] of chain)for(const mv of getMissingMoves(r,c)){
+    if(mv.type==='h'&&!hLines[mv.r][mv.c])return mv;
+    if(mv.type==='v'&&!vLines[mv.r][mv.c])return mv;
+  }
+  return null;
+}
+function getMissingMoves(r,c){
+  const ms=[];
+  if(!hLines[r][c])ms.push({type:'h',r,c});
+  if(!hLines[r+1][c])ms.push({type:'h',r:r+1,c});
+  if(!vLines[r][c])ms.push({type:'v',r,c});
+  if(!vLines[r][c+1])ms.push({type:'v',r,c:c+1});
+  return ms;
+}
+
+// ─── SUPER: MINIMAX + ALPHA-BETA ─────────────────────────
+function getDepth(){
+  if(N<=4)return 10;if(N<=5)return 7;if(N<=6)return 5;return 4;
+}
+function cloneState(st){
+  return{hL:st.hL.map(r=>[...r]),vL:st.vL.map(r=>[...r]),bx:st.bx.map(r=>[...r]),sc:[...st.sc],cur:st.cur};
+}
+function globalToState(){
+  return{hL:hLines.map(r=>[...r]),vL:vLines.map(r=>[...r]),bx:boxes.map(r=>[...r]),sc:[...scores],cur};
+}
+function sideCountS(st,r,c){
+  return (st.hL[r][c]?1:0)+(st.hL[r+1][c]?1:0)+(st.vL[r][c]?1:0)+(st.vL[r][c+1]?1:0);
+}
+function movesFromState(st){
+  const completing=[],others=[];
+  for(let r=0;r<N;r++)for(let c=0;c<N-1;c++){
+    if(!st.hL[r][c]){
+      const mv={type:'h',r,c};
+      const compl=(r>0&&sideCountS(st,r-1,c)===3?1:0)+(r<N-1&&sideCountS(st,r,c)===3?1:0);
+      if(compl>0)completing.push(mv);else others.push(mv);
+    }
+  }
+  for(let r=0;r<N-1;r++)for(let c=0;c<N;c++){
+    if(!st.vL[r][c]){
+      const mv={type:'v',r,c};
+      const compl=(c>0&&sideCountS(st,r,c-1)===3?1:0)+(c<N-1&&sideCountS(st,r,c)===3?1:0);
+      if(compl>0)completing.push(mv);else others.push(mv);
+    }
+  }
+  return [...completing,...others];
+}
+function applyMoveToState(st,mv){
+  const ns=cloneState(st);
+  if(mv.type==='h')ns.hL[mv.r][mv.c]=ns.cur;else ns.vL[mv.r][mv.c]=ns.cur;
+  let scored=0;
+  if(mv.type==='h'){
+    if(mv.r>0&&!ns.bx[mv.r-1][mv.c]&&sideCountS(ns,mv.r-1,mv.c)===4){ns.bx[mv.r-1][mv.c]=ns.cur;scored++;}
+    if(mv.r<N-1&&!ns.bx[mv.r][mv.c]&&sideCountS(ns,mv.r,mv.c)===4){ns.bx[mv.r][mv.c]=ns.cur;scored++;}
+  }else{
+    if(mv.c>0&&!ns.bx[mv.r][mv.c-1]&&sideCountS(ns,mv.r,mv.c-1)===4){ns.bx[mv.r][mv.c-1]=ns.cur;scored++;}
+    if(mv.c<N-1&&!ns.bx[mv.r][mv.c]&&sideCountS(ns,mv.r,mv.c)===4){ns.bx[mv.r][mv.c]=ns.cur;scored++;}
+  }
+  ns.sc[ns.cur]+=scored;
+  if(scored===0)ns.cur=ns.cur===1?2:1;
+  return ns;
+}
+
+// aiPlayer: 이 AI가 몇 번 플레이어인지 (1 or 2)
+// 평가값 = sc[aiPlayer] - sc[opponent]
+function minimaxAB(st,depth,alpha,beta,aiPlayer){
+  const moves=movesFromState(st);
+  if(moves.length===0||depth===0)return st.sc[aiPlayer]-st.sc[aiPlayer===1?2:1];
+  if(st.cur===aiPlayer){
+    let best=-Infinity;
+    for(const mv of moves){
+      const val=minimaxAB(applyMoveToState(st,mv),depth-1,alpha,beta,aiPlayer);
+      if(val>best)best=val;
+      if(val>alpha)alpha=val;
+      if(beta<=alpha)break;
+    }
+    return best;
+  }else{
+    let best=Infinity;
+    for(const mv of moves){
+      const val=minimaxAB(applyMoveToState(st,mv),depth-1,alpha,beta,aiPlayer);
+      if(val<best)best=val;
+      if(val<beta)beta=val;
+      if(beta<=alpha)break;
+    }
+    return best;
+  }
+}
+function superPick(moves,aiPlayer){
+  const depth=getDepth();
+  const st=globalToState();
+  let bestMove=moves[0],bestVal=-Infinity;
+  for(const mv of moves){
+    const val=minimaxAB(applyMoveToState(st,mv),depth-1,-Infinity,Infinity,aiPlayer);
+    if(val>bestVal){bestVal=val;bestMove=mv;}
+  }
+  return bestMove;
+}
+
+// ─── UI ──────────────────────────────────────────────────
+function updateUI(){
+  document.getElementById('score1').textContent=scores[1];
+  document.getElementById('score2').textContent=scores[2];
+  document.getElementById('tdot').style.background=cur===1?C1:C2;
+  const bothAI=!isHuman(1)&&!isHuman(2);
+  document.getElementById('turn-txt').textContent=gameOver?'게임 종료':`P${cur} 차례`;
+  document.getElementById('card1').className='p-card'+((!gameOver&&cur===1)?' active-1':'');
+  document.getElementById('card2').className='p-card'+((!gameOver&&cur===2)?' active-2':'');
+  const msg=document.getElementById('msg');
+  if(gameOver&&!aiThinking){
+    if(scores[1]>scores[2]){
+      const txt=p1Diff==='human'?'🎉 플레이어 1 승리!':p2Diff==='human'?'🤖 AI 승리!':'🎉 P1 승리!';
+      msg.innerHTML=`<span class="winner-glow" style="color:${C1}">${txt}</span>`;
+    }else if(scores[2]>scores[1]){
+      const txt=p2Diff==='human'?'🎉 플레이어 2 승리!':p1Diff==='human'?'🤖 AI 승리!':'🎉 P2 승리!';
+      msg.innerHTML=`<span class="winner-glow" style="color:${C2}">${txt}</span>`;
+    }else{
+      msg.innerHTML='<span>🤝 무승부!</span>';
+    }
+  }
+}
+
+window.addEventListener('resize',()=>{computeSP();resetGame();});
+
+// 초기 실행
+p1Diff=document.getElementById('p1Sel').value;
+p2Diff=document.getElementById('p2Sel').value;
+N=parseInt(document.getElementById('gridSel').value);
+resetGame();
+</script>
+</body>
+</html>

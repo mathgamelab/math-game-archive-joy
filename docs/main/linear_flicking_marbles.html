@@ -1,0 +1,849 @@
+<!doctype html>
+<html class="h-full">
+ <head><meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>일차함수 알까기</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Noto Sans KR', sans-serif; }
+    canvas { display: block; }
+    body { box-sizing: border-box; padding-bottom: 4.5rem; }
+    .creator-info {
+      position: fixed;
+      bottom: calc(10px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      color: #cbd5e1;
+      font-size: 0.85rem;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 8px 16px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+      border: 1px solid #334155;
+      z-index: 200;
+      width: fit-content;
+      max-width: calc(100vw - 24px);
+      line-height: 1.45;
+    }
+    .creator-info p { margin: 2px 0; }
+    @media (max-width: 768px) {
+      .creator-info { font-size: 0.78rem; padding: 6px 12px; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js" type="text/javascript"></script>
+  </head>
+ <body class="h-full bg-slate-900 overflow-auto">
+  <div id="app" class="h-full w-full flex flex-col items-center p-4">
+   <!-- 룰 소개 화면 -->
+   <div id="rulesScreen" class="h-full w-full flex flex-col items-center justify-center p-4">
+    <div class="bg-slate-800 border-2 border-amber-500 rounded-2xl p-8 max-w-2xl w-full space-y-6">
+     <h1 class="text-4xl font-black text-amber-400 text-center mb-6">일차함수 알까기</h1>
+     <div class="space-y-4 text-slate-200">
+      <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+       <h2 class="text-xl font-bold text-amber-300 mb-2">📖 게임 규칙</h2>
+       <ul class="space-y-2 text-sm">
+        <li>✓ 흰돌(⚪)과 검은돌(⚫)이 번갈아가며 진행합니다</li>
+        <li>✓ 흰돌은 왼쪽(2,3사분면), 검은돌은 오른쪽(1,4사분면)에 배치됩니다</li>
+        <li>✓ 자신의 차례에 돌을 선택하고 기울기를 정한 후 힘을 조절해서 발사합니다</li>
+        <li>✓ 일직선의 경로를 따라 돌이 움직입니다</li>
+        <li>✓ 상대방의 돌과 충돌하면 둘 다 튕겨나갑니다</li>
+        <li>✓ 게임판 밖으로 나간 돌은 제거됩니다</li>
+       </ul>
+      </div>
+      <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+       <h2 class="text-xl font-bold text-amber-300 mb-2">🎮 조작 방법</h2>
+       <ol class="space-y-2 text-sm">
+        <li><strong>1단계:</strong> 게임판에서 자신의 돌을 클릭해서 선택합니다</li>
+        <li><strong>2단계:</strong> 발사 방향을 선택합니다 (← 왼쪽 / 오른쪽 →)</li>
+        <li><strong>3단계:</strong> 기울기(m)를 입력합니다 (예: 2, 1/2, -3/4)</li>
+        <li><strong>4단계:</strong> 힘 게이지를 클릭해서 멈춤으로 발사 강도를 정합니다</li>
+       </ol>
+      </div>
+      <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+       <h2 class="text-xl font-bold text-amber-300 mb-2">🏆 승리 조건</h2>
+       <p class="text-sm">상대방의 모든 돌을 게임판 밖으로 제거하면 승리합니다!</p>
+      </div>
+     </div><button id="startGameBtn" class="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-bold text-lg rounded-lg transition-all transform hover:scale-105"> 🎮 게임 시작하기 </button><button id="backToGameBtn" class="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 font-bold text-lg rounded-lg transition-all transform hover:scale-105 hidden"> 🎮 게임으로 돌아가기 </button>
+    </div>
+   </div><!-- 게임 화면 -->
+   <div id="gameScreen" class="h-full w-full hidden flex flex-col items-center p-4">
+    <div class="flex w-full max-w-5xl items-center gap-3 mb-3">
+     <button id="ruleBookBtn" class="p-2 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold rounded-lg transition-colors" title="게임 규칙 보기"> 📖 규칙 </button>
+     <h1 id="title" class="text-2xl font-black text-amber-400 flex-1 text-center">일차함수 알까기</h1>
+     <div class="w-12"></div>
+    </div>
+    <div class="flex flex-col lg:flex-row gap-4 w-full max-w-5xl flex-1"><!-- Game Canvas -->
+     <div class="flex-1 relative">
+      <canvas id="gameCanvas" class="w-full rounded-xl border-2 border-amber-500/30 bg-emerald-900"></canvas>
+     </div><!-- Controls -->
+     <div class="lg:w-64 bg-slate-800 rounded-xl p-4 space-y-4 border border-slate-700">
+      <div id="turnIndicator" class="text-center text-lg font-bold text-yellow-100">
+       ⚪ 흰돌 차례
+      </div>
+      <div class="space-y-2"><label class="text-slate-300 text-sm font-bold">방향</label>
+       <div class="flex gap-2"><button id="dirLeftBtn" class="flex-1 py-2 bg-amber-500 text-slate-900 font-bold rounded-lg transition-colors">← 왼쪽</button> <button id="dirRightBtn" class="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold rounded-lg transition-colors">오른쪽 →</button>
+       </div>
+      </div>
+      <div class="space-y-2"><label class="text-slate-300 text-sm font-bold">기울기 (m)</label> <input type="text" id="slopeInput" placeholder="예: 2, 1/2, -3/4" value="" class="w-full px-3 py-2 bg-slate-700 text-amber-300 border border-slate-600 rounded-lg focus:outline-none focus:border-amber-400">
+       <div id="slopeError" class="text-red-400 text-xs hidden">
+        유효한 수나 분수를 입력하세요
+       </div>
+      </div>
+      <div class="space-y-2"><label class="text-slate-300 text-sm font-bold">⚡ 힘 (클릭/터치해서 멈추기)</label>
+       <div id="powerContainer" class="relative h-8 bg-slate-700 rounded-lg overflow-hidden border border-slate-600 cursor-pointer hover:border-amber-400 transition-colors">
+        <div id="powerBar" class="h-full bg-gradient-to-r from-rose-500 to-rose-400 w-0 transition-none"></div>
+       </div>
+       <div id="powerVal" class="text-rose-300 text-center text-xs">
+        준비 중...
+       </div>
+      </div><button id="shootBtn" class="w-full py-3 bg-slate-600 text-slate-400 font-bold rounded-lg transition-colors cursor-not-allowed" disabled> 게이지를 클릭하세요 🎯 </button>
+      <div id="scoreBoard" class="text-center text-sm text-slate-300"><span class="text-yellow-100 font-bold">흰돌: 3</span> | <span class="text-gray-400 font-bold">검정돌: 3</span>
+      </div><button id="resetBtn" class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-bold rounded-lg transition-colors"> 다시 시작 </button>
+      <div class="bg-slate-900 border border-slate-600 rounded-lg p-3 mt-4 text-xs text-slate-300 space-y-1">
+       <div class="font-bold text-amber-300 mb-2">
+        📋 진행 순서:
+       </div>
+       <div id="step1" class="text-slate-400">
+        1️⃣ 돌 선택
+       </div>
+       <div id="step2" class="text-slate-400">
+        2️⃣ 방향 선택
+       </div>
+       <div id="step3" class="text-slate-400">
+        3️⃣ 기울기 입력
+       </div>
+       <div id="step4" class="text-slate-400">
+        4️⃣ 힘 게이지
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- 승리 팝업 -->
+   <div id="winPopup" class="fixed inset-0 hidden flex items-center justify-center pointer-events-none z-50">
+    <div class="fixed inset-0 bg-black/50 pointer-events-auto" id="winPopupBackdrop"></div>
+    <div class="relative bg-gradient-to-b from-amber-400 to-amber-600 rounded-3xl p-12 text-center max-w-md transform pointer-events-auto animate-bounce" style="animation: scaleIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);">
+     <div class="text-6xl mb-4">
+      🏆
+     </div>
+     <h2 id="winTitle" class="text-4xl font-black text-amber-900 mb-2">승리!</h2>
+     <p id="winMessage" class="text-2xl font-bold text-amber-900 mb-6">흰돌팀 승리!</p>
+     <div class="space-y-3"><button id="winPlayAgainBtn" class="w-full py-3 bg-amber-900 hover:bg-amber-950 text-amber-100 font-bold text-lg rounded-xl transition-all transform hover:scale-105"> 🎮 다시 게임하기 </button> <button id="winRulesBtn" class="w-full py-3 bg-amber-800 hover:bg-amber-900 text-amber-100 font-bold text-lg rounded-xl transition-all transform hover:scale-105"> 📖 규칙 보기 </button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <div class="creator-info">
+    <p>행복한 수학, 함께 만들어요 😊</p>
+    <p>© 세종 중등수학교육 연구회 | 이OO 선생님</p>
+  </div>
+  <script>
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes scaleIn {
+        0% {
+          transform: scale(0.3) rotateZ(-10deg);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.1) rotateZ(5deg);
+        }
+        100% {
+          transform: scale(1) rotateZ(0deg);
+          opacity: 1;
+        }
+      }
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-20px); }
+      }
+      #winPopup.show {
+        pointer-events: auto !important;
+      }
+      #winPopup.show > div:last-child {
+        pointer-events: auto !important;
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+  <script>
+    const defaultConfig = {
+      game_title: '일차함수 알까기',
+      primary_color: '#f59e0b',
+      background_color: '#0f172a',
+      surface_color: '#1e293b',
+      text_color: '#fbbf24',
+      accent_color: '#fb7185'
+    };
+
+    // Game Logic
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Parse slope - supports numbers and fractions
+    function parseSlope(input) {
+      if (!input) return 1;
+      input = input.trim();
+      
+      // Check if it's a fraction (e.g., "1/2", "-3/4")
+      if (input.includes('/')) {
+        const parts = input.split('/');
+        if (parts.length !== 2) return null;
+        const numerator = parseFloat(parts[0].trim());
+        const denominator = parseFloat(parts[1].trim());
+        if (isNaN(numerator) || isNaN(denominator) || denominator === 0) return null;
+        return numerator / denominator;
+      }
+      
+      // Otherwise try to parse as a regular number
+      const num = parseFloat(input);
+      return isNaN(num) ? null : num;
+    }
+    
+    let W, H, RADIUS = 10;
+    let marbles = [];
+    let turn = 0; // 0=red, 1=blue
+    let animating = false;
+    let powerGaugeActive = false;
+    let powerGaugeValue = 0;
+    let maxPowerGaugeValue = 10;
+    let powerDirection = 1; // 1 = increasing, -1 = decreasing
+    let selectedMarbleIndex = -1;
+    let powerAnimationId = null;
+    let userDirection = null; // null, 'left', 'right'
+    
+    // 진행 단계 추적
+    let gameStep = 0; // 0=돌선택, 1=방향선택, 2=기울기입력, 3=힘게이지
+    
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      W = canvas.width = rect.width;
+      H = canvas.height = Math.min(rect.width * 0.75, 500);
+      canvas.style.height = H + 'px';
+      RADIUS = Math.max(9, W * 0.02);
+    }
+    
+    function initMarbles() {
+      marbles = [];
+      const unitSize = Math.min(W * 0.9, H * 0.9) / 20;
+      const originX = W / 2;
+      const originY = H / 2;
+      const minDistance = 2 * unitSize; // 중심 사이 거리 최소 2 units
+      
+      // 돌 배치 함수 - 겹침 없이 배치
+      const placeMarble = (team, side) => {
+        let attempts = 0;
+        const maxAttempts = 50;
+        
+        while (attempts < maxAttempts) {
+          let x, y;
+          
+          if (side === 'left') {
+            // White marbles (2, 3 quadrants - left side)
+            x = originX - Math.random() * 8 * unitSize - 2 * unitSize; // -10 to -2 on x-axis
+            y = originY - (Math.random() * 20 - 10) * unitSize; // -10 to +10 on y-axis
+          } else {
+            // Black marbles (1, 4 quadrants - right side)
+            x = originX + Math.random() * 8 * unitSize + 2 * unitSize; // +2 to +10 on x-axis
+            y = originY - (Math.random() * 20 - 10) * unitSize; // -10 to +10 on y-axis
+          }
+          
+          // 기존 돌들과의 거리 체크
+          let overlaps = false;
+          for (let marble of marbles) {
+            const dx = marble.x - x;
+            const dy = marble.y - y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < minDistance) {
+              overlaps = true;
+              break;
+            }
+          }
+          
+          if (!overlaps) {
+            marbles.push({ x: x, y: y, vx: 0, vy: 0, team: team, alive: true });
+            return true;
+          }
+          
+          attempts++;
+        }
+        
+        return false;
+      };
+      
+      // White marbles 3개 배치
+      for (let i = 0; i < 3; i++) {
+        placeMarble(0, 'left');
+      }
+      
+      // Black marbles 3개 배치
+      for (let i = 0; i < 3; i++) {
+        placeMarble(1, 'right');
+      }
+    }
+    
+    function getActiveMarble() {
+      if (selectedMarbleIndex >= 0 && marbles[selectedMarbleIndex].alive && marbles[selectedMarbleIndex].team === turn) {
+        return marbles[selectedMarbleIndex];
+      }
+      return marbles.find(m => m.alive && m.team === turn);
+    }
+    
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      
+      // Background - darker for 3D effect
+      ctx.fillStyle = '#2a1f0f';
+      ctx.fillRect(0, 0, W, H);
+      
+      // Draw grid - same unit size for both axes
+      const unitSize = Math.min(W * 0.9, H * 0.9) / 20;
+      const originX = W / 2;
+      const originY = H / 2;
+      
+      // Draw board area with shadow for 3D effect
+      const boardLeft = originX - 10 * unitSize;
+      const boardTop = originY - 10 * unitSize;
+      const boardSize = 20 * unitSize;
+      
+      // Large shadow beneath the board - more dramatic
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(boardLeft + 15, boardTop + 15, boardSize, boardSize);
+      
+      // Board surface
+      ctx.fillStyle = '#d4a574';
+      ctx.fillRect(boardLeft, boardTop, boardSize, boardSize);
+      
+      // 3D border - top and left edges (lighter) - thicker for more depth
+      ctx.strokeStyle = '#f5deb3';
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.moveTo(boardLeft, boardTop);
+      ctx.lineTo(boardLeft + boardSize, boardTop);
+      ctx.lineTo(boardLeft + boardSize, boardTop + boardSize);
+      ctx.stroke();
+      
+      // 3D border - bottom and right edges (darker) - thicker for more depth
+      ctx.strokeStyle = '#5c4033';
+      ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.moveTo(boardLeft, boardTop + boardSize);
+      ctx.lineTo(boardLeft + boardSize, boardTop + boardSize);
+      ctx.lineTo(boardLeft + boardSize, boardTop);
+      ctx.stroke();
+      
+      // Draw grid lines - darker for non-axes
+      ctx.strokeStyle = '#8b7355';
+      ctx.lineWidth = 1;
+      for (let i = -10; i <= 10; i++) {
+        // Vertical lines
+        const xPos = originX + i * unitSize;
+        ctx.beginPath();
+        ctx.moveTo(xPos, boardTop);
+        ctx.lineTo(xPos, boardTop + boardSize);
+        ctx.stroke();
+        
+        // Horizontal lines
+        const yPos = originY - i * unitSize;
+        ctx.beginPath();
+        ctx.moveTo(boardLeft, yPos);
+        ctx.lineTo(boardLeft + boardSize, yPos);
+        ctx.stroke();
+      }
+      
+      // Draw axes - bold lines
+      ctx.strokeStyle = '#3d2817';
+      ctx.lineWidth = 2.5;
+      // X-axis
+      ctx.beginPath();
+      ctx.moveTo(boardLeft, originY);
+      ctx.lineTo(boardLeft + boardSize, originY);
+      ctx.stroke();
+      // Y-axis
+      ctx.beginPath();
+      ctx.moveTo(originX, boardTop);
+      ctx.lineTo(originX, boardTop + boardSize);
+      ctx.stroke();
+      
+      // Draw axis tick marks and labels
+      ctx.fillStyle = '#3d2817';
+      ctx.font = 'bold 11px Noto Sans KR';
+      ctx.textAlign = 'center';
+      for (let i = -10; i <= 10; i++) {
+        if (i === 0) continue;
+        // X-axis labels
+        const xPos = originX + i * unitSize;
+        ctx.fillText(i.toString(), xPos, originY + 16);
+        
+        // Y-axis labels
+        ctx.textAlign = 'right';
+        const yPos = originY - i * unitSize;
+        ctx.fillText(i.toString(), originX - 10, yPos + 4);
+        ctx.textAlign = 'center';
+      }
+      ctx.fillText('O', originX - 6, originY + 16);
+      
+      // Border zone - where marbles fall off
+      ctx.strokeStyle = '#f59e0b44';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 4]);
+      ctx.strokeRect(boardLeft, boardTop, boardSize, boardSize);
+      ctx.setLineDash([]);
+      
+
+      
+      // Draw marbles - white and black like baduk stones
+      marbles.forEach(m => {
+        if (!m.alive) return;
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, RADIUS, 0, Math.PI * 2);
+        const grad = ctx.createRadialGradient(m.x - 5, m.y - 5, 2, m.x, m.y, RADIUS);
+        if (m.team === 0) {
+          // White stone with shadow
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(1, '#e0e0e0');
+        } else {
+          // Black stone with highlight
+          grad.addColorStop(0, '#2a2a2a');
+          grad.addColorStop(1, '#000000');
+        }
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.strokeStyle = m.team === 0 ? '#999' : '#333';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+      
+      // Highlight active marble
+      if (!animating) {
+        const active = getActiveMarble();
+        if (active) {
+          ctx.beginPath();
+          ctx.arc(active.x, active.y, RADIUS + 5, 0, Math.PI * 2);
+          ctx.strokeStyle = '#fbbf24';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([3, 3]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+      
+      // Highlight selected marble
+      if (selectedMarbleIndex >= 0 && marbles[selectedMarbleIndex].alive) {
+        const m = marbles[selectedMarbleIndex];
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, RADIUS + 8, 0, Math.PI * 2);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    }
+    
+    function startPowerGauge() {
+      if (animating) return;
+      
+      // 돌이 선택되어 있는지 확인
+      if (selectedMarbleIndex < 0 || !marbles[selectedMarbleIndex].alive || marbles[selectedMarbleIndex].team !== turn) {
+        return; // 돌이 선택되지 않으면 게이지 시작 안 함
+      }
+      
+      // 단계 확인: 힘게이지 단계(3)에만 작동
+      if (gameStep !== 3) {
+        return;
+      }
+      
+      if (!powerGaugeActive) {
+        // 첫 클릭: 게이지 시작
+        powerGaugeActive = true;
+        powerGaugeValue = 0;
+        powerDirection = 1;
+        animatePowerGauge();
+      } else {
+        // 두 번째 클릭: 발사
+        stopPowerGauge();
+      }
+    }
+    
+    function animatePowerGauge() {
+      if (!powerGaugeActive) return;
+      
+      powerGaugeValue += powerDirection * 0.2;
+      if (powerGaugeValue >= maxPowerGaugeValue) {
+        powerDirection = -1;
+        powerGaugeValue = maxPowerGaugeValue;
+      } else if (powerGaugeValue <= 0) {
+        powerDirection = 1;
+        powerGaugeValue = 0;
+      }
+      
+      const percentage = (powerGaugeValue / maxPowerGaugeValue) * 100;
+      document.getElementById('powerBar').style.width = percentage + '%';
+      document.getElementById('powerVal').textContent = `힘: ${powerGaugeValue.toFixed(1)}`;
+      
+      powerAnimationId = requestAnimationFrame(animatePowerGauge);
+    }
+    
+    function stopPowerGauge() {
+      powerGaugeActive = false;
+      if (powerAnimationId) {
+        cancelAnimationFrame(powerAnimationId);
+        powerAnimationId = null;
+      }
+      const power = powerGaugeValue;
+      document.getElementById('powerBar').style.width = '0%';
+      document.getElementById('powerVal').textContent = '준비 중...';
+      shoot(power);
+    }
+    
+    function shoot(power) {
+      if (animating || power === 0) return;
+      const active = getActiveMarble();
+      if (!active) return;
+      
+      const input = document.getElementById('slopeInput').value;
+      const slope = parseSlope(input);
+      
+      // 입력이 없으면 1을 기본값으로 사용
+      const finalSlope = slope !== null ? slope : 1;
+      
+      let direction = userDirection;
+      if (!direction) {
+        direction = turn === 0 ? 'right' : 'left';
+      }
+      
+      if (direction === 'right') {
+        // Moves right (+x), y = slope * x
+        const length = Math.sqrt(1 + finalSlope * finalSlope);
+        active.vx = power / length;
+        active.vy = -power * finalSlope / length;
+      } else {
+        // Moves left (-x), follows same slope equation
+        const length = Math.sqrt(1 + finalSlope * finalSlope);
+        active.vx = -power / length;
+        active.vy = power * finalSlope / length;
+      }
+      
+      animating = true;
+      animate();
+    }
+    
+    function animate() {
+      const friction = 0.98;
+      let moving = false;
+      const unitSize = Math.min(W * 0.9, H * 0.9) / 20;
+      const originX = W / 2;
+      const originY = H / 2;
+      const boundaryX = originX + 10 * unitSize;
+      const boundaryY = originY + 10 * unitSize;
+      
+      marbles.forEach(m => {
+        if (!m.alive) return;
+        m.x += m.vx;
+        m.y += m.vy;
+        m.vx *= friction;
+        m.vy *= friction;
+        
+        if (Math.abs(m.vx) > 0.1 || Math.abs(m.vy) > 0.1) moving = true;
+      });
+      
+      // Collision detection
+      for (let i = 0; i < marbles.length; i++) {
+        for (let j = i + 1; j < marbles.length; j++) {
+          const a = marbles[i], b = marbles[j];
+          if (!a.alive || !b.alive) continue;
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < RADIUS * 2) {
+            const nx = dx / dist, ny = dy / dist;
+            const overlap = RADIUS * 2 - dist;
+            a.x -= nx * overlap / 2;
+            a.y -= ny * overlap / 2;
+            b.x += nx * overlap / 2;
+            b.y += ny * overlap / 2;
+            
+            const dvx = a.vx - b.vx, dvy = a.vy - b.vy;
+            const dot = dvx * nx + dvy * ny;
+            a.vx -= dot * nx;
+            a.vy -= dot * ny;
+            b.vx += dot * nx;
+            b.vy += dot * ny;
+            moving = true;
+          }
+        }
+      }
+      
+      // Check out of bounds - based on coordinate plane boundaries
+      marbles.forEach(m => {
+        if (!m.alive) return;
+        const minX = originX - 10 * unitSize;
+        const maxX = boundaryX;
+        const minY = originY - 10 * unitSize;
+        const maxY = boundaryY;
+        
+        if (m.x < minX - RADIUS || m.x > maxX + RADIUS || m.y < minY - RADIUS || m.y > maxY + RADIUS) {
+          m.alive = false;
+        }
+      });
+      
+      draw();
+      
+      if (moving) {
+        requestAnimationFrame(animate);
+      } else {
+        animating = false;
+        marbles.forEach(m => { m.vx = 0; m.vy = 0; });
+        checkWin();
+        
+        // 차례 넘기기: 공이 멈춘 후에만 차례가 바뀜
+        turn = 1 - turn;
+        
+        // 같은 팀의 살아있는 공이 없으면 다시 한번 더 넘기기
+        if (!marbles.some(m => m.alive && m.team === turn)) {
+          turn = 1 - turn;
+        }
+        
+        // 모든 입력 초기화
+        resetGameStep();
+        
+        updateUI();
+        draw();
+      }
+    }
+    
+    function checkWin() {
+      const redAlive = marbles.filter(m => m.alive && m.team === 0).length;
+      const blueAlive = marbles.filter(m => m.alive && m.team === 1).length;
+      updateScore(redAlive, blueAlive);
+      
+      if (redAlive === 0 || blueAlive === 0) {
+        setTimeout(() => {
+          const winner = redAlive > 0 ? '⚪ 흰돌팀' : '⚫ 검정돌팀';
+          document.getElementById('turnIndicator').textContent = `🏆 ${winner} 승리!`;
+          document.getElementById('shootBtn').disabled = true;
+          
+          // 승리 팝업 표시
+          showWinPopup(winner);
+        }, 100);
+      }
+    }
+    
+    function showWinPopup(winner) {
+      const popup = document.getElementById('winPopup');
+      const winMessage = document.getElementById('winMessage');
+      
+      // 메시지 업데이트
+      winMessage.textContent = `${winner} 승리!`;
+      
+      // 팝업 표시
+      popup.classList.remove('hidden');
+      popup.classList.add('show');
+    }
+    
+    function updateScore(r, b) {
+      document.getElementById('scoreBoard').innerHTML = 
+        `<span class="text-yellow-100 font-bold">흰돌: ${r}</span> | <span class="text-gray-400 font-bold">검정돌: ${b}</span>`;
+    }
+    
+    function updateUI() {
+      const indicator = document.getElementById('turnIndicator');
+      indicator.textContent = turn === 0 ? '⚪ 흰돌 차례' : '⚫ 검정돌 차례';
+      indicator.className = `text-center text-lg font-bold ${turn === 0 ? 'text-yellow-100' : 'text-gray-400'}`;
+    }
+    
+    function reset() {
+      turn = 0;
+      animating = false;
+      powerGaugeActive = false;
+      selectedMarbleIndex = -1;
+      userDirection = null;
+      gameStep = 0; // 처음 단계부터 시작
+      document.getElementById('shootBtn').disabled = false;
+      document.getElementById('powerBar').style.width = '0%';
+      document.getElementById('powerVal').textContent = '준비 중...';
+      updateDirectionButtons();
+      resize();
+      initMarbles();
+      updateUI();
+      updateScore(3, 3);
+      updateStepIndicator();
+      draw();
+    }
+    
+    function resetGameStep() {
+      gameStep = 0;
+      selectedMarbleIndex = -1;
+      userDirection = null;
+      document.getElementById('slopeInput').value = '';
+      document.getElementById('slopeError').classList.add('hidden');
+      document.getElementById('powerBar').style.width = '0%';
+      document.getElementById('powerVal').textContent = '준비 중...';
+      updateDirectionButtons();
+      updateStepIndicator();
+    }
+    
+    function updateStepIndicator() {
+      const steps = ['step1', 'step2', 'step3', 'step4'];
+      steps.forEach((id, index) => {
+        const el = document.getElementById(id);
+        if (index === gameStep) {
+          el.className = 'text-amber-300 font-bold';
+        } else if (index < gameStep) {
+          el.className = 'text-emerald-400';
+        } else {
+          el.className = 'text-slate-400';
+        }
+      });
+    }
+    
+    function updateDirectionButtons() {
+      const leftBtn = document.getElementById('dirLeftBtn');
+      const rightBtn = document.getElementById('dirRightBtn');
+      
+      if (userDirection === 'left') {
+        leftBtn.className = 'flex-1 py-2 bg-amber-500 text-slate-900 font-bold rounded-lg transition-colors';
+        rightBtn.className = 'flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold rounded-lg transition-colors';
+      } else if (userDirection === 'right') {
+        leftBtn.className = 'flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold rounded-lg transition-colors';
+        rightBtn.className = 'flex-1 py-2 bg-amber-500 text-slate-900 font-bold rounded-lg transition-colors';
+      } else {
+        leftBtn.className = 'flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold rounded-lg transition-colors';
+        rightBtn.className = 'flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold rounded-lg transition-colors';
+      }
+    }
+    
+    // 게임 시작 버튼
+    document.getElementById('startGameBtn').addEventListener('click', () => {
+      document.getElementById('rulesScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+      document.getElementById('startGameBtn').classList.add('hidden');
+      document.getElementById('backToGameBtn').classList.remove('hidden');
+      reset();
+    });
+    
+    // 규칙 버튼 - 게임 상태 유지
+    document.getElementById('ruleBookBtn').addEventListener('click', () => {
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('rulesScreen').classList.remove('hidden');
+    });
+    
+    // 게임으로 돌아가기 버튼 - 게임 상태 유지
+    document.getElementById('backToGameBtn').addEventListener('click', () => {
+      document.getElementById('rulesScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+    });
+    
+    // Events
+    document.getElementById('slopeInput').addEventListener('input', (e) => {
+      const input = e.target.value;
+      const slope = parseSlope(input);
+      const errorDiv = document.getElementById('slopeError');
+      
+      if (input.trim() === '') {
+        // 입력이 비어있으면 에러 표시 안 함, 다음 단계 불가능
+        errorDiv.classList.add('hidden');
+        gameStep = 2; // 기울기 입력 단계에서 멈춤
+      } else if (slope === null) {
+        // 유효하지 않은 입력
+        errorDiv.classList.remove('hidden');
+        gameStep = 2; // 기울기 입력 단계에서 멈춤
+      } else {
+        // 유효한 기울기 입력
+        errorDiv.classList.add('hidden');
+        gameStep = 3; // 힘게이지 단계로
+      }
+      
+      updateStepIndicator();
+      draw();
+    });
+    
+    const powerContainer = document.getElementById('powerContainer');
+    powerContainer.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      startPowerGauge();
+    });
+    powerContainer.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startPowerGauge();
+    });
+    document.addEventListener('mouseup', (e) => {
+      if (powerGaugeActive && e.target !== powerContainer) {
+        stopPowerGauge();
+      }
+    });
+    document.addEventListener('touchend', (e) => {
+      if (powerGaugeActive && e.target !== powerContainer) {
+        stopPowerGauge();
+      }
+    });
+    
+    // Marble selection
+    canvas.addEventListener('click', (e) => {
+      if (animating) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      const current = getActiveMarble();
+      if (!current) return;
+      
+      let clicked = -1;
+      marbles.forEach((m, i) => {
+        if (!m.alive || m.team !== turn) return;
+        const dx = m.x - x, dy = m.y - y;
+        if (Math.sqrt(dx * dx + dy * dy) < RADIUS + 5) {
+          clicked = i;
+        }
+      });
+      
+      if (clicked >= 0) {
+        selectedMarbleIndex = clicked;
+        gameStep = 1; // 돌 선택 후 방향선택 단계로
+        updateStepIndicator();
+      }
+      draw();
+    });
+    
+    document.getElementById('resetBtn').addEventListener('click', reset);
+    
+    document.getElementById('winPlayAgainBtn').addEventListener('click', () => {
+      document.getElementById('winPopup').classList.add('hidden');
+      document.getElementById('winPopup').classList.remove('show');
+      reset();
+    });
+    
+    document.getElementById('winRulesBtn').addEventListener('click', () => {
+      document.getElementById('winPopup').classList.add('hidden');
+      document.getElementById('winPopup').classList.remove('show');
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('rulesScreen').classList.remove('hidden');
+    });
+    
+    document.getElementById('winPopupBackdrop').addEventListener('click', () => {
+      document.getElementById('winPopup').classList.add('hidden');
+      document.getElementById('winPopup').classList.remove('show');
+      reset();
+    });
+    
+    document.getElementById('dirLeftBtn').addEventListener('click', () => {
+      userDirection = 'left';
+      gameStep = 2; // 다음 단계로 진행
+      updateDirectionButtons();
+      updateStepIndicator();
+    });
+    
+    document.getElementById('dirRightBtn').addEventListener('click', () => {
+      userDirection = 'right';
+      gameStep = 2; // 다음 단계로 진행
+      updateDirectionButtons();
+      updateStepIndicator();
+    });
+    
+    window.addEventListener('resize', () => { resize(); draw(); });
+    
+    reset();
+  </script>
+ </body>
+</html>

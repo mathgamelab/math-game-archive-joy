@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D 틱택토</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -12,9 +13,9 @@
         html, body { width: 100%; height: 100%; overflow: hidden; }
         body {
             margin: 0;
-            background-color: #f9fafb;
-            color: #1f2937;
-            font-family: 'Segoe UI', 'Apple SD Gothic Neo', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            color: #242830;
+            font-family: 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
             user-select: none;
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
@@ -45,15 +46,15 @@
             width: 2.4rem; height: 2.4rem; border-radius: 0.6rem;
             background: rgba(255,255,255,0.92);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            color: #4b5563; cursor: pointer; font-size: 1.05rem; font-family: inherit;
+            border: 1px solid #e1e4ea; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+            color: #4a5568; cursor: pointer; font-size: 1.05rem; font-family: inherit;
             display: inline-flex; align-items: center; justify-content: center;
             transition: all 0.18s;
         }
-        .icon-btn:hover { background: white; color: #111827; transform: translateY(-1px); }
+        .icon-btn:hover { background: white; color: #242830; transform: translateY(-1px); }
         .icon-btn:active { transform: translateY(0); }
-        .icon-btn.primary { background: #4f46e5; color: white; border-color: #4f46e5; }
-        .icon-btn.primary:hover { background: #6366f1; color: white; }
+        .icon-btn.primary { background: #2b313c; color: white; border-color: #2b313c; }
+        .icon-btn.primary:hover { background: #3d4554; color: white; }
         .hidden { display: none !important; }
 
         .top-center {
@@ -62,8 +63,7 @@
         }
         .title {
             margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: -0.025em;
-            background: linear-gradient(90deg, #3b82f6 0%, #fbbf24 50%, #f87171 100%);
-            -webkit-background-clip: text; background-clip: text; color: transparent;
+            color: #242830;
             line-height: 1.1;
         }
         @media (min-width: 768px) { .title { font-size: 1.65rem; } }
@@ -73,13 +73,13 @@
             background: rgba(255,255,255,0.92);
             backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             border-radius: 9999px;
-            box-shadow: 0 4px 12px -2px rgba(0,0,0,0.08);
-            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+            border: 1px solid #e1e4ea;
             padding: 0.35rem 1rem;
             display: flex; align-items: center; gap: 0.6rem; justify-content: center;
             font-size: 0.82rem;
         }
-        .line-meta { color: #6b7280; font-size: 0.78rem; font-weight: 700; }
+        .line-meta { color: #616b7a; font-size: 0.78rem; font-weight: 700; }
         .chip {
             display: inline-flex; align-items: center; gap: 0.4rem;
             padding: 0.12rem 0.65rem; border-radius: 9999px;
@@ -87,29 +87,29 @@
         }
         .chip.p1 { background: #eff6ff; color: #2563eb; }
         .chip.p2 { background: #fef2f2; color: #dc2626; }
-        .chip.draw { background: #f3f4f6; color: #4b5563; }
+        .chip.draw { background: #f1f3f6; color: #4a5568; }
         .dot {
             width: 0.5rem; height: 0.5rem; border-radius: 50%;
             box-shadow: 0 0 0 2px rgba(255,255,255,0.8); display: inline-block;
         }
         .dot.blue { background: #3b82f6; }
         .dot.red  { background: #f87171; }
-        .dot.gray { background: #9ca3af; }
+        .dot.gray { background: #94a0b0; }
 
         .top-right { display: flex; gap: 0.4rem; align-items: flex-start; }
         .mode-toggle {
             display: flex; gap: 0.3rem;
             background: rgba(255,255,255,0.92);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid #e5e7eb; border-radius: 0.6rem; padding: 0.2rem;
+            border: 1px solid #e1e4ea; border-radius: 0.6rem; padding: 0.2rem;
         }
         .mode-btn {
             padding: 0.35rem 0.7rem; border-radius: 0.4rem; background: transparent;
-            border: none; font-size: 0.8rem; font-weight: 600; color: #6b7280; cursor: pointer;
+            border: none; font-size: 0.8rem; font-weight: 600; color: #616b7a; cursor: pointer;
             transition: all 0.18s; font-family: inherit;
         }
-        .mode-btn:hover { color: #374151; }
-        .mode-btn.active { color: #4f46e5; background: #eef2ff; }
+        .mode-btn:hover { color: #2b313c; }
+        .mode-btn.active { color: #2b313c; background: #f1f3f6; }
 
         .control-hint {
             position: absolute;
@@ -118,9 +118,9 @@
             transform: translateX(-50%);
             background: rgba(255,255,255,0.9);
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-            border: 1px solid #e5e7eb; border-radius: 9999px;
-            padding: 0.35rem 0.9rem; font-size: 0.72rem; color: #6b7280;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e1e4ea; border-radius: 9999px;
+            padding: 0.35rem 0.9rem; font-size: 0.72rem; color: #616b7a;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
             text-align: center;
         }
 
@@ -133,40 +133,40 @@
         .modal-backdrop.show { display: flex; }
         .modal-card {
             background: white; border-radius: 1rem; max-width: 440px; width: 100%;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
             padding: 1.5rem 1.75rem; position: relative;
         }
         .modal-card h2 {
-            margin: 0 0 0.9rem 0; font-size: 1.15rem; font-weight: 700; color: #1f2937;
+            margin: 0 0 0.9rem 0; font-size: 1.15rem; font-weight: 700; color: #242830;
         }
         .modal-close {
             position: absolute; top: 0.75rem; right: 0.75rem;
             width: 2rem; height: 2rem; border-radius: 50%;
-            background: #f3f4f6; border: none; cursor: pointer;
+            background: #f1f3f6; border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            color: #6b7280; font-size: 1rem;
+            color: #616b7a; font-size: 1rem;
         }
-        .modal-close:hover { background: #e5e7eb; color: #111827; }
+        .modal-close:hover { background: #e1e4ea; color: #242830; }
         .rule-item {
             display: flex; gap: 0.7rem; margin-bottom: 0.85rem;
-            font-size: 0.88rem; color: #4b5563; line-height: 1.5;
+            font-size: 0.88rem; color: #4a5568; line-height: 1.5;
         }
         .rule-item:last-child { margin-bottom: 0; }
         .rule-num {
             flex-shrink: 0; width: 1.5rem; height: 1.5rem; border-radius: 50%;
-            background: #eef2ff; color: #4f46e5;
+            background: #f1f3f6; color: #2b313c;
             display: inline-flex; align-items: center; justify-content: center;
             font-size: 0.8rem; font-weight: 700;
         }
-        .rule-item b { color: #d97706; font-weight: 700; }
-        .rule-item strong { color: #1f2937; font-weight: 600; }
+        .rule-item b { color: #457a68; font-weight: 700; }
+        .rule-item strong { color: #242830; font-weight: 600; }
         .modal-tip {
             margin-top: 0.9rem; padding: 0.65rem 0.85rem;
-            background: #fffbeb; border-left: 3px solid #f59e0b;
-            border-radius: 0.3rem; font-size: 0.78rem; color: #78350f;
+            background: #f1f3f6; border-left: 3px solid #457a68;
+            border-radius: 0.3rem; font-size: 0.78rem; color: #4a5568;
         }
         .controls-hint {
-            margin-top: 0.75rem; font-size: 0.72rem; color: #9ca3af; line-height: 1.5;
+            margin-top: 0.75rem; font-size: 0.72rem; color: #94a0b0; line-height: 1.5;
         }
 
         .banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; }
@@ -174,21 +174,21 @@
         .banner-inner {
             background: rgba(255,255,255,0.96);
             backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border-radius: 1rem; border: 2px solid #9ca3af;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            border-radius: 1rem; border: 1px solid #e1e4ea;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
             padding: 1.6rem 2rem; text-align: center;
         }
         .banner-text { font-size: 1.65rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.45rem; }
         .banner-text.blue { color: #2563eb; }
         .banner-text.red { color: #dc2626; }
-        .banner-text.gray { color: #4b5563; }
-        .banner-sub { font-size: 0.86rem; color: #6b7280; margin-bottom: 1rem; }
+        .banner-text.gray { color: #4a5568; }
+        .banner-sub { font-size: 0.86rem; color: #616b7a; margin-bottom: 1rem; }
         .banner-btn {
             padding: 0.5rem 1.05rem; border-radius: 0.5rem;
-            background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb;
+            background: #f1f3f6; color: #2b313c; border: 1px solid #e1e4ea;
             font-size: 0.85rem; font-weight: 600; cursor: pointer;
         }
-        .banner-btn:hover { background: #e5e7eb; color: #111827; }
+        .banner-btn:hover { background: #e1e4ea; color: #242830; }
 
         .creator-info {
             position: fixed;
@@ -203,8 +203,8 @@
             -webkit-backdrop-filter: blur(10px);
             padding: 8px 15px;
             border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+            border: 1px solid #e1e4ea;
             z-index: 200;
             width: fit-content;
             max-width: calc(100vw - 24px);
@@ -217,7 +217,7 @@
             }
         }
         .creator-info p { margin: 2px 0; }
-        .creator-info a { color: #4299e1; text-decoration: none; }
+        .creator-info a { color: #457a68; text-decoration: none; }
         .creator-info a:hover { text-decoration: underline; }
 
         /* Extra-tight portrait layout */
@@ -331,7 +331,7 @@
             // --- Three.js Setup ---
             const container = document.getElementById('canvas-container');
             const scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0xf9fafb, 0.02); 
+            scene.fog = new THREE.FogExp2(0xffffff, 0.02); 
 
             const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(14, 12, 18); // 간격이 벌어질 것을 대비해 카메라를 살짝 뒤로 배치

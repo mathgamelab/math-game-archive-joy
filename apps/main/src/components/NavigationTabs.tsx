@@ -1,5 +1,4 @@
 import React from 'react';
-import { Button } from "@/components/ui/button";
 
 export interface TabData {
   id: string;
@@ -13,31 +12,30 @@ interface NavigationTabsProps {
   onTabChange: (tabId: string) => void;
 }
 
-export const NavigationTabs: React.FC<NavigationTabsProps> = ({ 
-  tabs, 
-  activeTab, 
-  onTabChange 
+export const NavigationTabs: React.FC<NavigationTabsProps> = ({
+  tabs,
+  activeTab,
+  onTabChange,
 }) => {
+  if (tabs.length <= 1) return null;
+
   return (
-    <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">
-      <div className="container mx-auto px-4">
-        <div className="flex overflow-x-auto scrollbar-hide py-4 gap-2">
-          {tabs.map((tab) => (
-            <Button
-              key={tab.id}
-              variant={activeTab === tab.id ? "default" : "ghost"}
-              onClick={() => onTabChange(tab.id)}
-              className={`
-                flex-shrink-0 whitespace-nowrap transition-smooth
-                ${activeTab === tab.id 
-                  ? 'bg-gradient-primary text-primary-foreground shadow-card hover:bg-gradient-primary hover:opacity-90' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                }
-              `}
-            >
-              {tab.label}
-            </Button>
-          ))}
+    <div className="border-b border-border/60 bg-background/80">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex gap-2 overflow-x-auto py-3 scrollbar-hide">
+          {tabs.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => onTabChange(tab.id)}
+                className={`chip shrink-0 whitespace-nowrap ${active ? 'chip-active' : 'hover:border-primary/25 hover:text-foreground'}`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

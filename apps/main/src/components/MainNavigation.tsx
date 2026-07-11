@@ -12,43 +12,59 @@ interface MainNavigationProps {
   onContactClick?: () => void;
 }
 
-export const MainNavigation: React.FC<MainNavigationProps> = ({ items, activeSection, onSectionChange, onContactClick }) => {
+export const MainNavigation: React.FC<MainNavigationProps> = ({
+  items,
+  activeSection,
+  onSectionChange,
+  onContactClick,
+}) => {
   return (
-    <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 sm:px-6 flex items-center h-12 sm:h-16">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center">
-            <img
-              src="/images/math_game_logo.png"
-              alt="Math Game Logo"
-              className="h-6 sm:h-10 w-auto select-none"
-              style={{ objectFit: 'contain' }}
-            />
-          </div>
-          <div className="flex items-center space-x-1 sm:space-x-2 flex-nowrap">
-            {items.map(item => (
+    <nav className="sticky top-0 z-50 border-b border-border/80 bg-white/90 backdrop-blur-md">
+      <div className="container mx-auto flex h-14 items-center justify-between px-4 sm:h-16 sm:px-6">
+        <button
+          type="button"
+          onClick={() => onSectionChange('main')}
+          className="flex items-center gap-2.5 text-left"
+          aria-label="메인으로 이동"
+        >
+          <img
+            src="/images/math_game_logo.png"
+            alt=""
+            className="h-7 w-auto select-none sm:h-9"
+            style={{ objectFit: 'contain' }}
+          />
+          <span className="hidden text-sm font-semibold tracking-tight text-foreground sm:inline sm:text-base">
+            Math Game Archive
+          </span>
+        </button>
+
+        <div className="flex items-center gap-1 sm:gap-2">
+          {items.map((item) => {
+            const active = activeSection === item.id;
+            return (
               <button
                 key={item.id}
+                type="button"
                 onClick={() => onSectionChange(item.id)}
-                className={`text-sm sm:text-lg font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded transition-colors duration-150 ${
-                  activeSection === item.id
-                    ? 'bg-blue-600 text-white shadow'
-                    : 'text-blue-700 bg-blue-50 hover:bg-blue-100'
+                className={`px-2.5 py-1.5 text-sm font-medium transition-colors sm:px-3 sm:text-[15px] ${
+                  active
+                    ? 'text-foreground underline decoration-primary/70 underline-offset-8'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {item.label}
               </button>
-            ))}
-            <button
-              onClick={onContactClick}
-              className="text-sm sm:text-lg font-medium px-2 sm:px-3 py-1.5 sm:py-2 rounded transition-colors duration-150 ml-1 sm:ml-2 text-blue-700 bg-blue-50 hover:bg-blue-100"
-              style={{ minWidth: '72px' }}
-            >
-              문의하기
-            </button>
-          </div>
+            );
+          })}
+          <button
+            type="button"
+            onClick={onContactClick}
+            className="ml-1 px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:px-3 sm:text-[15px]"
+          >
+            문의하기
+          </button>
         </div>
       </div>
     </nav>
   );
-}; 
+};

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-ro
 import { MainNavigation, MainNavItem } from "@/components/MainNavigation";
 import Main from "./pages/Main";
 import Index from "./pages/Index";
+import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
 import { useState, useEffect } from "react";
 import ContactModal from '@/components/ContactModal';
@@ -47,6 +48,7 @@ function AppRoutes({ navigationItems, onContactClick }: { navigationItems: MainN
         <Route path="/" element={<Main />} />
         <Route path="/main" element={<Main />} />
         <Route path="/games" element={<Index />} />
+        <Route path="/privacy" element={<Privacy />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

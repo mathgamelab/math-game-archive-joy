@@ -40,6 +40,15 @@ export const SiteFooter: React.FC = () => {
             <li>
               <button
                 type="button"
+                onClick={() => navigate('/terms')}
+                className="hover:text-foreground"
+              >
+                이용약관
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
                 onClick={() => navigate('/privacy')}
                 className="hover:text-foreground"
               >

@@ -41,21 +41,23 @@ const Main = () => {
   return (
     <div className="page-shell">
       {/* Hero */}
-      <section className="relative min-h-[72vh] overflow-hidden text-white sm:min-h-[78vh]">
+      <section className="relative min-h-[72svh] overflow-hidden text-white sm:min-h-[78svh]">
         <video
           className="absolute inset-0 z-0 h-full w-full object-cover"
           src="/videos/high_school_math_ver2.mp4"
+          poster="/images/main-poster.jpg"
           autoPlay
           loop
           muted
           playsInline
+          preload="metadata"
           onLoadedMetadata={(e) => {
             e.currentTarget.muted = true;
             e.currentTarget.volume = 0;
           }}
         />
         <div className="absolute inset-0 z-10 bg-[#2C2825]/55" />
-        <div className="container relative z-20 mx-auto flex min-h-[72vh] flex-col justify-end px-6 pb-16 pt-24 sm:min-h-[78vh] sm:pb-20">
+        <div className="container relative z-20 mx-auto flex min-h-[72svh] flex-col justify-end px-6 pb-16 pt-24 sm:min-h-[78svh] sm:pb-20">
           <div className="max-w-2xl animate-fade-in">
             <p className="mb-3 text-sm font-medium tracking-wide text-white/75">
               Math Game Archive

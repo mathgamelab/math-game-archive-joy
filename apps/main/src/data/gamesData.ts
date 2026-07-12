@@ -789,6 +789,29 @@ export const gamesData: Record<string, GameData[]> = {
   ],
   'geometry': [
     {
+      id: 'shape-scanner',
+      title: '도형 탐지기',
+      description: `🎮게임명 : 도형 탐지기
+📘 교과명 : 기하/공간도형
+📂 내용범주 : 공간도형·입체도형
+📌 내용요소 : 입체도형의 단면, 입체도형의 인식, 공간 감각
+✏️ 학습 가능 용어 : 정육면체, 구, 원기둥, 원뿔, 사각뿔, 삼각기둥, 육각기둥, 육각뿔, 정사면체, 정팔면체, 정십이면체, 정이십면체, 단면
+🎯 성취기준 : 입체도형의 단면을 관찰하며 공간도형의 형태와 성질을 탐구한다.
+📚 학습 유형 : 탐지 게임
+🔥 난이도 : ★★★☆☆`,
+      icon: '🔍',
+      status: 'playable',
+      difficulty: '중급',
+      estimatedTime: '15분',
+      category: '기하',
+      content: '입체도형의 단면',
+      terms: '입체도형, 단면, 정육면체, 구, 원기둥, 원뿔',
+      type: '탐지 게임',
+      summary: '단면의 변화를 관찰하고 숨겨진 입체도형을 맞추는 탐지 게임',
+      url: '/shape_scanner.html',
+      mobile: '제한'
+    },
+    {
       id: 'shape-constructor',
       title: '도형 건설자',
       description: `🎮게임명 : 도형 건설자

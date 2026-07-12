@@ -260,7 +260,6 @@
             padding: 20px;
             box-sizing: border-box;
             z-index: 2000;
-            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .history-header {
@@ -280,6 +279,10 @@
             font-size: 24px;
             color: var(--text-muted);
             cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            padding: 4px 8px;
+            line-height: 1;
         }
 
         .reset-btn {
@@ -332,13 +335,22 @@
             #history-panel {
                 position: fixed;
                 top: 0;
-                right: -min(320px, 100vw);
+                right: 0;
+                left: auto;
                 width: min(320px, 92vw);
                 height: 100vh;
                 height: 100dvh;
                 padding-top: calc(16px + env(safe-area-inset-top));
+                transform: translateX(105%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                pointer-events: none;
+                visibility: hidden;
             }
-            #history-panel.open { right: 0; }
+            #history-panel.open {
+                transform: translateX(0);
+                pointer-events: auto;
+                visibility: visible;
+            }
             .close-history-btn { display: block; }
 
             #ui-layer { margin-bottom: 6px; }
@@ -397,11 +409,56 @@
         }
 
         @media (max-width: 480px) {
-            #top-banner { font-size: 1.15rem; padding: 8px 10px 6px; }
-            #ui-layer h2 { font-size: 13px; }
+            #main-area { padding: 0 8px 8px; }
+            #top-banner {
+                width: calc(100% + 16px);
+                margin: 0 -8px 8px -8px;
+                font-size: 1.05rem;
+                padding: 8px 10px 6px;
+                gap: 6px;
+            }
+            #top-banner .banner-mascot {
+                width: 32px;
+                height: 32px;
+            }
+            #mobile-history-toggle {
+                padding: 6px 12px;
+                font-size: 12px;
+                min-height: 36px;
+                margin-bottom: 6px;
+                border-radius: 10px;
+            }
+            #ui-layer { margin-bottom: 4px; }
+            #ui-layer h2 { font-size: 12px; line-height: 1.35; }
             #ui-layer p { font-size: 11px; }
-            .score-value { font-size: 28px; }
-            #dramatic-pi { font-size: 28vh; }
+
+            #result-board {
+                gap: 8px;
+                padding: 10px;
+                margin-top: 8px;
+                border-radius: 14px;
+                max-height: 38vh;
+            }
+            .score-title { font-size: 11px; margin-bottom: 2px; }
+            .score-value { font-size: 26px; }
+            .score-value span { font-size: 14px !important; }
+            .stat-section { gap: 4px; padding-left: 6px; }
+            .stat-box { padding: 5px 6px; border-radius: 8px; }
+            .stat-label { font-size: 10px; }
+            .stat-val { font-size: 11px; }
+            .play-again-btn {
+                padding: 12px;
+                font-size: 15px;
+                min-height: 44px;
+            }
+            #history-panel {
+                width: min(300px, 88vw);
+                padding: 14px;
+            }
+            .history-header h3 { font-size: 15px; }
+            .history-item { padding: 10px 12px; font-size: 12px; }
+            .history-item .score { font-size: 18px; }
+            #dramatic-pi { font-size: 26vh; }
         }
 
         @keyframes slideDownBanner { from { transform: translateY(-100%); } to { transform: translateY(0); } }
@@ -470,7 +527,7 @@
             <img src="images/sutam.png" alt="" class="banner-mascot" width="52" height="52" draggable="false" />
         </div>
 
-        <button id="mobile-history-toggle" onclick="toggleHistory()">🏆 기록 보기</button>
+        <button id="mobile-history-toggle" type="button" onclick="toggleHistory(event)">🏆 기록 보기</button>
         
         <div id="ui-layer">
             <h2>매번 바뀌는 가이드 선분에 맞춰 원을 그려보세요!</h2>
@@ -508,8 +565,8 @@
         <div class="history-header">
             <h3>도전 기록</h3>
             <div>
-                <button class="reset-btn" onclick="resetHistory()">초기화</button>
-                <button class="close-history-btn" onclick="toggleHistory()">×</button>
+                <button class="reset-btn" type="button" onclick="resetHistory()">초기화</button>
+                <button class="close-history-btn" type="button" onclick="toggleHistory(event)" aria-label="기록 닫기">×</button>
             </div>
         </div>
         <ul id="history-list"></ul>
@@ -522,10 +579,23 @@
         useWorker: true
     });
 
-    function toggleHistory() {
+    let historyToggleLock = false;
+    function toggleHistory(e) {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        if (historyToggleLock) return;
+        historyToggleLock = true;
+        setTimeout(() => { historyToggleLock = false; }, 320);
+
         playEffect('click');
         const panel = document.getElementById('history-panel');
         panel.classList.toggle('open');
+    }
+
+    function closeHistory() {
+        document.getElementById('history-panel').classList.remove('open');
     }
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;

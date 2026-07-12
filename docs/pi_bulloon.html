@@ -169,6 +169,12 @@
     @media (max-width: 768px) {
       .hud-bar { padding-top: calc(8px + env(safe-area-inset-top)); gap: 6px; }
       .hint-box { border-radius: 14px; }
+      .desktop-pi-panel { display: none !important; }
+      .mobile-pi-bar {
+        display: block;
+        top: auto;
+        bottom: calc(120px + env(safe-area-inset-bottom));
+      }
       #hintPanel .hint-box:first-child { padding: 8px 14px !important; margin-bottom: 6px !important; border-width: 3px !important; }
       #hintPanel #nextDigit { font-size: 2.75rem !important; }
       #hintPanel .hint-box:last-child { padding: 6px 10px !important; }
@@ -179,19 +185,12 @@
       #timerPanel .score-line { font-size: 0.75rem !important; margin-bottom: 2px !important; }
       #timerPanel .score-line #scoreDisplay { font-size: 1.1rem !important; }
       #timerPanel .rank-line { font-size: 0.65rem !important; }
-      .desktop-pi-panel { display: none !important; }
-      .mobile-pi-bar {
-        display: block;
-        top: auto;
-        bottom: calc(148px + env(safe-area-inset-bottom));
-      }
-      .wand { width: 96px; height: 165px; bottom: 8px; }
-      .wand-face-wrap, .wand-face { width: 88px; height: 88px; }
-      .wand-stick { width: 28px; height: 90px; margin-top: -8px; }
-      .number-bubble { width: 88px; height: 104px; }
-      .balloon { width: 72px; height: 72px; }
-      .balloon-text { font-size: 28px; }
-      .balloon::before { bottom: -22px; height: 18px; }
+      .number-bubble { width: 94px; height: 110px; }
+      .balloon { width: 76px; height: 76px; }
+      .balloon-text { font-size: 30px; }
+      .wand { width: 108px; height: 187px; bottom: 8px; }
+      .wand-face-wrap, .wand-face { width: 100px; height: 100px; }
+      .wand-stick { width: 30px; height: 100px; margin-top: -8px; }
       #comboDisplay { font-size: 1.75rem !important; }
       #startScreen > div { padding: 1.25rem !important; margin: 12px; max-width: calc(100% - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; }
       #startScreen h2 { font-size: 1.5rem !important; }
@@ -199,17 +198,62 @@
       #endScreenModal { padding: 1.25rem !important; margin: 12px; max-width: calc(100% - 24px) !important; max-height: calc(100dvh - 24px); overflow-y: auto; }
     }
 
+    /* 스마트폰: 메뉴·풍선 약 70% 스케일 */
     @media (max-width: 480px) {
-      #hintPanel #nextDigit { font-size: 2.25rem !important; }
-      #timer { font-size: 2.1rem !important; }
-      .number-bubble { width: 76px; height: 92px; }
-      .balloon { width: 64px; height: 64px; }
-      .balloon-text { font-size: 24px; }
-      .wand { width: 80px; height: 140px; bottom: 4px; }
-      .wand-face-wrap, .wand-face { width: 72px; height: 72px; }
-      .wand-stick { width: 24px; height: 72px; }
-      .projectile { width: 28px; height: 28px; font-size: 16px; }
+      .hud-bar {
+        padding: calc(6px + env(safe-area-inset-top)) 8px 0;
+        gap: 4px;
+      }
+      #hintPanel {
+        transform: scale(0.7);
+        transform-origin: top left;
+      }
+      #hintPanel .hint-box:first-child {
+        padding: 10px 16px !important;
+        margin-bottom: 8px !important;
+        border-width: 3px !important;
+      }
+      #hintPanel #nextDigit { font-size: 5rem !important; }
+      #hintPanel .hint-box:last-child { padding: 8px 12px !important; }
+      #hintPanel #next10Digits {
+        font-size: 0.95rem !important;
+        letter-spacing: 0.1em !important;
+        max-width: 46vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      #timerPanel {
+        transform: scale(0.7);
+        transform-origin: top right;
+        min-width: 0 !important;
+        padding: 12px 16px !important;
+        border-width: 3px !important;
+      }
+      #timerPanel .timer-label { font-size: 0.95rem !important; margin-bottom: 4px !important; }
+      #timer { font-size: 4rem !important; margin-bottom: 8px !important; }
+      #timerPanel .score-line { font-size: 0.9rem !important; }
+      #timerPanel .score-line #scoreDisplay { font-size: 1.25rem !important; }
+      #timerPanel .rank-line { font-size: 0.75rem !important; }
+      .mobile-pi-bar {
+        transform: scale(0.7);
+        transform-origin: bottom center;
+        left: 8px; right: 8px;
+        bottom: calc(100px + env(safe-area-inset-bottom));
+      }
+      /* 풍선 110×130 → 70% */
+      .number-bubble { width: 77px; height: 91px; }
+      .balloon { width: 63px; height: 63px; }
+      .balloon-text { font-size: 25px; }
+      .balloon::before { bottom: -18px; height: 16px; width: 1.5px; }
+      .pop-burst { width: 63px; height: 74px; }
+      /* wand 128×220 → 70% */
+      .wand { width: 90px; height: 154px; bottom: 4px; }
+      .wand-face-wrap, .wand-face { width: 83px; height: 83px; }
+      .wand-stick { width: 25px; height: 84px; margin-top: -7px; }
+      .projectile { width: 28px; height: 28px; font-size: 17px; }
       .score-popup { font-size: 22px; }
+      #comboDisplay { font-size: 1.35rem !important; }
     }
   </style>
   <style>
@@ -645,15 +689,16 @@
       
       const areaW = gameArea.clientWidth; const areaH = gameArea.clientHeight;
       const isCompact = window.innerWidth <= 768;
-      const topPad = isCompact ? 88 : 100;
-      const bottomPad = isCompact ? 170 : 200;
+      const isPhone = window.innerWidth <= 480;
+      const topPad = isPhone ? 72 : (isCompact ? 88 : 100);
+      const bottomPad = isPhone ? 140 : (isCompact ? 170 : 200);
       let x, y; let overlap = true; let attempts = 0;
       while (overlap && attempts < 10) {
-        x = 40 + Math.random() * Math.max(40, areaW - (isCompact ? 120 : 150));
+        x = 40 + Math.random() * Math.max(40, areaW - (isPhone ? 90 : isCompact ? 120 : 150));
         y = topPad + Math.random() * Math.max(40, areaH - topPad - bottomPad);
         overlap = bubbles.some(b => {
           let dx = b.x - x; let dy = b.y - y;
-          return Math.sqrt(dx*dx + dy*dy) < (isCompact ? 48 : 60); 
+          return Math.sqrt(dx*dx + dy*dy) < (isPhone ? 40 : isCompact ? 48 : 60); 
         });
         attempts++;
       }
@@ -1195,10 +1240,11 @@
       speedMultiplier = Math.min(speedMultiplier, currentMaxSpeed);
 
       const isCompact = window.innerWidth <= 768;
-      const topPad = isCompact ? 88 : 100;
-      const bottomPad = isCompact ? 170 : 200;
+      const isPhone = window.innerWidth <= 480;
+      const topPad = isPhone ? 72 : (isCompact ? 88 : 100);
+      const bottomPad = isPhone ? 140 : (isCompact ? 170 : 200);
       const sidePad = isCompact ? 16 : 20;
-      const bubbleW = isCompact ? 80 : 110;
+      const bubbleW = isPhone ? 77 : (isCompact ? 94 : 110);
       
       bubbles.forEach(b => {
         if (!isFrozen) { 

@@ -27,8 +27,8 @@ const breakGameTabs: TabData[] = [
   { id: 'break-game', label: '뇌풀기 게임', description: '두뇌를 말랑말랑하게 만드는 게임' },
 ];
 
-const mathDayTabs: TabData[] = [
-  { id: 'mathday', label: 'MathDay', description: 'MathDay 행사·체험용 수학 게임' },
+const experienceTabs: TabData[] = [
+  { id: 'math-experience', label: '수학 체험', description: '교육과정 밖 체험형 수학 게임' },
 ];
 
 const classManagementTabs: TabData[] = [
@@ -39,7 +39,7 @@ const gradeTabs = [
   { id: 'middle', label: '중학수학' },
   { id: 'high', label: '고등수학' },
   { id: 'break-game', label: '뇌풀기 게임' },
-  { id: 'mathday', label: 'MathDay' },
+  { id: 'math-experience', label: '수학 체험' },
   { id: 'class-management', label: '학급운영' },
 ];
 
@@ -57,14 +57,18 @@ const Index = () => {
     const section = urlParams.get('section');
     const tab = urlParams.get('tab');
 
-    if (section) setActiveSection(section);
+    if (section) {
+      const normalizedSection = section === 'mathday' ? 'math-experience' : section;
+      setActiveSection(normalizedSection);
+    }
     if (tab) {
-      setActiveTab(tab);
+      const normalizedTab = tab === 'mathday' ? 'math-experience' : tab;
+      setActiveTab(normalizedTab);
     } else if (section) {
       if (section === 'middle') setActiveTab('middle1');
       else if (section === 'high') setActiveTab('common-math');
       else if (section === 'break-game') setActiveTab('break-game');
-      else if (section === 'mathday') setActiveTab('mathday');
+      else if (section === 'math-experience' || section === 'mathday') setActiveTab('math-experience');
       else if (section === 'class-management') setActiveTab('class-management');
     }
   }, []);
@@ -78,7 +82,7 @@ const Index = () => {
   if (activeSection === 'middle') currentTabs = middleSchoolTabs;
   else if (activeSection === 'high') currentTabs = highSchoolTabs;
   else if (activeSection === 'break-game') currentTabs = breakGameTabs;
-  else if (activeSection === 'mathday') currentTabs = mathDayTabs;
+  else if (activeSection === 'math-experience') currentTabs = experienceTabs;
   else if (activeSection === 'class-management') currentTabs = classManagementTabs;
 
   const currentGames = gamesData[activeTab] || [];
@@ -139,7 +143,7 @@ const Index = () => {
     if (gradeId === 'middle') setActiveTab('middle1');
     else if (gradeId === 'high') setActiveTab('common-math');
     else if (gradeId === 'break-game') setActiveTab('break-game');
-    else if (gradeId === 'mathday') setActiveTab('mathday');
+    else if (gradeId === 'math-experience') setActiveTab('math-experience');
     else if (gradeId === 'class-management') setActiveTab('class-management');
   };
 

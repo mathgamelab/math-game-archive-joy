@@ -69,13 +69,6 @@ export const SiteFooter: React.FC = () => {
       </div>
       <div className="container mx-auto mt-10 border-t border-border/70 px-6 pt-6 text-center text-xs text-muted-foreground">
         <p>© 행복한윤쌤 · 행복한 수학, 함께 만들어요</p>
-        <button
-          type="button"
-          onClick={() => navigate('/privacy')}
-          className="mt-2 hover:text-foreground hover:underline"
-        >
-          개인정보처리방침
-        </button>
       </div>
     </footer>
   );

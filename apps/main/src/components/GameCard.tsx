@@ -50,6 +50,8 @@ const CLAY_ICONS: Record<string, string> = {
   'coordinate-chess': '/images/clay/games/coordinate-chess.png',
   number_of_cases_challenge: '/images/clay/games/number_of_cases_challenge.png',
   set_master: '/images/clay/games/set_master.png',
+  'binary-number-quiz': '/images/clay/games/binary-number-quiz.png',
+  'topology-simulator': '/images/clay/games/topology-simulator.png',
 };
 
 export const getClayIcon = (game: Pick<GameData, 'id' | 'clayIcon'>) =>
@@ -87,18 +89,16 @@ export const GameCard: React.FC<GameCardProps> = ({ game, onClick }) => {
         )}
 
         <div className="absolute left-3 top-3 flex flex-col items-start gap-1">
-          <span
-            className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
-              game.status === 'playable'
-                ? 'bg-emerald-50 text-emerald-800'
-                : 'bg-amber-50 text-amber-800'
-            }`}
-          >
-            {game.status === 'playable' ? '플레이 가능' : '개발 중'}
-          </span>
-          <span className="rounded-full bg-card/90 px-2 py-0.5 text-[11px] text-muted-foreground backdrop-blur-sm">
-            📱 {game.mobile === '지원' ? '모바일 가능' : '모바일 제한'}
-          </span>
+          {game.status === 'development' && (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800">
+              개발 중
+            </span>
+          )}
+          {game.mobile === '지원' && (
+            <span className="rounded-full bg-card/90 px-2 py-0.5 text-[11px] text-muted-foreground backdrop-blur-sm">
+              📱 모바일 가능
+            </span>
+          )}
         </div>
 
         <div className="absolute right-3 top-3">

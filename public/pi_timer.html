@@ -3,7 +3,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>π를 맞춰라!</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -32,6 +32,19 @@
             box-shadow: none;
             width: 100%;
             z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-sizing: border-box;
+        }
+        .top-banner .banner-mascot {
+            width: clamp(36px, 8vw, 52px);
+            height: clamp(36px, 8vw, 52px);
+            object-fit: contain;
+            flex-shrink: 0;
+            user-select: none;
+            pointer-events: none;
         }
 
         .main-content {
@@ -197,14 +210,30 @@
         #reset-btn:hover { background-color: #e1e4ea; color: #242830; }
 
         @media (max-width: 768px) {
-            .top-banner { font-size: 1.3rem; padding: 15px; }
-            .game-wrapper { flex-direction: column; align-items: center; }
-            .container, .history-container { width: 100%; box-sizing: border-box; }
-            .history-container { max-height: 400px; }
-            .main-content { padding: 20px 10px; }
-            
-            /* 모바일 화면에서는 숫자가 가로 넓이의 20% 단위로 유연하게 설정됩니다. */
-            #time-display { font-size: 20vw; } 
+            body { min-height: 100dvh; }
+            .top-banner { font-size: 1.25rem; padding: 12px 14px; }
+            .game-wrapper { flex-direction: column; align-items: center; gap: 14px; }
+            .container, .history-container { width: 100%; box-sizing: border-box; min-width: 0; }
+            .container { padding: 24px 16px 28px; }
+            .history-container { max-height: min(360px, 42vh); padding: 20px 16px; }
+            .main-content { padding: 16px 12px; align-items: flex-start; }
+            h1 { font-size: 1.4rem; }
+            #time-display { font-size: clamp(3rem, 18vw, 5.5rem); }
+            #action-btn { width: 100%; max-width: 360px; min-height: 52px; font-size: 1.15rem; }
+            #message { min-height: 3.5rem; font-size: 1.05rem; margin-bottom: 20px; }
+            .success-text { font-size: 1.25rem; }
+        }
+
+        @media (max-width: 480px) {
+            .top-banner { font-size: 1.15rem; padding: 10px 12px; }
+            .main-content { padding: 12px 10px; }
+            .container { padding: 18px 14px 22px; }
+            h1 { font-size: 1.25rem; }
+            .target-time { font-size: 0.95rem; }
+            #time-display { font-size: clamp(2.6rem, 16vw, 4.2rem); }
+            #message { font-size: 0.95rem; margin-bottom: 16px; }
+            .history-container { max-height: min(300px, 38vh); }
+            #history-list li { font-size: 0.9rem; padding: 10px 8px; }
         }
     </style>
   <style>
@@ -230,7 +259,11 @@
     .creator-info p { margin: 0; display: inline; }
     .creator-info .sep { margin: 0 0.45em; color: #94a3b8; }
     @media (max-width: 768px) {
-      .creator-info { font-size: 0.72rem; padding: 5px 10px calc(5px + env(safe-area-inset-bottom)); }
+      .creator-info {
+        font-size: 0.72rem;
+        padding: 5px 10px calc(5px + env(safe-area-inset-bottom));
+        white-space: normal;
+      }
     }
 
   </style>
@@ -238,7 +271,8 @@
 <body>
 
     <div class="top-banner">
-        π를 맞춰라!
+        <span>π를 맞춰라!</span>
+        <img src="images/sutam.png" alt="" class="banner-mascot" width="52" height="52" draggable="false" />
     </div>
 
     <div class="main-content">

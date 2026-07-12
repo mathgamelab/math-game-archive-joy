@@ -95,13 +95,12 @@ export const GameModal: React.FC<GameModalProps> = ({ game, isOpen, onClose, onP
                   <Clock className="h-3.5 w-3.5" />
                   {game.estimatedTime}
                 </span>
-                <span
-                  className={
-                    game.status === 'playable' ? 'text-emerald-700' : 'text-amber-700'
-                  }
-                >
-                  {game.status === 'playable' ? '플레이 가능' : '개발 중'}
-                </span>
+                {game.status === 'development' && (
+                  <span className="text-amber-700">개발 중</span>
+                )}
+                {game.mobile === '지원' && (
+                  <span className="text-foreground/80">📱 모바일 가능</span>
+                )}
               </div>
             </div>
           </div>

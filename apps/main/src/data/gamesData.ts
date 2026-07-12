@@ -426,7 +426,7 @@ export const gamesData: Record<string, GameData[]> = {
       mobile: '지원'
     }
   ],
-  'mathday': [
+  'math-experience': [
     {
       id: 'pi-bulloon',
       title: 'π 풍선 슈팅',
@@ -486,6 +486,48 @@ export const gamesData: Record<string, GameData[]> = {
       type: '파이데이 체험 게임',
       summary: '정확히 3.141초에 멈추며 원주율을 체감하는 타이머 게임',
       mobile: '지원'
+    },
+    {
+      id: 'binary-number-quiz',
+      title: '이진수 탐색기',
+      description: `🎮게임명 : 이진수 탐색기
+📘 교과명 : 수학 체험
+📂 내용범주 : 수와 연산·이진법
+📌 내용요소 : 이진수와 십진수 변환, 자리값(1·2·4·8·16), 비트 조합
+✏️ 학습 가능 용어 : 이진수, 십진수, 비트, 자리값
+🎯 성취기준 : 카드를 뒤집어 이진수와 십진수의 관계를 이해하고 변환할 수 있다.
+📚 학습 유형 : 수학 체험 게임
+🔥 난이도 : ★★☆☆☆`,
+      icon: '🔢',
+      status: 'playable',
+      difficulty: '초급',
+      estimatedTime: '10분',
+      url: '/binary_number_quiz.html',
+      type: '수학 체험 게임',
+      summary: '카드를 뒤집어 0부터 31까지 이진수를 배우고 퀴즈로 익히는 체험 게임',
+      mobile: '지원',
+      clayIcon: '/images/clay/games/binary-number-quiz.png'
+    },
+    {
+      id: 'topology-simulator',
+      title: '위상 공간 시뮬레이터',
+      description: `🎮게임명 : 위상 공간 시뮬레이터
+📘 교과명 : 수학 체험
+📂 내용범주 : 위상수학·공간 감각
+📌 내용요소 : 뫼비우스의 띠, 클라인 병, 토러스 등 위상 공간의 연속 변형
+✏️ 학습 가능 용어 : 위상, 뫼비우스의 띠, 클라인 병, 토러스, 연속 변형
+🎯 성취기준 : 위상적으로 흥미로운 공간을 조작하며 모양과 연결성의 개념을 탐구한다.
+📚 학습 유형 : 수학 체험 시뮬레이터
+🔥 난이도 : ★★★☆☆`,
+      icon: '🌀',
+      status: 'playable',
+      difficulty: '중급',
+      estimatedTime: '10분',
+      url: '/topology_simulator.html',
+      type: '수학 체험 시뮬레이터',
+      summary: '뫼비우스의 띠·클라인 병 등 위상 공간을 돌려보며 탐구하는 3D 시뮬레이터',
+      mobile: '지원',
+      clayIcon: '/images/clay/games/topology-simulator.png'
     }
   ],
   'class-management': [],

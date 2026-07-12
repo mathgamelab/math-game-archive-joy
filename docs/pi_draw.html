@@ -99,6 +99,18 @@
             border-bottom: 1px solid var(--border-light);
             box-shadow: none;
             animation: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #top-banner .banner-mascot {
+            width: clamp(36px, 8vw, 52px);
+            height: clamp(36px, 8vw, 52px);
+            object-fit: contain;
+            flex-shrink: 0;
+            user-select: none;
+            pointer-events: none;
         }
         
         #ui-layer {
@@ -298,67 +310,98 @@
         .history-item .score { font-size: 22px; font-weight: bold; color: var(--success); }
 
         @media (max-width: 850px) {
-            /* 🌟 모바일 기록보기 버튼 위치 대폭 하향 조정 (충분한 공간 확보) */
-            #mobile-history-toggle { 
-                display: block; 
-                top: 190px;  /* 기존 130px에서 190px로 더 깊게 내림 */
-                right: 15px;
-                padding: 6px 12px;
+            #main-area { padding: 0 12px 12px; }
+            #top-banner {
+                width: calc(100% + 24px);
+                margin: 0 -12px 10px -12px;
+                padding: 10px 12px 8px;
+                font-size: 1.25rem;
+            }
+            #mobile-history-toggle {
+                display: block;
+                top: auto;
+                bottom: auto;
+                position: relative;
+                right: auto;
+                margin: 0 0 8px auto;
+                padding: 8px 14px;
                 font-size: 13px;
-                z-index: 1000; 
+                z-index: 1000;
+                min-height: 40px;
             }
             #history-panel {
                 position: fixed;
                 top: 0;
-                right: -320px; 
+                right: -min(320px, 100vw);
+                width: min(320px, 92vw);
                 height: 100vh;
                 height: 100dvh;
+                padding-top: calc(16px + env(safe-area-inset-top));
             }
             #history-panel.open { right: 0; }
             .close-history-btn { display: block; }
 
-            #ui-layer h2 { font-size: 18px; margin-top: 10px; padding: 0 10px; }
+            #ui-layer { margin-bottom: 6px; }
+            #ui-layer h2 { font-size: 15px; margin-top: 0; padding: 0 4px; line-height: 1.35; }
             #ui-layer p { font-size: 12px; }
 
             #result-board {
-                position: absolute; 
-                width: 92%; 
-                flex-direction: row; 
-                flex-wrap: wrap; 
+                position: relative;
+                left: auto;
+                bottom: auto;
+                width: 100%;
+                max-width: none;
+                flex-direction: row;
+                flex-wrap: wrap;
                 gap: 10px;
-                padding: 15px; 
-                bottom: 12px;
-                transform: translate(-50%, 50px);
+                padding: 12px;
+                margin-top: 10px;
+                transform: none;
+                opacity: 0;
+                pointer-events: none;
+                max-height: 42vh;
+                overflow-y: auto;
             }
             #result-board.show {
-                transform: translate(-50%, 0);
+                opacity: 1;
+                transform: none;
+                pointer-events: auto;
             }
 
-            .score-section { 
-                width: 40%;
-                border-right: 2px dashed var(--border-light); 
-                border-bottom: none; 
-                padding-right: 10px; 
-                padding-bottom: 0; 
+            .score-section {
+                width: 38%;
+                border-right: 2px dashed var(--border-light);
+                border-bottom: none;
+                padding-right: 10px;
+                padding-bottom: 0;
                 min-width: 0;
             }
-            .score-value { font-size: 40px; } 
-            
-            .stat-section { 
-                width: 50%;
+            .score-value { font-size: 34px; }
+
+            .stat-section {
+                width: 55%;
                 flex: 1;
-                padding: 0 0 0 10px; 
+                padding: 0 0 0 8px;
+                gap: 6px;
             }
-            .stat-box { padding: 6px 8px; gap: 5px; flex-direction: column; align-items: flex-start;}
+            .stat-box { padding: 6px 8px; gap: 2px; flex-direction: column; align-items: flex-start; }
             .stat-label { font-size: 11px; }
-            .stat-val { font-size: 13px; }
-            
-            .action-section { 
-                width: 100%; 
-                padding-left: 0; 
-                margin-top: 8px; 
+            .stat-val { font-size: 12px; word-break: break-all; }
+
+            .action-section {
+                width: 100%;
+                padding-left: 0;
+                margin-top: 4px;
             }
-            .play-again-btn { width: 100%; padding: 14px; font-size: 17px; }
+            .play-again-btn { width: 100%; padding: 14px; font-size: 16px; min-height: 48px; }
+        }
+
+        @media (max-width: 480px) {
+            #top-banner { font-size: 1.15rem; padding: 8px 10px 6px; }
+            #ui-layer h2 { font-size: 13px; }
+            #ui-layer p { font-size: 11px; }
+            .score-value { font-size: 28px; }
+            #dramatic-pi { font-size: 28vh; }
         }
 
         @keyframes slideDownBanner { from { transform: translateY(-100%); } to { transform: translateY(0); } }
@@ -405,7 +448,11 @@
     .creator-info p { margin: 0; display: inline; }
     .creator-info .sep { margin: 0 0.45em; color: #94a3b8; }
     @media (max-width: 768px) {
-      .creator-info { font-size: 0.72rem; padding: 5px 10px calc(5px + env(safe-area-inset-bottom)); }
+      .creator-info {
+        font-size: 0.72rem;
+        padding: 5px 10px calc(5px + env(safe-area-inset-bottom));
+        white-space: normal;
+      }
     }
 
   </style>
@@ -418,7 +465,10 @@
 
     <div id="game-shell">
     <div id="main-area">
-        <div id="top-banner">π그리기</div>
+        <div id="top-banner">
+            <span>π그리기</span>
+            <img src="images/sutam.png" alt="" class="banner-mascot" width="52" height="52" draggable="false" />
+        </div>
 
         <button id="mobile-history-toggle" onclick="toggleHistory()">🏆 기록 보기</button>
         
@@ -632,19 +682,22 @@
     function resizeCanvas() {
         const wrapperW = canvasWrapper.clientWidth;
         const wrapperH = canvasWrapper.clientHeight;
-        const size = Math.min(wrapperW * 0.95, wrapperH * 0.9, 800); 
-        
+        const isMobile = window.matchMedia('(max-width: 850px)').matches;
+        const hRatio = isMobile ? 0.98 : 0.9;
+        const size = Math.max(160, Math.min(wrapperW * 0.98, wrapperH * hRatio, 800));
+
         const dpr = window.devicePixelRatio || 1;
         canvas.width = size * dpr;
         canvas.height = size * dpr;
         canvas.style.width = size + 'px';
         canvas.style.height = size + 'px';
-        
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(dpr, dpr);
 
         centerX = size / 2;
         centerY = size / 2;
-        
+
         setRandomTarget(size);
         resetCanvas(size);
     }

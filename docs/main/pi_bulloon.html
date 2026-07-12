@@ -3,7 +3,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>π 풍선 슈팅</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
@@ -143,6 +143,74 @@
     .ranking-scroll::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
     .ranking-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
     .ranking-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+    .hud-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      pointer-events: none;
+      padding: calc(12px + env(safe-area-inset-top)) 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .hud-bar > * { pointer-events: auto; }
+    .mobile-pi-bar {
+      display: none;
+      position: absolute;
+      left: 12px; right: 12px;
+      top: calc(12px + env(safe-area-inset-top));
+      z-index: 48;
+      pointer-events: none;
+    }
+    .number-bubble { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+    @media (max-width: 768px) {
+      .hud-bar { padding-top: calc(8px + env(safe-area-inset-top)); gap: 6px; }
+      .hint-box { border-radius: 14px; }
+      #hintPanel .hint-box:first-child { padding: 8px 14px !important; margin-bottom: 6px !important; border-width: 3px !important; }
+      #hintPanel #nextDigit { font-size: 2.75rem !important; }
+      #hintPanel .hint-box:last-child { padding: 6px 10px !important; }
+      #hintPanel #next10Digits { font-size: 0.75rem !important; letter-spacing: 0.08em !important; max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      #timerPanel { min-width: 0 !important; padding: 8px 12px !important; border-width: 3px !important; }
+      #timerPanel .timer-label { font-size: 0.7rem !important; margin-bottom: 2px !important; }
+      #timer { font-size: 2.5rem !important; margin-bottom: 6px !important; }
+      #timerPanel .score-line { font-size: 0.75rem !important; margin-bottom: 2px !important; }
+      #timerPanel .score-line #scoreDisplay { font-size: 1.1rem !important; }
+      #timerPanel .rank-line { font-size: 0.65rem !important; }
+      .desktop-pi-panel { display: none !important; }
+      .mobile-pi-bar {
+        display: block;
+        top: auto;
+        bottom: calc(148px + env(safe-area-inset-bottom));
+      }
+      .wand { width: 96px; height: 165px; bottom: 8px; }
+      .wand-face-wrap, .wand-face { width: 88px; height: 88px; }
+      .wand-stick { width: 28px; height: 90px; margin-top: -8px; }
+      .number-bubble { width: 88px; height: 104px; }
+      .balloon { width: 72px; height: 72px; }
+      .balloon-text { font-size: 28px; }
+      .balloon::before { bottom: -22px; height: 18px; }
+      #comboDisplay { font-size: 1.75rem !important; }
+      #startScreen > div { padding: 1.25rem !important; margin: 12px; max-width: calc(100% - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; }
+      #startScreen h2 { font-size: 1.5rem !important; }
+      #startScreen .text-5xl { font-size: 2.25rem !important; }
+      #endScreenModal { padding: 1.25rem !important; margin: 12px; max-width: calc(100% - 24px) !important; max-height: calc(100dvh - 24px); overflow-y: auto; }
+    }
+
+    @media (max-width: 480px) {
+      #hintPanel #nextDigit { font-size: 2.25rem !important; }
+      #timer { font-size: 2.1rem !important; }
+      .number-bubble { width: 76px; height: 92px; }
+      .balloon { width: 64px; height: 64px; }
+      .balloon-text { font-size: 24px; }
+      .wand { width: 80px; height: 140px; bottom: 4px; }
+      .wand-face-wrap, .wand-face { width: 72px; height: 72px; }
+      .wand-stick { width: 24px; height: 72px; }
+      .projectile { width: 28px; height: 28px; font-size: 16px; }
+      .score-popup { font-size: 22px; }
+    }
   </style>
   <style>
     .creator-info {
@@ -166,7 +234,11 @@
     .creator-info p { margin: 0; display: inline; }
     .creator-info .sep { margin: 0 0.45em; color: #94a3b8; }
     @media (max-width: 768px) {
-      .creator-info { font-size: 0.72rem; padding: 5px 10px calc(5px + env(safe-area-inset-bottom)); }
+      .creator-info {
+        font-size: 0.72rem;
+        padding: 5px 10px calc(5px + env(safe-area-inset-bottom));
+        white-space: normal;
+      }
     }
 
   </style>
@@ -180,7 +252,7 @@
     <div class="cloud" style="top:20%;left:-150px;animation-delay:5s;transform:scale(0.7)"><div class="cloud-body"></div></div>
     <div class="cloud" style="top:35%;left:-150px;animation-delay:10s;transform:scale(0.85)"><div class="cloud-body"></div></div>
 
-    <div class="absolute top-4 left-4 right-4 flex justify-between items-start z-50 pointer-events-none">
+    <div class="hud-bar">
       
       <div id="hintPanel" class="flex flex-col items-center hidden" style="visibility:hidden">
         <div class="hint-box text-center pointer-events-auto border-4 border-pink-300 shadow-xl px-8 py-4 mb-3">
@@ -193,7 +265,7 @@
         </div>
       </div>
 
-      <div class="text-center bg-white/80 backdrop-blur-md rounded-3xl p-4 shadow-xl border-2 border-white/90 transform origin-top scale-105 mt-2 hidden md:block w-80 relative z-40">
+      <div class="desktop-pi-panel text-center bg-white/80 backdrop-blur-md rounded-3xl p-4 shadow-xl border-2 border-white/90 transform origin-top scale-105 mt-2 hidden md:block w-80 relative z-40">
         <div id="gameTitle" class="text-2xl font-bold text-slate-800 drop-shadow-sm mb-2">
           π 풍선 슈팅
         </div>
@@ -208,16 +280,26 @@
         </div>
       </div>
 
-      <div class="hint-box text-right pointer-events-auto border-4 border-purple-300 shadow-xl px-8 py-5 min-w-[160px]">
-        <div class="text-base text-gray-500 font-extrabold mb-2 tracking-wide">남은 시간</div>
+      <div id="timerPanel" class="hint-box text-right pointer-events-auto border-4 border-purple-300 shadow-xl px-8 py-5 min-w-[160px] ml-auto">
+        <div class="timer-label text-base text-gray-500 font-extrabold mb-2 tracking-wide">남은 시간</div>
         <div id="timer" class="text-[4.5rem] leading-none font-black text-purple-600 mb-4 drop-shadow-md">30</div>
-        <div class="text-sm text-gray-500 font-bold mb-1">
+        <div class="score-line text-sm text-gray-500 font-bold mb-1">
           점수 <span id="scoreDisplay" class="font-black text-pink-500 text-xl ml-1">0</span>
         </div>
-        <div class="text-xs text-gray-400 font-bold flex items-center justify-end">
+        <div class="rank-line text-xs text-gray-400 font-bold flex items-center justify-end">
           <span class="mr-1">🏆 1위:</span>
           <span id="topScoreDisplay" class="text-gray-600">0</span>
         </div>
+      </div>
+    </div>
+
+    <div class="mobile-pi-bar">
+      <div class="hint-box px-3 py-2 border-2 border-purple-200 shadow-md">
+        <div class="flex items-center justify-between gap-2 mb-1">
+          <span class="text-[10px] font-extrabold text-purple-400 tracking-wide">달성한 원주율</span>
+          <span id="feverStatusMobile" class="text-[10px] font-black fever-text opacity-0">FEVER x3</span>
+        </div>
+        <div id="piProgressMobile" class="text-left text-sm leading-snug font-black text-purple-700 break-all max-h-10 overflow-hidden">?</div>
       </div>
     </div>
 
@@ -229,7 +311,7 @@
 
     <div class="wand" id="wand">
       <div class="wand-face-wrap">
-        <img src="/images/pi-mascot-face.png" alt="" class="wand-face" width="118" height="118" draggable="false" />
+        <img src="images/sutam.png" alt="" class="wand-face" width="118" height="118" draggable="false" />
       </div>
       <svg class="wand-stick" viewBox="0 0 40 140" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <rect x="14" y="0" width="12" height="110" rx="6" fill="#8D6E63" stroke="#5D4E37" stroke-width="2"/>
@@ -421,6 +503,8 @@
       document.getElementById('scoreDisplay').textContent = '0';
       document.getElementById('comboDisplay').style.opacity = '0';
       document.getElementById('feverStatus').style.opacity = '0';
+      const feverMobile = document.getElementById('feverStatusMobile');
+      if (feverMobile) feverMobile.style.opacity = '0';
       gameArea.classList.remove('fever-bg', 'fever-active');
       document.getElementById('freezeOverlay').style.opacity = '0';
 
@@ -455,14 +539,18 @@
 
     function updateProgressDisplay() {
       const displayEl = document.getElementById('piProgressFull');
-      if (currentIndex === 0) { displayEl.innerHTML = '<span class="text-gray-400">?</span>'; }
-      else if (currentIndex === 1) { displayEl.innerHTML = '<span class="new-digit">3.</span>'; } 
+      const mobileEl = document.getElementById('piProgressMobile');
+      let html = '';
+      if (currentIndex === 0) { html = '<span class="text-gray-400">?</span>'; }
+      else if (currentIndex === 1) { html = '<span class="new-digit">3.</span>'; }
       else {
         const fullStr = "3." + PI_DIGITS.slice(1, currentIndex);
         const prevStr = fullStr.slice(0, -1);
         const lastChar = fullStr.slice(-1);
-        displayEl.innerHTML = prevStr + `<span class="new-digit">${lastChar}</span>`;
+        html = prevStr + `<span class="new-digit">${lastChar}</span>`;
       }
+      if (displayEl) displayEl.innerHTML = html;
+      if (mobileEl) mobileEl.innerHTML = html;
     }
 
     function spawnBubble(forcedType = null) {
@@ -556,13 +644,16 @@
       el.appendChild(balloonDiv);
       
       const areaW = gameArea.clientWidth; const areaH = gameArea.clientHeight;
+      const isCompact = window.innerWidth <= 768;
+      const topPad = isCompact ? 88 : 100;
+      const bottomPad = isCompact ? 170 : 200;
       let x, y; let overlap = true; let attempts = 0;
       while (overlap && attempts < 10) {
-        x = 50 + Math.random() * (areaW - 150);
-        y = 100 + Math.random() * (areaH - 300);
+        x = 40 + Math.random() * Math.max(40, areaW - (isCompact ? 120 : 150));
+        y = topPad + Math.random() * Math.max(40, areaH - topPad - bottomPad);
         overlap = bubbles.some(b => {
           let dx = b.x - x; let dy = b.y - y;
-          return Math.sqrt(dx*dx + dy*dy) < 60; 
+          return Math.sqrt(dx*dx + dy*dy) < (isCompact ? 48 : 60); 
         });
         attempts++;
       }
@@ -619,6 +710,8 @@
       feverMode = true;
       gameArea.classList.add('fever-bg', 'fever-active');
       document.getElementById('feverStatus').style.opacity = '1';
+      const feverMobileOn = document.getElementById('feverStatusMobile');
+      if (feverMobileOn) feverMobileOn.style.opacity = '1';
       showScorePopup(gameArea.clientWidth/2, gameArea.clientHeight/2 - 50, "🔥🔥 피버 타임! 5초 갱신! 🔥🔥");
       
       playFeverSound();
@@ -627,6 +720,8 @@
         feverMode = false;
         gameArea.classList.remove('fever-bg', 'fever-active');
         document.getElementById('feverStatus').style.opacity = '0';
+        const feverMobileOff = document.getElementById('feverStatusMobile');
+        if (feverMobileOff) feverMobileOff.style.opacity = '0';
       }, 5000); 
     }
 
@@ -644,6 +739,8 @@
       if (feverTimeout) clearTimeout(feverTimeout);
       gameArea.classList.remove('fever-bg', 'fever-active');
       document.getElementById('feverStatus').style.opacity = '0';
+      const feverMobilePen = document.getElementById('feverStatusMobile');
+      if (feverMobilePen) feverMobilePen.style.opacity = '0';
       
       wand.classList.remove('shake'); void wand.offsetWidth; wand.classList.add('shake');
       gameArea.classList.add('screen-shake');
@@ -1096,6 +1193,12 @@
       }
 
       speedMultiplier = Math.min(speedMultiplier, currentMaxSpeed);
+
+      const isCompact = window.innerWidth <= 768;
+      const topPad = isCompact ? 88 : 100;
+      const bottomPad = isCompact ? 170 : 200;
+      const sidePad = isCompact ? 16 : 20;
+      const bubbleW = isCompact ? 80 : 110;
       
       bubbles.forEach(b => {
         if (!isFrozen) { 
@@ -1103,10 +1206,10 @@
           b.y += b.vy * speedMultiplier;
         }
         
-        if (b.x < 20 || b.x > areaW - 110) b.vx *= -1;
-        if (b.y < 100 || b.y > areaH - 200) b.vy *= -1;
-        b.x = Math.max(20, Math.min(areaW - 110, b.x));
-        b.y = Math.max(100, Math.min(areaH - 200, b.y));
+        if (b.x < sidePad || b.x > areaW - bubbleW) b.vx *= -1;
+        if (b.y < topPad || b.y > areaH - bottomPad) b.vy *= -1;
+        b.x = Math.max(sidePad, Math.min(areaW - bubbleW, b.x));
+        b.y = Math.max(topPad, Math.min(areaH - bottomPad, b.y));
         b.el.style.left = b.x + 'px'; b.el.style.top = b.y + 'px';
       });
       
@@ -1169,42 +1272,42 @@
       }
 
       const endScreen = document.createElement('div');
-      endScreen.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;z-index:101;backdrop-filter:blur(5px); flex-direction: column; padding: 20px; box-sizing: border-box;';
+      endScreen.style.cssText = 'position:absolute;inset:0;background:rgba(255,255,255,0.95);display:flex;align-items:center;justify-content:center;z-index:101;backdrop-filter:blur(5px); flex-direction: column; padding: 12px; box-sizing: border-box; overflow-y:auto;';
       endScreen.innerHTML = `
-        <div class="flex flex-col md:flex-row gap-6 items-center justify-center w-full max-w-[1200px] h-full max-h-[90vh]">
-          <div style="background:white;border-radius:30px;padding:40px;box-shadow:0 10px 30px rgba(0,0,0,0.2);border:5px solid #fce4ec;text-align:center; flex: 1; min-width: 320px; max-width: 450px;">
-            <div style="font-size:60px;margin-bottom:10px">⏱️</div>
-            <h2 style="font-size:32px;font-weight:900;color:#880e4f;margin-bottom:12px">도전 종료!</h2>
+        <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center justify-center w-full max-w-[1200px] max-h-[90dvh]">
+          <div id="endScreenModal" style="background:white;border-radius:24px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,0.2);border:4px solid #fce4ec;text-align:center; flex: 1; min-width: 0; width:100%; max-width: 450px; box-sizing:border-box;">
+            <div style="font-size:48px;margin-bottom:8px">⏱️</div>
+            <h2 style="font-size:clamp(1.4rem,5vw,2rem);font-weight:900;color:#880e4f;margin-bottom:12px">도전 종료!</h2>
             
-            <div style="background:#f3f4f6; border-radius:20px; padding:15px; margin-bottom: 20px;">
-               <div style="font-size:16px; font-weight:bold; color:#666;">획득 칭호</div>
-               <div style="font-size:24px; font-weight:900; color:${titleColor}; letter-spacing:-0.5px;">${title}</div>
+            <div style="background:#f3f4f6; border-radius:16px; padding:12px; margin-bottom: 16px;">
+               <div style="font-size:14px; font-weight:bold; color:#666;">획득 칭호</div>
+               <div style="font-size:clamp(1.1rem,4vw,1.5rem); font-weight:900; color:${titleColor}; letter-spacing:-0.5px;">${title}</div>
             </div>
 
-            <div style="margin-bottom:15px">
-              <div style="font-size:18px;font-weight:bold;color:#666;margin-bottom:5px">최종 점수</div>
-              <div style="font-size:56px;font-weight:900;color:#7c4dff;line-height:1;">${score.toLocaleString()}</div>
+            <div style="margin-bottom:12px">
+              <div style="font-size:16px;font-weight:bold;color:#666;margin-bottom:5px">최종 점수</div>
+              <div style="font-size:clamp(2.2rem,10vw,3.5rem);font-weight:900;color:#7c4dff;line-height:1;">${score.toLocaleString()}</div>
               
-              <div style="margin-top: 10px; font-size: 15px; font-weight: bold; color: #ff9800; background: #fff3e0; display: inline-block; padding: 6px 16px; border-radius: 20px; border: 1px solid #ffe0b2;">
-                🔥 최대 연속 정답: <span style="font-size: 20px; font-weight: 900; color: #e65100;">${maxCombo}</span> 콤보
+              <div style="margin-top: 10px; font-size: 14px; font-weight: bold; color: #ff9800; background: #fff3e0; display: inline-block; padding: 6px 14px; border-radius: 20px; border: 1px solid #ffe0b2;">
+                🔥 최대 연속 정답: <span style="font-size: 18px; font-weight: 900; color: #e65100;">${maxCombo}</span> 콤보
               </div>
             </div>
             
-            <div style="margin-bottom:30px;font-size:14px;color:#666;line-height:1.6">
-              <div style="font-weight:bold;">최종 달성 원주율: <br><strong style="color:#e91e63;font-size:18px;word-break:break-all;display:inline-block;margin-top:3px;">π = ${finalStr}</strong></div>
+            <div style="margin-bottom:20px;font-size:13px;color:#666;line-height:1.6">
+              <div style="font-weight:bold;">최종 달성 원주율: <br><strong style="color:#e91e63;font-size:clamp(14px,3.5vw,18px);word-break:break-all;display:inline-block;margin-top:3px;">π = ${finalStr}</strong></div>
               ${gameMode === 'practice' ? '<div style="margin-top:10px;color:#64748b;font-size:13px;">📖 암기하기 모드 · 기록은 저장되지 않습니다</div>' : ''}
             </div>
-            <button onclick="handleRestart()" style="background:linear-gradient(to right, #ff6b9d, #e91e63);color:white;border:none;padding:16px 40px;border-radius:40px;font-size:20px;font-weight:900;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 20px rgba(233,30,99,0.5);width:100%;">
+            <button onclick="handleRestart()" style="background:linear-gradient(to right, #ff6b9d, #e91e63);color:white;border:none;padding:14px 24px;border-radius:40px;font-size:clamp(1rem,4vw,1.25rem);font-weight:900;cursor:pointer;transition:all 0.3s;box-shadow:0 6px 20px rgba(233,30,99,0.5);width:100%;min-height:48px;">
               처음으로 / 다시 도전!
             </button>
           </div>
           
-          <div class="bg-white rounded-[30px] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.15)] border-4 border-purple-200 flex flex-col flex: 1.5; w-full max-w-[700px] h-[90%] max-h-[600px]">
-             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-black text-purple-700 text-center flex-1">🏆 명예의 전당</h3>
-                <button onclick="resetLeaderboard(false)" class="text-sm bg-red-100 text-red-600 px-3 py-1.5 rounded-lg hover:bg-red-200 transition-colors font-bold whitespace-nowrap shadow-sm active:scale-95">기록 초기화</button>
+          <div class="bg-white rounded-[24px] p-4 md:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.15)] border-4 border-purple-200 flex flex-col w-full max-w-[700px] max-h-[min(420px,50dvh)] md:max-h-[600px] min-h-0">
+             <div class="flex justify-between items-center mb-3 gap-2">
+                <h3 class="text-lg md:text-2xl font-black text-purple-700 text-center flex-1">🏆 명예의 전당</h3>
+                <button onclick="resetLeaderboard(false)" class="text-xs md:text-sm bg-red-100 text-red-600 px-2.5 py-1.5 rounded-lg hover:bg-red-200 transition-colors font-bold whitespace-nowrap shadow-sm active:scale-95">기록 초기화</button>
              </div>
-             <ul id="endLeaderboardList" class="space-y-2 text-base text-left ranking-scroll overflow-y-auto pr-3 flex-1">
+             <ul id="endLeaderboardList" class="space-y-2 text-sm md:text-base text-left ranking-scroll overflow-y-auto pr-2 flex-1 min-h-0">
              </ul>
           </div>
         </div>

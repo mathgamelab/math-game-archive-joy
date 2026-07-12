@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>위상 공간 시뮬레이터</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'JetBrains Mono','SF Mono',Consolas,monospace;
+    background:#06080f; min-height:100vh;
+    display:flex; flex-direction:column; align-items:center;
+    padding:16px 10px; color:#e0e0e0; overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .title-wrap { text-align:center; margin-bottom:12px; }
+  #title {
+    font-size:22px; font-weight:800; letter-spacing:-0.03em;
+    background:linear-gradient(135deg,#00ff88,#ffffff);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  }
+  .subtitle { font-size:10px; color:rgba(255,255,255,0.25); margin-top:2px; letter-spacing:2px; }
+  .mode-row {
+    display:flex; gap:4px; margin-bottom:10px; flex-wrap:wrap; justify-content:center;
+    max-width:100%; padding:2px 4px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+  }
+  .mode-btn {
+    background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.08);
+    color:rgba(255,255,255,0.35); padding:5px 11px; border-radius:6px; cursor:pointer;
+    font-size:11px; font-weight:600; font-family:inherit; transition:all 0.2s;
+    white-space:nowrap; flex-shrink:0;
+  }
+  #kleinOrderRow { display:none; gap:4px; margin-bottom:8px; align-items:center; }
+  #kleinOrderRow span { font-size:10px; color:rgba(255,255,255,0.3); margin-right:2px; }
+  .order-btn {
+    background:rgba(255,255,255,0.03); border:1.5px solid rgba(255,255,255,0.08);
+    color:rgba(255,255,255,0.3); padding:4px 10px; border-radius:5px; cursor:pointer;
+    font-size:10px; font-weight:600; font-family:inherit; transition:all 0.2s;
+  }
+  #toggleBtn {
+    margin-bottom:4px; background:rgba(255,255,255,0.05);
+    border:2px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.5);
+    padding:8px 28px; border-radius:24px; cursor:pointer;
+    font-size:13px; font-weight:700; font-family:inherit;
+    letter-spacing:0.08em; transition:all 0.3s;
+  }
+  #phaseLabel {
+    height:20px; margin-bottom:2px; font-size:11px; opacity:0;
+    transition:opacity 0.3s; text-align:center; padding:0 10px;
+  }
+  #viewWrap { position:relative; }
+  #view3d {
+    border-radius:12px; overflow:hidden;
+    border:1px solid rgba(255,255,255,0.2);
+    cursor:grab; touch-action:none;
+  }
+  #hint {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-140%);
+    background:rgba(0,0,0,0.75); border:1px solid rgba(255,255,255,0.3);
+    border-radius:8px; padding:8px 14px; font-size:11px; color:rgba(255,255,255,0.75);
+    pointer-events:none; z-index:11; white-space:nowrap; text-align:center;
+    animation:pulse 2s infinite;
+  }
+  #hint .sub { font-size:9px; color:rgba(255,255,255,0.4); margin-top:3px; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.55} }
+  #clearBtn {
+    position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5);
+    border:1px solid rgba(255,255,255,0.25); color:rgba(255,255,255,0.7);
+    padding:4px 10px; border-radius:6px; cursor:pointer;
+    font-size:10px; font-weight:600; font-family:inherit; z-index:10;
+  }
+  #joystick {
+    position:absolute; bottom:12px; right:12px;
+    width:80px; height:80px; border-radius:50%;
+    background:rgba(0,0,0,0.5); border:2px solid rgba(255,255,255,0.4);
+    display:flex; align-items:center; justify-content:center;
+    touch-action:none; cursor:pointer; z-index:10;
+    box-shadow:0 0 16px rgba(0,0,0,0.6);
+  }
+  #joystick .cross-h { position:absolute; width:55%; height:1px; background:rgba(255,255,255,0.2); }
+  #joystick .cross-v { position:absolute; width:1px; height:55%; background:rgba(255,255,255,0.2); }
+  #knob {
+    width:36px; height:36px; border-radius:50%;
+    background:radial-gradient(circle at 40% 35%, rgba(255,255,255,0.5), rgba(255,255,255,0.25));
+    border:2px solid rgba(255,255,255,0.6);
+    transition:transform 0.15s ease-out; pointer-events:none;
+  }
+  .controls-hint { font-size:9px; color:rgba(255,255,255,0.2); margin-top:8px; text-align:center; }
+  .panel {
+    margin-top:10px; padding:10px 16px;
+    border:1px solid rgba(255,255,255,0.06); border-radius:6px;
+    width:100%; font-size:11px; line-height:1.8; color:rgba(255,255,255,0.35);
+  }
+  .panel-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; }
+  #infoName { font-weight:700; font-size:12px; }
+  #infoWord { font-size:10px; color:rgba(255,255,255,0.3); font-style:italic; }
+  .invariants { display:flex; gap:14px; margin-top:6px; font-size:10px; flex-wrap:wrap; }
+  .inv-label { color:rgba(255,255,255,0.25); }
+  .inv-val { font-weight:700; }
+  #relPanel .rel-title { font-size:10px; color:rgba(255,255,255,0.3); margin-bottom:6px; font-weight:700; }
+  .rel-row { display:flex; align-items:center; gap:4px; flex-wrap:wrap; font-size:9.5px; margin-bottom:5px; }
+  .rel-arrow { color:rgba(255,255,255,0.25); font-size:8.5px; }
+  .rel-node {
+    padding:2px 7px; border-radius:4px;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+    color:rgba(255,255,255,0.4); white-space:nowrap;
+  }
+  #legend { margin-top:6px; width:100%; display:grid; grid-template-columns:1fr 1fr; gap:4px; font-size:10px; }
+  .legend-item { padding:4px 8px; border-radius:4px; cursor:pointer; border:1px solid rgba(255,255,255,0.04); color:rgba(255,255,255,0.18); }
+  .legend-item b { font-weight:700; }
+  .legend-item span { margin-left:4px; opacity:0.7; }
+  @media (max-width:500px) {
+    body { padding:10px 6px; }
+    #title { font-size:18px; }
+    .mode-row { flex-wrap:nowrap; }
+    .mode-btn { padding:4px 8px; font-size:10px; }
+    #toggleBtn { padding:6px 20px; font-size:11px; }
+    #legend { grid-template-columns:1fr; }
+    .panel { font-size:10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="title-wrap">
+  <div id="title">위상 공간 시뮬레이터</div>
+  <div class="subtitle">TOPOLOGY SPACE SIMULATOR</div>
+</div>
+
+<div class="mode-row" id="modeRow"></div>
+
+<div id="kleinOrderRow">
+  <span>접기 순서</span>
+  <button class="order-btn" id="orderLR">가로 먼저</button>
+  <button class="order-btn" id="orderTB">세로 먼저</button>
+</div>
+
+<button id="toggleBtn">◆ 2D → 3D 접기</button>
+<div id="phaseLabel"></div>
+
+<div id="viewWrap">
+  <div id="view3d"></div>
+  <div id="hint">
+    <span id="hintMain">화살표 키(←↑↓→)로 이동해 보세요</span>
+    <div class="sub">경계를 넘으면 반대편으로 연결됩니다</div>
+  </div>
+  <button id="clearBtn">✕ 궤적 지우기</button>
+  <div id="joystick">
+    <div class="cross-h"></div>
+    <div class="cross-v"></div>
+    <div id="knob"></div>
+  </div>
+</div>
+
+<div class="controls-hint" id="controlsHint"></div>
+
+<div class="panel" id="infoPanel">
+  <div class="panel-header">
+    <div id="infoName"></div>
+    <div id="infoWord"></div>
+  </div>
+  <div id="infoDesc"></div>
+  <div class="invariants">
+    <span><span class="inv-label">오일러 지표 </span><span class="inv-val" id="invEuler"></span></span>
+    <span><span class="inv-label">방향성 </span><span class="inv-val" id="invOrient"></span></span>
+    <span><span class="inv-label">경계 </span><span class="inv-val" id="invBoundary"></span></span>
+  </div>
+</div>
+
+<div class="panel" id="relPanel">
+  <div class="rel-title">도형 관계도</div>
+  <div id="relRows"></div>
+</div>
+
+<div id="legend"></div>
+
+<script>
+/* ══════════ Constants ══════════ */
+const S=300, SPD=2.8, TRAIL_MAX=160, R_BIG=2.2, R_SMALL=0.75;
+const FLAT_SCALE=3.2, SEG_U=72, SEG_V=36;
+const PHASE1_MS=900, PAUSE_MS=500, PHASE2_MS=900, TOTAL_MS=PHASE1_MS+PAUSE_MS+PHASE2_MS;
+const MIN_ZOOM=3.5, MAX_ZOOM=12, DEFAULT_ZOOM=7.0;
+const JOY_RADIUS=34;
+
+function easeInOutCubic(x){return x<0.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;}
+
+/* ══════════ Parametric surfaces ══════════ */
+function torusPt(u,v){const a=u*Math.PI*2,b=v*Math.PI*2;return[(R_BIG+R_SMALL*Math.cos(b))*Math.cos(a),R_SMALL*Math.sin(b),(R_BIG+R_SMALL*Math.cos(b))*Math.sin(a)];}
+function cylinderPt(u,v){const a=u*Math.PI*2,R=1.4,H=3.2;return[R*Math.cos(a),-(v-0.5)*H,R*Math.sin(a)];}
+function mobiusPt(u,v){const a=u*Math.PI*2,s=(v-0.5)*1.3,R=2;return[(R+s*Math.cos(a/2))*Math.cos(a),s*Math.sin(a/2),(R+s*Math.cos(a/2))*Math.sin(a)];}
+function kleinPt(u,v){
+  const a=u*Math.PI*2,b=v*Math.PI*2,sc=0.13;
+  let x,y,z;
+  const ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b);
+  const half=1-ca/2;
+  if(a<Math.PI){x=6*ca*(1+sa)+4*half*ca*cb;y=16*sa+4*half*sa*cb;z=4*half*sb;}
+  else{x=6*ca*(1+sa)+4*half*Math.cos(b+Math.PI);y=16*sa;z=4*half*sb;}
+  return[x*sc,y*sc,z*sc];
+}
+function projectivePt(u,v){const ua=u*Math.PI,va=v*Math.PI,R=2.5;return[R*Math.sin(ua)*Math.sin(2*va)*0.5,R*Math.sin(2*ua)*Math.cos(va)*Math.cos(va),R*Math.cos(2*ua)*Math.cos(va)*Math.cos(va)];}
+function torusMidPt(u,v){const a=u*Math.PI*2;return[R_BIG*Math.cos(a),-(v-0.5)*3.0,R_BIG*Math.sin(a)];}
+function kleinMidTBPt(u,v){const a=v*Math.PI*2,R=1.2;return[(u-0.5)*3.2,R*Math.cos(a),R*Math.sin(a)];}
+function flatPt(u,v){return[(u-0.5)*FLAT_SCALE,-(v-0.5)*FLAT_SCALE,0];}
+
+const SURFACE_FN={torus:torusPt,cylinder:cylinderPt,mobius:mobiusPt,klein:kleinPt,projective:projectivePt};
+const MID_FN={torus:torusMidPt,cylinder:cylinderPt,mobius:mobiusPt,klein:mobiusPt,projective:mobiusPt};
+
+/* ══════════ Wrap logic ══════════ */
+function wrapTorus(x,y){const c=[];if(x<0||x>S)c.push("lr");if(y<0||y>S)c.push("tb");return{x:((x%S)+S)%S,y:((y%S)+S)%S,crossed:c};}
+function wrapCylinder(x,y,vy){const c=[];if(x<0||x>S)c.push("lr");x=((x%S)+S)%S;if(y<0){y=0;vy=Math.abs(vy)*0.6;}if(y>S){y=S;vy=-Math.abs(vy)*0.6;}return{x,y,vy,crossed:c};}
+function wrapMobius(x,y,vy){const c=[];if(x<0){x+=S;y=S-y;vy=-vy;c.push("lr");}if(x>S){x-=S;y=S-y;vy=-vy;c.push("lr");}if(y<0){y=0;vy=Math.abs(vy)*0.6;}if(y>S){y=S;vy=-Math.abs(vy)*0.6;}return{x,y,vy,crossed:c};}
+function wrapKlein(x,y){const c=[];if(x<0){x+=S;y=S-y;c.push("lr");}if(x>S){x-=S;y=S-y;c.push("lr");}if(y<0||y>S)c.push("tb");y=((y%S)+S)%S;return{x,y,crossed:c};}
+function wrapProjective(x,y){const c=[];if(x<0){x+=S;y=S-y;c.push("lr");}if(x>S){x-=S;y=S-y;c.push("lr");}if(y<0){y+=S;x=S-x;c.push("tb");}if(y>S){y-=S;x=S-x;c.push("tb");}return{x,y,crossed:c};}
+
+/* ══════════ Modes ══════════ */
+const MODES={
+  torus:{name:"원환면",sub:"Torus",color:"#00ff88",desc:"좌우·상하 같은 방향 연결",
+    phase1:"좌우 변(a)을 같은 방향으로 붙여 원기둥 만드는 중…",phase2:"상하 변(b)을 같은 방향으로 붙여 도넛 만드는 중…",hasPhase2:true,
+    euler:0,orient:true,boundary:0,word:"aba⁻¹b⁻¹"},
+  cylinder:{name:"원기둥",sub:"Cylinder",color:"#44aaff",desc:"좌우 연결, 상하 벽",
+    phase1:"좌우 변(a)을 같은 방향으로 붙이는 중…",phase2:"",hasPhase2:false,
+    euler:0,orient:true,boundary:2,word:"a·a⁻¹"},
+  mobius:{name:"뫼비우스 띠",sub:"Möbius Strip",color:"#ff8800",desc:"좌우 반전 연결, 상하 벽",
+    phase1:"좌우 변(a)을 반대 방향으로 비틀어 붙이는 중…",phase2:"",hasPhase2:false,
+    euler:0,orient:false,boundary:1,word:"a·a"},
+  klein:{name:"클라인 병",sub:"Klein Bottle",color:"#dd44ff",desc:"좌우 반전, 상하 같은 방향 연결",
+    phase1:"좌우 변(a)을 반대 방향으로 비틀어 뫼비우스 띠 만드는 중…",phase2:"상하 변(b)을 같은 방향으로 붙여 클라인 병 만드는 중…",hasPhase2:true,
+    euler:0,orient:false,boundary:0,word:"abab⁻¹"},
+  projective:{name:"사영평면",sub:"RP²",color:"#ff4466",desc:"좌우·상하 모두 반전 연결",
+    phase1:"좌우 변(a)을 반대 방향으로 비틀어 뫼비우스 띠 만드는 중…",phase2:"상하 변(b)도 반대 방향으로 비틀어 붙이는 중…",hasPhase2:true,
+    euler:1,orient:false,boundary:0,word:"abab"},
+};
+const MODE_KEYS=Object.keys(MODES);
+
+function lerpV(a,b,t){return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t];}
+
+function buildEdgePos(fnMid,fnFinal,pLR,pTB){
+  const pts={left:[],right:[],top:[],bottom:[]};
+  const n=60;
+  for(let i=0;i<=n;i++){
+    const f=i/n;
+    pts.left.push(...lerpV(flatPt(0,f),fnMid(0,f),pLR));
+    pts.right.push(...lerpV(flatPt(1,f),fnMid(1,f),pLR));
+    pts.top.push(...lerpV(lerpV(flatPt(f,0),fnMid(f,0),pLR),fnFinal(f,0),pTB));
+    pts.bottom.push(...lerpV(lerpV(flatPt(f,1),fnMid(f,1),pLR),fnFinal(f,1),pTB));
+  }
+  return pts;
+}
+
+function makeCheckerTexture(){
+  const size=512,n=12;
+  const canvas=document.createElement("canvas");
+  canvas.width=size;canvas.height=size;
+  const ctx=canvas.getContext("2d");
+  const cell=size/n;
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+    ctx.fillStyle=(i+j)%2===0?"#ffffff":"#888888";
+    ctx.fillRect(i*cell,j*cell,cell,cell);
+  }
+  const tex=new THREE.CanvasTexture(canvas);
+  tex.wrapS=THREE.ClampToEdgeWrapping;tex.wrapT=THREE.ClampToEdgeWrapping;
+  return tex;
+}
+
+function disposeObject(obj){
+  obj.traverse(c=>{
+    if(c.geometry)c.geometry.dispose();
+    if(c.material){
+      const ms=Array.isArray(c.material)?c.material:[c.material];
+      ms.forEach(m=>{if(m.map)m.map.dispose();m.dispose();});
+    }
+  });
+}
+
+/* ══════════ App State ══════════ */
+let mode="torus";
+let is3D=false;
+let kleinOrder="lr";
+let viewSize=440;
+
+const st={
+  x:S/2,y:S/2,vx:0,vy:0,trail:[],keys:new Set(),
+  joyVec:{x:0,y:0},flashLR:0,flashTB:0,shipFlash:0,
+};
+const T={
+  scene:null,camera:null,renderer:null,pivot:null,
+  surfaceGeo:null,surfaceMesh:null,wireMesh:null,wireGeo:null,
+  shipGroup:null,shipGlow:null,trailMesh:null,
+  gridLines:null,edgeLines:{},arrowSprites:[],labelSprites:[],
+  dragStart:null,rotX:0.3,rotY:0,autoRot:0,
+  morphStart:null,morphDirection:1,
+  flatPos:null,midPos:null,curvedPos:null,
+  currentMorphT:0,zoom:DEFAULT_ZOOM,pinchDist:null,
+  phaseSwap:false,fnMidRef:null,
+  dummy:new THREE.Object3D(),
+  trailColor:new THREE.Color(),trailBaseColor:new THREE.Color(),
+  lookTarget:new THREE.Vector3(),
+};
+let phaseLabelText="";
+let lastTap=0;
+
+/* ══════════ DOM refs ══════════ */
+const $ = id=>document.getElementById(id);
+const viewBox=$("view3d"), viewWrap=$("viewWrap");
+const modeRow=$("modeRow"), toggleBtn=$("toggleBtn"), phaseLabelEl=$("phaseLabel");
+const kleinOrderRow=$("kleinOrderRow"), orderLRBtn=$("orderLR"), orderTBBtn=$("orderTB");
+const hintEl=$("hint"), clearBtn=$("clearBtn");
+const joyEl=$("joystick"), knobEl=$("knob");
+const legendEl=$("legend"), relRowsEl=$("relRows");
+
+/* ══════════ Responsive sizing ══════════ */
+function calcSize(){
+  const w=window.innerWidth;
+  if(w<500)viewSize=Math.min(w-20,400);
+  else if(w<768)viewSize=Math.min(w-40,440);
+  else viewSize=440;
+  viewBox.style.width=viewSize+"px";
+  viewBox.style.height=viewSize+"px";
+  document.querySelectorAll(".panel,#legend").forEach(el=>{el.style.maxWidth=viewSize+"px";});
+  $("controlsHint").textContent = window.matchMedia("(pointer:coarse)").matches
+    ? "조이스틱 이동 · 1손가락 회전 · 2손가락 확대/축소 · 더블탭 리셋"
+    : "←↑↓→ 이동 · 드래그 회전 · 휠 확대/축소 · 더블클릭 리셋";
+  $("hintMain").textContent = window.matchMedia("(pointer:coarse)").matches
+    ? "조이스틱으로 이동해 보세요 →"
+    : "화살표 키(←↑↓→)로 이동해 보세요";
+}
+calcSize();
+window.addEventListener("resize",calcSize);
+
+/* ══════════ Init renderer (once) ══════════ */
+function initRenderer(){
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(40,1,0.1,100);
+  camera.position.set(0,0,T.zoom);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setClearColor(0x06080f,1);
+  viewBox.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff,0.5));
+  const d1=new THREE.DirectionalLight(0xffffff,0.65);d1.position.set(3,5,4);scene.add(d1);
+  const d2=new THREE.DirectionalLight(0x8888ff,0.3);d2.position.set(-3,-2,-3);scene.add(d2);
+
+  T.scene=scene;T.camera=camera;T.renderer=renderer;
+
+  const ro=new ResizeObserver(entries=>{
+    for(const e of entries){
+      const w=e.contentRect.width,h=e.contentRect.height;
+      if(w>0&&h>0){renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix();}
+    }
+  });
+  ro.observe(viewBox);
+}
+
+/* ══════════ Rebuild scene contents ══════════ */
+function rebuildContents(m){
+  if(!T.scene)return;
+  if(T.pivot){disposeObject(T.pivot);T.scene.remove(T.pivot);T.pivot=null;}
+
+  const fn=SURFACE_FN[m];
+  const isKleinTB=(m==="klein"&&kleinOrder==="tb");
+  const fnMid=isKleinTB?kleinMidTBPt:MID_FN[m];
+  const col=new THREE.Color(MODES[m].color);
+
+  const flatArr=[],midArr=[],curvedArr=[],uvArr=[],idxArr=[];
+  for(let j=0;j<=SEG_V;j++)for(let i=0;i<=SEG_U;i++){
+    const u=i/SEG_U,v=j/SEG_V;
+    flatArr.push(...flatPt(u,v));midArr.push(...fnMid(u,v));curvedArr.push(...fn(u,v));uvArr.push(u,v);
+  }
+  for(let j=0;j<SEG_V;j++)for(let i=0;i<SEG_U;i++){
+    const a=j*(SEG_U+1)+i,b=a+1,c=a+(SEG_U+1),d=c+1;idxArr.push(a,b,c,b,d,c);
+  }
+
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute("position",new THREE.Float32BufferAttribute(new Float32Array(flatArr),3));
+  geo.setAttribute("uv",new THREE.Float32BufferAttribute(uvArr,2));
+  geo.setIndex(idxArr);geo.computeVertexNormals();
+
+  const surfaceMesh=new THREE.Mesh(geo,new THREE.MeshPhongMaterial({
+    color:col,map:makeCheckerTexture(),transparent:true,opacity:0.1,
+    side:THREE.DoubleSide,depthWrite:false,
+  }));
+  const wireGeo=geo.clone();
+  const wireMesh=new THREE.Mesh(wireGeo,new THREE.MeshBasicMaterial({
+    color:col,wireframe:true,transparent:true,opacity:0.06,
+  }));
+
+  const gridPts=[];
+  for(let i=0;i<=10;i++){const f=i/10;for(let j=0;j<50;j++){const t0=j/50,t1=(j+1)/50;gridPts.push(...flatPt(f,t0),...flatPt(f,t1),...flatPt(t0,f),...flatPt(t1,f));}}
+  const gridGeo=new THREE.BufferGeometry();
+  gridGeo.setAttribute("position",new THREE.Float32BufferAttribute(gridPts,3));
+  const gridLines=new THREE.LineSegments(gridGeo,new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.07}));
+
+  const kleinEdge={left:"#ff4444",right:"#ff4444",top:MODES[m].color,bottom:MODES[m].color};
+  const edgeColors={torus:{left:MODES[m].color,right:MODES[m].color,top:MODES[m].color,bottom:MODES[m].color},cylinder:{left:MODES[m].color,right:MODES[m].color,top:"#666666",bottom:"#666666"},mobius:{left:"#ff4444",right:"#ff4444",top:"#666666",bottom:"#666666"},klein:kleinEdge,projective:{left:"#ff4444",right:"#ff4444",top:"#ff4444",bottom:"#ff4444"}}[m];
+  const edgePts=buildEdgePos(fnMid,fn,0,0);
+  const edgeLines={};
+  for(const side of ["left","right","top","bottom"]){
+    const eg=new THREE.BufferGeometry();
+    eg.setAttribute("position",new THREE.Float32BufferAttribute(edgePts[side],3));
+    edgeLines[side]=new THREE.Line(eg,new THREE.LineBasicMaterial({color:new THREE.Color(edgeColors[side]),transparent:true,opacity:0.7}));
+  }
+
+  const arrowSprites=[],labelSprites=[];
+  const arrowConf={torus:{l:"▼",r:"▼",t:"▶",b:"▶"},cylinder:{l:"▼",r:"▼",t:"—",b:"—"},mobius:{l:"▼",r:"▲",t:"—",b:"—"},klein:{l:"▼",r:"▲",t:"▶",b:"▶"},projective:{l:"▼",r:"▲",t:"▶",b:"◀"}}[m];
+  const letterConf={torus:{l:"a",r:"a",t:"b",b:"b"},cylinder:{l:"a",r:"a",t:"",b:""},mobius:{l:"a",r:"a",t:"",b:""},klein:{l:"a",r:"a",t:"b",b:"b"},projective:{l:"a",r:"a",t:"b",b:"b"}}[m];
+  const hs=FLAT_SCALE/2;
+  const makeSprite=(text,x,y,z,op,size,colorOverride)=>{
+    if(!text||text==="—")return null;
+    const c2=document.createElement("canvas");c2.width=64;c2.height=64;
+    const cx=c2.getContext("2d");
+    cx.fillStyle=colorOverride||MODES[m].color;
+    cx.font=`bold ${size||32}px sans-serif`;
+    cx.textAlign="center";cx.textBaseline="middle";
+    cx.fillText(text,32,32);
+    const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c2),transparent:true,opacity:op}));
+    spr.scale.set(0.34,0.34,1);spr.position.set(x,y,z);
+    return spr;
+  };
+  arrowSprites.push(makeSprite(arrowConf.l,-hs-0.22,0,0,0.55));
+  arrowSprites.push(makeSprite(arrowConf.r,hs+0.22,0,0,0.55));
+  arrowSprites.push(makeSprite(arrowConf.t,0,hs+0.22,0,0.55));
+  arrowSprites.push(makeSprite(arrowConf.b,0,-hs-0.22,0,0.55));
+  const lrColor=(m==="mobius"||m==="klein"||m==="projective")?"#ff6666":MODES[m].color;
+  const tbColor=(m==="projective")?"#ff6666":MODES[m].color;
+  labelSprites.push(makeSprite(letterConf.l,-hs-0.22,0.4,0,0.7,36,lrColor));
+  labelSprites.push(makeSprite(letterConf.r,hs+0.22,0.4,0,0.7,36,lrColor));
+  labelSprites.push(makeSprite(letterConf.t,0.4,hs+0.22,0,0.7,36,tbColor));
+  labelSprites.push(makeSprite(letterConf.b,0.4,-hs-0.22,0,0.7,36,tbColor));
+
+  /* Ship: direction cone */
+  const shipGroup=new THREE.Group();
+  const coneGeo=new THREE.ConeGeometry(0.075,0.24,10);
+  coneGeo.rotateX(Math.PI/2);
+  shipGroup.add(new THREE.Mesh(coneGeo,new THREE.MeshBasicMaterial({color:0xffffff})));
+  const shipGlow=new THREE.Mesh(new THREE.SphereGeometry(0.16,16,16),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.35}));
+  shipGroup.add(shipGlow);
+
+  /* Trail: InstancedMesh */
+  const trailMesh=new THREE.InstancedMesh(
+    new THREE.SphereGeometry(0.035,6,6),
+    new THREE.MeshBasicMaterial({transparent:true,opacity:0.7}),
+    TRAIL_MAX
+  );
+  trailMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  trailMesh.count=0;
+  const tmpColor=new THREE.Color(MODES[m].color);
+  for(let i=0;i<TRAIL_MAX;i++)trailMesh.setColorAt(i,tmpColor);
+  if(trailMesh.instanceColor)trailMesh.instanceColor.needsUpdate=true;
+
+  const pivot=new THREE.Group();
+  pivot.add(surfaceMesh);pivot.add(wireMesh);pivot.add(gridLines);
+  Object.values(edgeLines).forEach(l=>pivot.add(l));
+  arrowSprites.forEach(s=>{if(s)pivot.add(s);});
+  labelSprites.forEach(s=>{if(s)pivot.add(s);});
+  pivot.add(shipGroup);pivot.add(trailMesh);
+  T.scene.add(pivot);
+
+  Object.assign(T,{
+    pivot,surfaceGeo:geo,surfaceMesh,wireMesh,wireGeo,
+    shipGroup,shipGlow,trailMesh,gridLines,edgeLines,arrowSprites,labelSprites,
+    flatPos:new Float32Array(flatArr),midPos:new Float32Array(midArr),curvedPos:new Float32Array(curvedArr),
+    autoRot:0,currentMorphT:0,morphStart:null,
+    phaseSwap:isKleinTB,fnMidRef:fnMid,
+  });
+  T.trailBaseColor.set(MODES[m].color);
+}
+
+/* ══════════ UI updates ══════════ */
+function setLabel(l){
+  if(phaseLabelText===l)return;
+  phaseLabelText=l;
+  phaseLabelEl.textContent=l;
+  phaseLabelEl.style.color=MODES[mode].color;
+  phaseLabelEl.style.opacity=l&&l!=="…"?0.8:l==="…"?0.3:0;
+}
+
+function updateUI(){
+  const cur=MODES[mode];
+  $("title").style.background=`linear-gradient(135deg, ${cur.color}, #ffffff)`;
+  $("title").style.webkitBackgroundClip="text";
+
+  /* Mode buttons */
+  document.querySelectorAll(".mode-btn").forEach(btn=>{
+    const k=btn.dataset.mode;
+    const active=k===mode;
+    btn.style.background=active?MODES[k].color+"22":"rgba(255,255,255,0.03)";
+    btn.style.borderColor=active?MODES[k].color:"rgba(255,255,255,0.08)";
+    btn.style.color=active?MODES[k].color:"rgba(255,255,255,0.35)";
+  });
+
+  /* Klein order */
+  kleinOrderRow.style.display=mode==="klein"?"flex":"none";
+  [["lr",orderLRBtn],["tb",orderTBBtn]].forEach(([o,btn])=>{
+    const active=kleinOrder===o;
+    btn.style.background=active?cur.color+"22":"rgba(255,255,255,0.03)";
+    btn.style.borderColor=active?cur.color:"rgba(255,255,255,0.08)";
+    btn.style.color=active?cur.color:"rgba(255,255,255,0.3)";
+  });
+
+  /* Toggle */
+  toggleBtn.textContent=is3D?"◇ 3D → 2D 펼치기":"◆ 2D → 3D 접기";
+  toggleBtn.style.background=is3D?`linear-gradient(135deg, ${cur.color}44, ${cur.color}22)`:"rgba(255,255,255,0.05)";
+  toggleBtn.style.borderColor=is3D?cur.color+"88":cur.color+"33";
+  toggleBtn.style.color=is3D?cur.color:"rgba(255,255,255,0.5)";
+  toggleBtn.style.boxShadow=is3D?`0 0 20px ${cur.color}22`:"none";
+
+  /* View border */
+  viewBox.style.borderColor=cur.color+"33";
+  viewBox.style.boxShadow=`0 0 40px ${cur.color}11`;
+  clearBtn.style.borderColor=cur.color+"44";
+  clearBtn.style.color=cur.color+"cc";
+  joyEl.style.borderColor=cur.color+"88";
+  knobEl.style.background=`radial-gradient(circle at 40% 35%, ${cur.color}aa, ${cur.color}55)`;
+  knobEl.style.borderColor=cur.color+"bb";
+  hintEl.style.borderColor=cur.color+"55";
+
+  /* Info */
+  $("infoName").textContent=`${cur.name} (${cur.sub})`;
+  $("infoName").style.color=cur.color;
+  $("infoWord").textContent=cur.word;
+  $("infoDesc").textContent=cur.desc;
+  $("invEuler").textContent=`χ = ${cur.euler}`;
+  $("invEuler").style.color=cur.color;
+  $("invOrient").textContent=cur.orient?"가능":"불가능";
+  $("invOrient").style.color=cur.orient?"#66dd88":"#ff7766";
+  $("invBoundary").textContent=`${cur.boundary}개`;
+  $("invBoundary").style.color=cur.color;
+
+  /* Relation diagram */
+  buildRelDiagram();
+  /* Legend */
+  buildLegend();
+}
+
+function buildRelDiagram(){
+  const rows=[
+    [{t:"정사각형",m:null},{a:"좌우 붙임"},{t:"원기둥",m:"cylinder"},{a:"상하 붙임"},{t:"원환면",m:"torus"}],
+    [{t:"정사각형",m:null},{a:"좌우 반전"},{t:"뫼비우스 띠",m:"mobius"},{a:"상하 붙임"},{t:"클라인 병",m:"klein"}],
+    [{t:"뫼비우스 띠",m:"mobius"},{a:"상하 반전"},{t:"사영평면",m:"projective"}],
+  ];
+  relRowsEl.innerHTML="";
+  rows.forEach(row=>{
+    const div=document.createElement("div");
+    div.className="rel-row";
+    row.forEach(item=>{
+      if(item.a!==undefined){
+        const s=document.createElement("span");
+        s.className="rel-arrow";s.textContent=`─${item.a}→`;
+        div.appendChild(s);
+      }else{
+        const s=document.createElement("span");
+        s.className="rel-node";s.textContent=item.t;
+        if(item.m===mode){
+          s.style.background=MODES[item.m].color+"22";
+          s.style.borderColor=MODES[item.m].color;
+          s.style.color=MODES[item.m].color;
+          s.style.fontWeight=700;
+        }else if(item.m){
+          s.style.color=MODES[item.m].color+"88";
+        }
+        div.appendChild(s);
+      }
+    });
+    relRowsEl.appendChild(div);
+  });
+}
+
+function buildLegend(){
+  legendEl.innerHTML="";
+  MODE_KEYS.forEach(k=>{
+    const div=document.createElement("div");
+    div.className="legend-item";
+    div.innerHTML=`<b>${MODES[k].name}</b><span>${MODES[k].desc}</span>`;
+    if(k===mode){
+      div.style.background=MODES[k].color+"0f";
+      div.style.borderColor=MODES[k].color+"33";
+      div.style.color=MODES[k].color;
+    }
+    div.onclick=()=>switchMode(k);
+    legendEl.appendChild(div);
+  });
+}
+
+/* ══════════ Mode switching ══════════ */
+function switchMode(m){
+  mode=m;
+  is3D=false;
+  rebuildContents(m);
+  st.trail=[];st.x=S/2;st.y=S/2;st.flashLR=0;st.flashTB=0;st.shipFlash=0;
+  T.morphDirection=-1;T.morphStart=null;T.currentMorphT=0;
+  setLabel("");
+  updateUI();
+}
+
+function toggle3D(){
+  is3D=!is3D;
+  T.morphDirection=is3D?1:-1;
+  T.morphStart=performance.now();
+  updateUI();
+}
+
+/* ══════════ Build mode buttons ══════════ */
+MODE_KEYS.forEach(k=>{
+  const btn=document.createElement("button");
+  btn.className="mode-btn";
+  btn.dataset.mode=k;
+  btn.textContent=MODES[k].name;
+  btn.onclick=()=>switchMode(k);
+  modeRow.appendChild(btn);
+});
+toggleBtn.onclick=toggle3D;
+orderLRBtn.onclick=()=>{kleinOrder="lr";switchMode("klein");};
+orderTBBtn.onclick=()=>{kleinOrder="tb";switchMode("klein");};
+clearBtn.onclick=()=>{st.trail=[];if(T.trailMesh)T.trailMesh.count=0;};
+
+/* ══════════ Hint ══════════ */
+let hintDismissed=false;
+function dismissHint(){
+  if(hintDismissed)return;
+  hintDismissed=true;
+  hintEl.style.display="none";
+}
+setTimeout(dismissHint,8000);
+
+/* ══════════ Keyboard ══════════ */
+window.addEventListener("keydown",e=>{
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)){
+    e.preventDefault();st.keys.add(e.key);dismissHint();
+  }
+});
+window.addEventListener("keyup",e=>st.keys.delete(e.key));
+
+/* ══════════ Mouse ══════════ */
+viewBox.addEventListener("mousedown",e=>{T.dragStart={x:e.clientX,y:e.clientY,rx:T.rotX,ry:T.rotY};});
+window.addEventListener("mousemove",e=>{
+  if(!T.dragStart)return;
+  const s=0.004+T.currentMorphT*0.004;
+  T.rotY=T.dragStart.ry+(e.clientX-T.dragStart.x)*s;
+  T.rotX=T.dragStart.rx+(e.clientY-T.dragStart.y)*s;
+  T.rotX=Math.max(-Math.PI/2,Math.min(Math.PI/2,T.rotX));
+});
+window.addEventListener("mouseup",()=>{T.dragStart=null;});
+viewBox.addEventListener("wheel",e=>{
+  e.preventDefault();
+  T.zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,T.zoom+e.deltaY*0.005));
+},{passive:false});
+viewBox.addEventListener("dblclick",e=>{
+  e.preventDefault();
+  T.zoom=DEFAULT_ZOOM;T.rotX=0.3;T.rotY=0;T.autoRot=0;
+});
+
+/* ══════════ Touch ══════════ */
+function getPD(e){const a=e.touches[0],b=e.touches[1];return Math.hypot(b.clientX-a.clientX,b.clientY-a.clientY);}
+viewBox.addEventListener("touchstart",e=>{
+  if(e.touches.length===1){
+    const tc=e.touches[0];
+    T.dragStart={x:tc.clientX,y:tc.clientY,rx:T.rotX,ry:T.rotY,moved:false};
+    T.pinchDist=null;
+  }else if(e.touches.length===2){
+    T.dragStart=null;T.pinchDist=getPD(e);T.pinchZoomStart=T.zoom;
+  }
+},{passive:true});
+viewBox.addEventListener("touchmove",e=>{
+  if(e.touches.length===1&&T.dragStart){
+    e.preventDefault();
+    const tc=e.touches[0];
+    if(Math.hypot(tc.clientX-T.dragStart.x,tc.clientY-T.dragStart.y)>6)T.dragStart.moved=true;
+    const s=0.004+T.currentMorphT*0.004;
+    T.rotY=T.dragStart.ry+(tc.clientX-T.dragStart.x)*s;
+    T.rotX=T.dragStart.rx+(tc.clientY-T.dragStart.y)*s;
+    T.rotX=Math.max(-Math.PI/2,Math.min(Math.PI/2,T.rotX));
+  }else if(e.touches.length===2&&T.pinchDist){
+    e.preventDefault();
+    const nd=getPD(e);
+    T.zoom=Math.max(MIN_ZOOM,Math.min(MAX_ZOOM,T.pinchZoomStart*(T.pinchDist/nd)));
+  }
+},{passive:false});
+function onTouchEnd(){
+  if(T.dragStart&&!T.dragStart.moved){
+    const now=performance.now();
+    if(now-lastTap<300){
+      T.zoom=DEFAULT_ZOOM;T.rotX=0.3;T.rotY=0;T.autoRot=0;lastTap=0;
+    }else lastTap=now;
+  }
+  T.dragStart=null;T.pinchDist=null;
+}
+viewBox.addEventListener("touchend",onTouchEnd);
+viewBox.addEventListener("touchcancel",onTouchEnd);
+
+/* ══════════ Joystick ══════════ */
+let joyActive=false;
+function joyUpdate(cx,cy){
+  const rect=joyEl.getBoundingClientRect();
+  const ox=rect.left+rect.width/2,oy=rect.top+rect.height/2;
+  let dx=cx-ox,dy=cy-oy;
+  const dist=Math.hypot(dx,dy);
+  if(dist>JOY_RADIUS){dx=dx/dist*JOY_RADIUS;dy=dy/dist*JOY_RADIUS;}
+  knobEl.style.transform=`translate(${dx}px,${dy}px)`;
+  const deadzone=6;
+  if(dist>deadzone){
+    const norm=Math.min((dist-deadzone)/(JOY_RADIUS-deadzone),1);
+    const len=Math.hypot(dx,dy);
+    st.joyVec.x=(dx/len)*norm;
+    st.joyVec.y=(dy/len)*norm;
+    dismissHint();
+  }else{st.joyVec.x=0;st.joyVec.y=0;}
+}
+function joyStart(e){
+  e.preventDefault();e.stopPropagation();
+  joyActive=true;
+  knobEl.style.transition="none";
+  const pt=e.touches?e.touches[0]:e;
+  joyUpdate(pt.clientX,pt.clientY);
+}
+function joyMove(e){
+  if(!joyActive)return;
+  e.preventDefault();e.stopPropagation();
+  const pt=e.touches?e.touches[0]:e;
+  joyUpdate(pt.clientX,pt.clientY);
+}
+function joyEnd(e){
+  e.preventDefault();e.stopPropagation();
+  joyActive=false;
+  st.joyVec.x=0;st.joyVec.y=0;
+  knobEl.style.transition="transform 0.15s ease-out";
+  knobEl.style.transform="translate(0px,0px)";
+}
+joyEl.addEventListener("touchstart",joyStart,{passive:false});
+joyEl.addEventListener("touchmove",joyMove,{passive:false});
+joyEl.addEventListener("touchend",joyEnd);
+joyEl.addEventListener("touchcancel",joyEnd);
+joyEl.addEventListener("mousedown",joyStart);
+joyEl.addEventListener("mousemove",joyMove);
+joyEl.addEventListener("mouseup",joyEnd);
+joyEl.addEventListener("mouseleave",e=>{if(joyActive)joyEnd(e);});
+
+/* ══════════ Animation loop ══════════ */
+function loop(){
+  requestAnimationFrame(loop);
+  if(!T.renderer||!T.surfaceGeo||!T.pivot)return;
+
+  const curMode=mode;
+  const hasP2=MODES[curMode].hasPhase2;
+  const swap=T.phaseSwap;
+  const swapLabel1=swap?"상하 변(b)을 같은 방향으로 붙여 원기둥 만드는 중…":MODES[curMode].phase1;
+  const swapLabel2=swap?"좌우 변(a)을 반대 방향으로 비틀어 클라인 병 만드는 중…":MODES[curMode].phase2;
+  const swapUnfold1=swap?"좌우 변을 펼치는 중…":"상하 변을 펼치는 중…";
+  const swapUnfold2=swap?"상하 변을 펼치는 중…":"좌우 변을 펼치는 중…";
+
+  let p1=0,p2=0;
+  if(T.morphStart!==null){
+    const elapsed=performance.now()-T.morphStart;const dir=T.morphDirection;
+    if(dir===1){
+      if(!hasP2){
+        p1=easeInOutCubic(Math.min(elapsed/PHASE1_MS,1));
+        if(elapsed>=PHASE1_MS)T.morphStart=null;
+        setLabel(elapsed<PHASE1_MS?MODES[curMode].phase1:"");
+      }else{
+        if(elapsed<PHASE1_MS){p1=easeInOutCubic(elapsed/PHASE1_MS);setLabel(swapLabel1);}
+        else if(elapsed<PHASE1_MS+PAUSE_MS){p1=1;setLabel("…");}
+        else if(elapsed<TOTAL_MS){p1=1;p2=easeInOutCubic((elapsed-PHASE1_MS-PAUSE_MS)/PHASE2_MS);setLabel(swapLabel2);}
+        else{p1=1;p2=1;T.morphStart=null;setLabel("");}
+      }
+    }else{
+      if(!hasP2){
+        p1=1-easeInOutCubic(Math.min(elapsed/PHASE1_MS,1));
+        if(elapsed>=PHASE1_MS)T.morphStart=null;
+        setLabel(elapsed<PHASE1_MS?"좌우 변을 펼치는 중…":"");
+      }else{
+        if(elapsed<PHASE2_MS){p1=1;p2=1-easeInOutCubic(elapsed/PHASE2_MS);setLabel(swapUnfold1);}
+        else if(elapsed<PHASE2_MS+PAUSE_MS){p1=1;p2=0;setLabel("…");}
+        else if(elapsed<TOTAL_MS){p1=1-easeInOutCubic((elapsed-PHASE2_MS-PAUSE_MS)/PHASE1_MS);setLabel(swapUnfold2);}
+        else{p1=0;p2=0;T.morphStart=null;setLabel("");}
+      }
+    }
+  }else{
+    if(is3D){p1=1;p2=hasP2?1:0;}else{p1=0;p2=0;}
+  }
+
+  let pLR,pTB;
+  if(swap){pTB=p1;pLR=p2;}else{pLR=p1;pTB=p2;}
+  T.currentMorphT=hasP2?(p1*0.5+p2*0.5):p1;
+  const mt=T.currentMorphT;
+
+  /* Vertices */
+  const posAttr=T.surfaceGeo.getAttribute("position");
+  const posArr=posAttr.array;
+  const flat=T.flatPos,mid=T.midPos,curved=T.curvedPos;
+  for(let i=0;i<posArr.length;i++){
+    const mv=flat[i]+(mid[i]-flat[i])*p1;
+    posArr[i]=mv+(curved[i]-mv)*p2;
+  }
+  posAttr.needsUpdate=true;
+  T.surfaceGeo.computeVertexNormals();
+  T.wireGeo.getAttribute("position").array.set(posArr);
+  T.wireGeo.getAttribute("position").needsUpdate=true;
+
+  /* Edges */
+  const fn=SURFACE_FN[curMode],fnMid=T.fnMidRef||MID_FN[curMode];
+  const edgePts=buildEdgePos(fnMid,fn,p1,p2);
+  for(const side of ["left","right","top","bottom"]){
+    const ep=T.edgeLines[side]?.geometry?.getAttribute("position");
+    if(ep){ep.array.set(new Float32Array(edgePts[side]));ep.needsUpdate=true;}
+  }
+
+  /* Flash decay */
+  st.flashLR*=0.94;st.flashTB*=0.94;st.shipFlash*=0.92;
+  if(st.flashLR<0.01)st.flashLR=0;
+  if(st.flashTB<0.01)st.flashTB=0;
+  if(st.shipFlash<0.01)st.shipFlash=0;
+
+  /* Opacity */
+  if(T.gridLines)T.gridLines.material.opacity=0.07*(1-mt*0.9);
+  T.surfaceMesh.material.opacity=0.1+mt*0.28;
+  T.wireMesh.material.opacity=0.06+mt*0.14;
+  T.arrowSprites.forEach((s,idx)=>{if(!s)return;if(idx<2)s.material.opacity=0.55*(1-pLR);else s.material.opacity=0.55*(1-pTB);});
+  T.labelSprites.forEach((s,idx)=>{if(!s)return;if(idx<2)s.material.opacity=0.7*(1-pLR);else s.material.opacity=0.7*(1-pTB);});
+  const baseL=0.7*(1-pLR*0.7),baseT=0.7*(1-pTB*0.7);
+  if(T.edgeLines.left)T.edgeLines.left.material.opacity=Math.min(1,baseL+st.flashLR);
+  if(T.edgeLines.right)T.edgeLines.right.material.opacity=Math.min(1,baseL+st.flashLR);
+  if(T.edgeLines.top)T.edgeLines.top.material.opacity=Math.min(1,baseT+st.flashTB);
+  if(T.edgeLines.bottom)T.edgeLines.bottom.material.opacity=Math.min(1,baseT+st.flashTB);
+
+  if(T.shipGlow){
+    const gs=1+st.shipFlash*1.8;
+    T.shipGlow.scale.set(gs,gs,gs);
+    T.shipGlow.material.opacity=0.35+st.shipFlash*0.5;
+  }
+
+  /* Movement */
+  let vx=0,vy=0;
+  if(st.keys.has("ArrowLeft"))vx=-SPD;
+  if(st.keys.has("ArrowRight"))vx=SPD;
+  if(st.keys.has("ArrowUp"))vy=-SPD;
+  if(st.keys.has("ArrowDown"))vy=SPD;
+  if(vx===0&&vy===0&&(st.joyVec.x!==0||st.joyVec.y!==0)){
+    vx=st.joyVec.x*SPD;vy=st.joyVec.y*SPD;
+  }
+  let x=st.x+vx,y=st.y+vy;
+
+  let wrapRes;
+  if(curMode==="torus")wrapRes=wrapTorus(x,y);
+  else if(curMode==="cylinder")wrapRes=wrapCylinder(x,y,vy);
+  else if(curMode==="mobius")wrapRes=wrapMobius(x,y,vy);
+  else if(curMode==="klein")wrapRes=wrapKlein(x,y);
+  else wrapRes=wrapProjective(x,y);
+  x=wrapRes.x;y=wrapRes.y;
+  if(wrapRes.vy!==undefined)vy=wrapRes.vy;
+  if(wrapRes.crossed.length>0){
+    for(const c of wrapRes.crossed){
+      if(c==="lr")st.flashLR=1;
+      if(c==="tb")st.flashTB=1;
+    }
+    st.shipFlash=1;
+  }
+  st.x=x;st.y=y;st.vx=vx;st.vy=vy;
+  const isMoving=Math.abs(vx)>0.05||Math.abs(vy)>0.05;
+  if(isMoving){st.trail.push({x,y});if(st.trail.length>TRAIL_MAX)st.trail.shift();}
+
+  /* Ship */
+  const u=x/S,v=y/S;
+  const fp=flatPt(u,v),mp=fnMid(u,v),cp=fn(u,v);
+  const sp=lerpV(lerpV(fp,mp,p1),cp,p2);
+  T.shipGroup.position.set(sp[0],sp[1],sp[2]);
+  if(isMoving){
+    const eps=0.012;
+    const speed=Math.hypot(vx,vy)||1;
+    const du=(vx/speed)*eps,dv=(vy/speed)*eps;
+    const u2=Math.min(Math.max(u+du,0),1),v2=Math.min(Math.max(v+dv,0),1);
+    const fp2=flatPt(u2,v2),mp2=fnMid(u2,v2),cp2=fn(u2,v2);
+    const sp2=lerpV(lerpV(fp2,mp2,p1),cp2,p2);
+    T.lookTarget.set(sp2[0],sp2[1],sp2[2]);
+    if(T.lookTarget.distanceToSquared(T.shipGroup.position)>1e-8){
+      T.shipGroup.lookAt(T.lookTarget);
+    }
+  }
+
+  /* Trail */
+  const tm=T.trailMesh;
+  if(tm){
+    const dummy=T.dummy;
+    const n=st.trail.length;
+    tm.count=n;
+    for(let i=0;i<n;i++){
+      const p=st.trail[i];
+      const tu=p.x/S,tv=p.y/S;
+      const tp=lerpV(lerpV(flatPt(tu,tv),fnMid(tu,tv),p1),fn(tu,tv),p2);
+      dummy.position.set(tp[0],tp[1],tp[2]);
+      const sc=0.5+0.5*(i/n);
+      dummy.scale.set(sc,sc,sc);
+      dummy.updateMatrix();
+      tm.setMatrixAt(i,dummy.matrix);
+      T.trailColor.copy(T.trailBaseColor).multiplyScalar(0.25+0.75*(i/n));
+      tm.setColorAt(i,T.trailColor);
+    }
+    tm.instanceMatrix.needsUpdate=true;
+    if(tm.instanceColor)tm.instanceColor.needsUpdate=true;
+  }
+
+  /* Camera + rotation */
+  T.camera.position.set(0,mt*0.5,T.zoom-mt*0.8);
+  T.camera.lookAt(0,0,0);
+  if(!T.dragStart)T.autoRot+=0.002*mt;
+  T.pivot.rotation.set(T.rotX*mt,T.rotY+T.autoRot,0);
+  T.renderer.render(T.scene,T.camera);
+}
+
+/* ══════════ Start ══════════ */
+initRenderer();
+rebuildContents(mode);
+updateUI();
+loop();
+</script>
+</body>
+</html>

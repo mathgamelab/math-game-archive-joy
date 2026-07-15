@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FormData } from '../../types';
 import { generateFinalPromptWithAI } from '../../services/geminiService';
 import { Icons } from '../../constants';
@@ -7,27 +7,12 @@ import { Icons } from '../../constants';
 interface Step6Props {
   formData: FormData;
   updateField: (field: string, value: any) => void;
-  apiKey?: string; // Gemini API key
+  onReset: () => void;
 }
 
-const Step6: React.FC<Step6Props> = ({ formData, updateField, apiKey }) => {
-  const [loading, setLoading] = useState(false);
-  const [copiedTarget, setCopiedTarget] = useState<'all' | '1' | '2' | '3' | null>(null);
-  const [lastPromptLevel, setLastPromptLevel] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    // promptLevel이 변경되었거나 새로 설정되었고, 프롬프트가 없을 때만 생성
-    if (formData.promptLevel && formData.promptLevel !== lastPromptLevel && !loading && !formData.geminiPrompt) {
-      setLastPromptLevel(formData.promptLevel);
-      setLoading(true);
-      generateFinalPromptWithAI(apiKey, formData).then((result) => {
-        if (result) {
-          updateField('geminiPrompt', result);
-          updateField('editedPrompt', result);
-        } else {
-          // API 키가 없거나 생성 실패 시 기본 프롬프트 사용
-          const isAdvanced = formData.promptLevel === 'advanced';
-          const defaultPrompt = `# 최종 개발 프롬프트 번들 (${isAdvanced ? '고급자용 3단계' : '초급자용 2단계'})
+const createDefaultPrompt = (formData: FormData): string => {
+  const isAdvanced = formData.promptLevel === 'advanced';
+  return `# 최종 개발 프롬프트 번들 (${isAdvanced ? '고급자용 3단계' : '초급자용 2단계'})
 
 아래 순서대로 붙여넣어 실행하세요.
 
@@ -42,8 +27,9 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, apiKey }) => {
 - 게임 설계: ${formData.mechanics}
 - 디자인 및 분위기: ${formData.vibe}
 - 핵심 로직 및 보상 체계: ${formData.structuredData.gameLogic}
+- 학습 흐름 및 단계 구성: ${formData.structuredData.learningFlow}
 - UI 에셋 및 시각화 계획: ${formData.structuredData.uiAssets}
-- 기술 규칙: ${formData.rules}
+- 기술 규칙: ${formData.structuredData.rules || formData.rules}
 
 [1차 구현 목표]
 1) 핵심 UI/UX 화면 구성 (시작, 플레이, 결과)
@@ -77,18 +63,55 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, apiKey }) => {
 
 ## 반영 체크리스트
 - Step5의 핵심 로직 및 보상 체계 반영
+- Step5의 학습 흐름 및 단계 구성 반영
 - Step5의 UI 에셋 및 시각화 계획 반영
+- Step5의 기술 규칙 및 제약 반영
 - 성취기준/학습 목표가 게임 플레이 루프에 연결됨
 - 1차/2차 순차 적용으로 점진적 완성 가능
 ${isAdvanced ? '- 3차 적용으로 백엔드 확장 가능' : ''}`;
-          updateField('geminiPrompt', defaultPrompt);
-          updateField('editedPrompt', defaultPrompt);
-        }
-        setLoading(false);
-      }).catch((error) => {
-        console.error('프롬프트 생성 실패:', error);
-        setLoading(false);
-      });
+};
+
+const Step6: React.FC<Step6Props> = ({ formData, updateField, onReset }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [copiedTarget, setCopiedTarget] = useState<'all' | '1' | '2' | '3' | null>(null);
+  const [lastPromptLevel, setLastPromptLevel] = useState<string | undefined>(undefined);
+  const requestIdRef = useRef(0);
+
+  useEffect(() => () => {
+    requestIdRef.current += 1;
+  }, []);
+
+  const generatePrompt = async () => {
+    if (!formData.promptLevel || loading) return;
+    const requestId = ++requestIdRef.current;
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await generateFinalPromptWithAI(formData);
+      if (requestId !== requestIdRef.current) return;
+      updateField('geminiPrompt', result);
+      updateField('editedPrompt', result);
+    } catch (requestError) {
+      if (requestId !== requestIdRef.current) return;
+      console.error('프롬프트 생성 실패:', requestError);
+      const defaultPrompt = createDefaultPrompt(formData);
+      updateField('geminiPrompt', defaultPrompt);
+      updateField('editedPrompt', defaultPrompt);
+      setError(requestError instanceof Error
+        ? requestError.message
+        : '프롬프트 생성에 실패했습니다. 기본 초안을 제공했습니다.');
+    } finally {
+      if (requestId === requestIdRef.current) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // promptLevel이 변경되었거나 새로 설정되었고, 프롬프트가 없을 때만 생성
+    if (formData.promptLevel && formData.promptLevel !== lastPromptLevel && !loading && !formData.geminiPrompt) {
+      setLastPromptLevel(formData.promptLevel);
+      void generatePrompt();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formData.promptLevel]);
@@ -120,7 +143,11 @@ ${isAdvanced ? '- 3차 적용으로 백엔드 확장 가능' : ''}`;
       <div className="text-center space-y-4 mb-10">
         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">최종 프롬프트 생성 <span className="text-green-600">(Result)</span></h2>
         <p className="text-slate-600 text-lg">
-          {loading ? 'Gemini AI가 단계별 프롬프트를 생성 중입니다...' : '1차 → 2차(고급은 3차) 순서대로 붙여넣어 사용하세요.'}
+          {loading
+            ? 'Solar AI가 단계별 프롬프트를 생성 중입니다...'
+            : error
+              ? '기본 초안을 제공했습니다. 다시 생성하거나 직접 편집할 수 있습니다.'
+              : '1차 → 2차(고급은 3차) 순서대로 붙여넣어 사용하세요.'}
         </p>
       </div>
 
@@ -131,6 +158,19 @@ ${isAdvanced ? '- 3차 적용으로 백엔드 확장 가능' : ''}`;
         </div>
       ) : (
         <>
+          {error && (
+            <div role="alert" className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+              <p className="mb-4 font-semibold text-red-700">{error}</p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <button onClick={() => void generatePrompt()} className="primary-button px-5 py-2.5">
+                  다시 생성
+                </button>
+                <button onClick={onReset} className="secondary-button px-5 py-2.5">
+                  새로 시작
+                </button>
+              </div>
+            </div>
+          )}
           <div className="rounded-2xl border-2 border-slate-400 bg-slate-900 text-slate-100 shadow-2xl overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 250px)', minHeight: '300px' }}>
             <div className="flex justify-between items-center px-6 py-4 bg-slate-950 border-b-2 border-slate-700 flex-shrink-0">
               <div className="flex items-center gap-3">
@@ -187,7 +227,7 @@ ${isAdvanced ? '- 3차 적용으로 백엔드 확장 가능' : ''}`;
             />
           </div>
 
-          {currentPrompt && (
+          {currentPrompt && !error && (
             <div className="flex flex-col items-center justify-center pt-6 pb-4 space-y-4">
               <div className="text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -197,7 +237,7 @@ ${isAdvanced ? '- 3차 적용으로 백엔드 확장 가능' : ''}`;
                 <p className="text-slate-600 text-lg">이제 생성된 프롬프트를 사용하여 선생님만의 멋진 게임을 개발해보세요.</p>
               </div>
               <button 
-                onClick={() => window.location.reload()}
+                onClick={onReset}
                 className="inline-flex items-center justify-center rounded-lg text-base font-semibold transition-all border-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-slate-400 text-slate-900 h-12 px-8 py-3 shadow-md hover:shadow-lg"
               >
                 처음으로 돌아가기

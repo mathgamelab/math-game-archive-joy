@@ -8,7 +8,6 @@ import AICoach from '../AICoach';
 interface Step2Props {
   formData: FormData;
   updateField: (field: string, value: any) => void;
-  apiKey?: string; // Gemini API key
 }
 
 type StandardWithMeta = Standard & { schoolLevel: string; grade: string; subject: string };
@@ -19,7 +18,7 @@ const MAIN_SUBJECTS: Set<string> = new Set([
   '기술가정', '정보', '제2외국어', '기타'
 ]);
 
-const Step2: React.FC<Step2Props> = ({ formData, updateField, apiKey }) => {
+const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStandard, setSelectedStandard] = useState<StandardWithMeta | null>(null);
   const [selectedGrades, setSelectedGrades] = useState<Set<string>>(new Set());
@@ -172,6 +171,7 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField, apiKey }) => {
       newList = [...selectedList, standard.text];
     }
     updateField('curriculumStandard', newList.join('\n'));
+    updateField('grade', newList.length > 0 ? standard.grade : '');
     setSelectedStandard(standard);
   };
 
@@ -252,6 +252,7 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField, apiKey }) => {
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm('')}
+                  aria-label="검색어 지우기"
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -271,6 +272,15 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField, apiKey }) => {
                     <div 
                       key={`${s.id}-${s.grade}`}
                       onClick={() => toggleStandard(s)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          toggleStandard(s);
+                        }
+                      }}
+                      role="checkbox"
+                      aria-checked={isChecked}
+                      tabIndex={0}
                       className={`group flex items-start gap-4 p-4 cursor-pointer transition-all border-l-4 ${
                         selectedStandard?.id === s.id && selectedStandard?.grade === s.grade
                           ? 'bg-orange-50 border-orange-500' 
@@ -328,6 +338,7 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField, apiKey }) => {
                           toggleStandard(standard);
                         }
                       }} 
+                      aria-label={`성취기준 선택 해제: ${item}`}
                       className="text-slate-300 hover:text-red-500 transition-colors"
                     >
                       &times;
@@ -357,7 +368,6 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField, apiKey }) => {
             currentValue={formData.learningGoal} 
             onApply={(v) => updateField('learningGoal', v)}
             curriculumStandard={formData.curriculumStandard}
-            apiKey={apiKey}
           />
         </div>
       </div>

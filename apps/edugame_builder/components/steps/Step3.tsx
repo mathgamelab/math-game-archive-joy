@@ -8,10 +8,9 @@ interface Step3Props {
   formData: FormData;
   updateField: (field: string, value: any) => void;
   onNext: () => void;
-  apiKey?: string; // Gemini API key
 }
 
-const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) => {
+const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
   const [ideas, setIdeas] = useState<GameIdea[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -100,28 +99,33 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) 
     setError(null);
     setSelectedIndex(null);
 
-    const result = await generateGameIdeas(
-      apiKey,
-      formData.learningGoal,
-      formData.subject,
-      formData.curriculumStandard
-    );
+    try {
+      const result = await generateGameIdeas(
+        formData.learningGoal,
+        formData.subject,
+        formData.curriculumStandard
+      );
 
-    if (result && result.length > 0) {
-      const normalized = result
-        .map((item) => normalizeIdea(item))
-        .filter((item): item is GameIdea => item !== null);
+      if (result && result.length > 0) {
+        const normalized = result
+          .map((item) => normalizeIdea(item))
+          .filter((item): item is GameIdea => item !== null);
 
-      if (normalized.length > 0) {
-        setIdeas(normalized);
-        saveIdeas(normalized); // 생성된 아이디어 저장
+        if (normalized.length > 0) {
+          setIdeas(normalized);
+          saveIdeas(normalized); // 생성된 아이디어 저장
+        } else {
+          setError('게임 아이디어 형식이 올바르지 않습니다. 다시 시도해주세요.');
+        }
       } else {
-        setError('게임 아이디어 형식이 올바르지 않습니다. 다시 시도해주세요.');
+        setError('게임 아이디어를 생성하지 못했습니다. 다시 시도해주세요.');
       }
-    } else {
-      setError('게임 아이디어를 생성하지 못했습니다. 다시 시도해주세요.');
+    } catch (requestError) {
+      console.error('Game ideas generation failed:', requestError);
+      setError(requestError instanceof Error ? requestError.message : '게임 아이디어 생성 요청이 실패했습니다.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // gameConcept에서 제목 추출
@@ -207,7 +211,7 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) 
 
       {/* 에러 메시지 */}
       {error && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 text-center">
+        <div role="alert" className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 text-center">
           <p className="text-red-600 font-bold">{error}</p>
         </div>
       )}
@@ -215,11 +219,20 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext, apiKey }) 
       {/* 게임 아이디어 카드들 */}
       {ideas.length > 0 && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div role="radiogroup" aria-label="게임 아이디어 선택" className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {ideas.map((idea, index) => (
               <div
                 key={index}
                 onClick={() => handleSelect(index)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleSelect(index);
+                  }
+                }}
+                role="radio"
+                aria-checked={selectedIndex === index}
+                tabIndex={0}
                 className={`
                   relative bg-white rounded-3xl border-2 p-6 cursor-pointer transition-all shadow-xl
                   ${selectedIndex === index

@@ -8,10 +8,9 @@ import AICoach from '../AICoach';
 interface Step4Props {
   formData: FormData;
   updateField: (field: string, value: any) => void;
-  apiKey?: string; // Gemini API key
 }
 
-const Step4: React.FC<Step4Props> = ({ formData, updateField, apiKey }) => {
+const Step4: React.FC<Step4Props> = ({ formData, updateField }) => {
   const example = (formData.subject && GAME_EXAMPLES[formData.subject]) || GAME_EXAMPLES['기타'];
   const [isEditingConcept, setIsEditingConcept] = useState(false);
 
@@ -124,7 +123,6 @@ const Step4: React.FC<Step4Props> = ({ formData, updateField, apiKey }) => {
                 currentValue={formData.mechanics} 
                 onApply={(v) => updateField('mechanics', v)}
                 gameConcept={formData.gameConcept}
-                apiKey={apiKey}
               />
             </div>
           </div>
@@ -148,7 +146,6 @@ const Step4: React.FC<Step4Props> = ({ formData, updateField, apiKey }) => {
                 currentValue={formData.vibe} 
                 onApply={(v) => updateField('vibe', v)}
                 gameConcept={formData.gameConcept}
-                apiKey={apiKey}
               />
             </div>
           </div>

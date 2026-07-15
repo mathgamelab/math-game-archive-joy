@@ -15,6 +15,6 @@ View your app in AI Studio: https://ai.studio/apps/drive/1fT2R5w7UJzcIT7OikzE1gr
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+2. AI requests are sent through the Firebase `callSolar` proxy, so no client-side API key is required.
 3. Run the app:
    `npm run dev`

@@ -13,7 +13,7 @@ interface FooterNavProps {
 const FooterNav: React.FC<FooterNavProps> = ({ currentStep, formData, onNext, onPrev }) => {
   // Step5에서 프롬프트가 생성되어 있으면 > 버튼 활성화
   const isStep5WithPrompt = currentStep === 5 && formData.geminiPrompt;
-  const isNextDisabled = currentStep === 5 && !isStep5WithPrompt;
+  const isNextDisabled = currentStep === 6 || (currentStep === 5 && !isStep5WithPrompt);
 
   return (
     <>
@@ -21,7 +21,8 @@ const FooterNav: React.FC<FooterNavProps> = ({ currentStep, formData, onNext, on
         <button 
           onClick={onPrev}
           disabled={currentStep === 1}
-          className="w-14 h-14 rounded-full bg-white border border-slate-200 shadow-xl flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-30 disabled:pointer-events-none transition-all hover:scale-105"
+          aria-label="이전 단계"
+          className="secondary-button w-14 h-14 rounded-full shadow-xl disabled:opacity-30 disabled:pointer-events-none hover:scale-105"
         >
           <Icons.ArrowLeft className="w-7 h-7" />
         </button>
@@ -31,7 +32,8 @@ const FooterNav: React.FC<FooterNavProps> = ({ currentStep, formData, onNext, on
         <button 
           onClick={onNext}
           disabled={isNextDisabled}
-          className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 shadow-xl flex items-center justify-center text-white hover:from-orange-600 hover:to-yellow-600 transition-all hover:scale-105 disabled:opacity-30 disabled:pointer-events-none"
+          aria-label="다음 단계"
+          className="primary-button w-14 h-14 rounded-full shadow-xl hover:scale-105 disabled:opacity-30 disabled:pointer-events-none"
         >
           <Icons.ArrowRight className="w-7 h-7" />
         </button>
@@ -41,14 +43,16 @@ const FooterNav: React.FC<FooterNavProps> = ({ currentStep, formData, onNext, on
         <button 
           onClick={onPrev}
           disabled={currentStep === 1}
-          className="w-14 h-14 rounded-full bg-white border border-slate-200 shadow-2xl flex items-center justify-center text-slate-600 disabled:opacity-30"
+          aria-label="이전 단계"
+          className="secondary-button w-14 h-14 rounded-full shadow-2xl disabled:opacity-30"
         >
           <Icons.ArrowLeft className="w-7 h-7" />
         </button>
         <button 
           onClick={onNext}
           disabled={isNextDisabled}
-          className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 shadow-2xl flex items-center justify-center text-white disabled:opacity-30 disabled:pointer-events-none"
+          aria-label="다음 단계"
+          className="primary-button w-16 h-16 rounded-full shadow-2xl disabled:opacity-30 disabled:pointer-events-none"
         >
           <Icons.ArrowRight className="w-8 h-8" />
         </button>

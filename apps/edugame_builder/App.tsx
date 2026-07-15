@@ -1,6 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
-import { STEP_NAMES, Icons } from './constants';
+import React, { useEffect, useState } from 'react';
 import { FormData, SubjectType } from './types';
 import Step1 from './components/steps/Step1';
 import Step2 from './components/steps/Step2';
@@ -11,47 +10,77 @@ import Step6 from './components/steps/Step6';
 import Header from './components/Header';
 import FooterNav from './components/FooterNav';
 import IdeaBooster from './components/IdeaBooster';
-import SettingsModal from './components/SettingsModal';
+
+const DRAFT_STORAGE_KEY = 'edugameBuilderDraftV2';
+
+const createInitialFormData = (): FormData => ({
+  subject: '',
+  grade: '',
+  curriculumStandard: '',
+  gameConcept: '',
+  learningGoal: '',
+  mechanics: '',
+  vibe: '',
+  rules: '',
+  structuredData: {
+    gameLogic: '',
+    learningFlow: '',
+    uiAssets: '',
+    rules: ''
+  },
+  geminiPrompt: '',
+  editedPrompt: '',
+  promptLevel: undefined
+});
+
+const loadDraft = (): { currentStep: number; formData: FormData } => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null') as {
+      currentStep?: number;
+      formData?: Partial<FormData>;
+    } | null;
+    const defaults = createInitialFormData();
+    if (!saved?.formData) return { currentStep: 1, formData: defaults };
+    return {
+      currentStep: Math.min(6, Math.max(1, Number(saved.currentStep) || 1)),
+      formData: {
+        ...defaults,
+        ...saved.formData,
+        structuredData: {
+          ...defaults.structuredData,
+          ...(saved.formData.structuredData || {})
+        }
+      }
+    };
+  } catch {
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+      // 저장소 접근이 차단된 환경에서는 메모리 상태로 계속 진행합니다.
+    }
+    return { currentStep: 1, formData: createInitialFormData() };
+  }
+};
 
 const App: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [apiKey, setApiKey] = useState<string>('');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    subject: '',
-    grade: '',
-    curriculumStandard: '',
-    gameConcept: '',
-    learningGoal: '',
-    mechanics: '',
-    vibe: '',
-    rules: '',
-    structuredData: {
-      gameLogic: '',
-      learningFlow: '',
-      uiAssets: '',
-      rules: ''
-    },
-    geminiPrompt: '',
-    editedPrompt: '',
-    frontendPrompt: '',
-    backendPrompt: ''
-  });
+  const [initialDraft] = useState(loadDraft);
+  const [currentStep, setCurrentStep] = useState(initialDraft.currentStep);
+  const [formData, setFormData] = useState<FormData>(initialDraft.formData);
+  const [notice, setNotice] = useState('');
 
-  // localStorage에서 API key 불러오기
   useEffect(() => {
-    const savedKey = localStorage.getItem('geminiApiKey');
-    if (savedKey) {
-      setApiKey(savedKey);
+    try {
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ currentStep, formData }));
+    } catch (error) {
+      console.warn('초안 저장 실패:', error);
     }
-  }, []);
+  }, [currentStep, formData]);
 
-  // API key 저장
-  const handleApiKeySave = (key: string) => {
-    setApiKey(key);
-    localStorage.setItem('geminiApiKey', key);
-    setIsSettingsOpen(false);
-  };
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(''), 3500);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
 
   const updateField = (field: string, value: any) => {
     if (field.includes('.')) {
@@ -68,16 +97,39 @@ const App: React.FC = () => {
     }
   };
 
+  const validateCurrentStep = (): boolean => {
+    const requirements: Partial<Record<number, Array<[keyof FormData, string]>>> = {
+      1: [['subject', '교과를 선택해주세요.']],
+      2: [
+        ['curriculumStandard', '성취기준을 하나 이상 선택해주세요.'],
+        ['learningGoal', '구체적인 학습 목표를 입력해주세요.']
+      ],
+      3: [['gameConcept', '게임 아이디어를 선택해주세요.']],
+      4: [
+        ['mechanics', '게임의 핵심 기능을 입력해주세요.'],
+        ['vibe', '디자인 및 분위기를 입력해주세요.']
+      ]
+    };
+    const missing = (requirements[currentStep] || []).find(([field]) => {
+      const value = formData[field];
+      return typeof value !== 'string' || !value.trim();
+    });
+    if (!missing) return true;
+    setNotice(missing[1]);
+    return false;
+  };
+
   const nextStep = (level?: 'beginner' | 'advanced') => {
+    if (!validateCurrentStep()) return;
     if (currentStep < 6) {
       if (currentStep === 4) {
         setFormData(prev => ({
           ...prev,
           structuredData: {
-            gameLogic: prev.mechanics || "사용자 인터랙션에 따른 학습 보상 체계 구축",
-            learningFlow: `${prev.learningGoal} 달성을 위한 단계별 퀴즈/미션 구성`,
-            uiAssets: `Vibe: ${prev.vibe}\n- 게임형 대시보드\n- 성취도 시각화 요소`,
-            rules: prev.rules || "프레임워크 최적화 및 학습 데이터 무결성 유지"
+            gameLogic: prev.structuredData.gameLogic || prev.mechanics || "사용자 인터랙션에 따른 학습 보상 체계 구축",
+            learningFlow: prev.structuredData.learningFlow || `${prev.learningGoal} 달성을 위한 단계별 퀴즈/미션 구성`,
+            uiAssets: prev.structuredData.uiAssets || `Vibe: ${prev.vibe}\n- 게임형 대시보드\n- 성취도 시각화 요소`,
+            rules: prev.structuredData.rules || prev.rules || "프레임워크 최적화 및 학습 데이터 무결성 유지"
           }
         }));
       }
@@ -89,6 +141,23 @@ const App: React.FC = () => {
     }
   };
 
+  const selectSubject = (subject: SubjectType) => {
+    setFormData(prev => ({ ...prev, subject }));
+    setCurrentStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const resetApp = () => {
+    setFormData(createInitialFormData());
+    setCurrentStep(1);
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+      // 저장소 접근이 차단되어도 앱 초기화는 유지합니다.
+    }
+    setNotice('새 게임 기획을 시작합니다.');
+  };
+
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
@@ -98,19 +167,25 @@ const App: React.FC = () => {
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 1: return <Step1 formData={formData} setSubject={(s) => { updateField('subject', s); nextStep(); }} />;
-      case 2: return <Step2 formData={formData} updateField={updateField} apiKey={apiKey} />;
-      case 3: return <Step3 formData={formData} updateField={updateField} onNext={nextStep} apiKey={apiKey} />;
-      case 4: return <Step4 formData={formData} updateField={updateField} apiKey={apiKey} />;
+      case 1: return <Step1 formData={formData} setSubject={selectSubject} />;
+      case 2: return <Step2 formData={formData} updateField={updateField} />;
+      case 3: return <Step3 formData={formData} updateField={updateField} onNext={nextStep} />;
+      case 4: return <Step4 formData={formData} updateField={updateField} />;
       case 5: return <Step5 formData={formData} updateField={updateField} onNext={nextStep} />;
-      case 6: return <Step6 formData={formData} updateField={updateField} apiKey={apiKey} />;
+      case 6: return <Step6 formData={formData} updateField={updateField} onReset={resetApp} />;
       default: return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-x-hidden">
-      <Header currentStep={currentStep} onSettingsClick={() => setIsSettingsOpen(true)} />
+    <div className="page-shell flex min-h-screen flex-col overflow-x-hidden">
+      <Header currentStep={currentStep} />
+
+      {notice && (
+        <div role="alert" className="fixed left-1/2 top-4 z-[100] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-modal">
+          {notice}
+        </div>
+      )}
       
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 md:py-12 pb-32">
         {renderStepContent()}
@@ -127,7 +202,6 @@ const App: React.FC = () => {
         <IdeaBooster 
           currentStep={currentStep}
           formData={formData}
-          apiKey={apiKey}
           onApply={(idea) => {
             if (currentStep === 3) {
               updateField('gameConcept', `${formData.gameConcept}\n\n💡 ${idea}`.trim());
@@ -140,35 +214,6 @@ const App: React.FC = () => {
         />
       )}
 
-      <SettingsModal 
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        apiKey={apiKey}
-        onSave={handleApiKeySave}
-      />
-
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-[-1]">
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-orange-200/20 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-yellow-200/20 rounded-full blur-[100px]" />
-      </div>
-
-      {/* Footer */}
-      <footer className="bg-white border-t-2 border-slate-200 py-6 mt-auto">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-2">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <p className="text-sm text-slate-600">
-              행복한 수학, 함께 만들어요 😊
-            </p>
-            <span className="hidden sm:inline text-slate-300">|</span>
-            <p className="text-sm text-slate-600">
-              MATH쌤, 열정은 MAX, 야근은 X
-            </p>
-          </div>
-          <p className="text-xs text-slate-500 sm:translate-x-[-1rem]">
-            © 행복한윤쌤 & MAXX쌤
-          </p>
-        </div>
-      </footer>
     </div>
   );
 };

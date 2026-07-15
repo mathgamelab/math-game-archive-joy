@@ -14,7 +14,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
     <div className="space-y-8 animate-in">
       <div className="text-center space-y-4 mb-10">
         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">게임 세부 사항 <span className="text-purple-600">(Details)</span></h2>
-        <p className="text-slate-600 text-lg">오른쪽의 기술 구조화 초안(핵심 로직/보상, UI 에셋)을 꼼꼼히 다듬어주세요. 이 내용이 Step6의 1차/2차(고급은 3차까지) 프롬프트에 핵심 근거로 반영됩니다.</p>
+        <p className="text-slate-600 text-lg">오른쪽의 게임 로직, 학습 흐름, UI 에셋, 기술 규칙을 꼼꼼히 다듬어주세요. 이 내용이 Step6의 1차/2차(고급은 3차까지) 프롬프트에 핵심 근거로 반영됩니다.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[600px]">
@@ -55,10 +55,19 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
               핵심 로직 및 보상 체계 (Game Logic)
             </div>
             <textarea 
-              className="flex-1 p-6 focus:outline-none resize-none text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
+              className="min-h-40 p-6 focus:outline-none resize-none text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
               value={formData.structuredData.gameLogic}
               onChange={(e) => updateField('structuredData.gameLogic', e.target.value)}
               placeholder="게임의 핵심 로직, 점수 계산 방식, 보상 체계 등을 기술적으로 구체화해주세요.&#10;&#10;예시:&#10;- 정답 시 +10점, 오답 시 -5점&#10;- 연속 정답 시 보너스 점수 2배&#10;- 게임 오버 조건: 시간 초과 또는 오답 3회"
+            />
+            <div className="bg-gradient-to-r from-emerald-100 to-emerald-50 px-6 py-3 border-y-2 border-emerald-200 text-xs font-bold text-emerald-900">
+              학습 흐름 및 단계 구성 (Learning Flow)
+            </div>
+            <textarea
+              className="min-h-36 p-6 focus:outline-none resize-none text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
+              value={formData.structuredData.learningFlow}
+              onChange={(e) => updateField('structuredData.learningFlow', e.target.value)}
+              placeholder="학습 목표를 달성하기 위한 단계, 문제 난이도 흐름, 피드백 방식을 작성해주세요."
             />
             <div className="bg-gradient-to-r from-blue-100 to-blue-50 px-6 py-3 border-y-2 border-blue-200 text-xs font-bold text-blue-900">
               UI 에셋 및 시각화 계획 (UI Assets)
@@ -68,6 +77,15 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
               value={formData.structuredData.uiAssets}
               onChange={(e) => updateField('structuredData.uiAssets', e.target.value)}
               placeholder="게임의 UI 구성, 시각적 요소, 애니메이션 등을 구체적으로 설명해주세요.&#10;&#10;예시:&#10;- 게임형 대시보드: 점수, 시간, 진행률 표시&#10;- 성취도 시각화: 별 3개 시스템&#10;- 문제 카드: 카드 뒤집기 애니메이션"
+            />
+            <div className="bg-gradient-to-r from-slate-100 to-slate-50 px-6 py-3 border-y-2 border-slate-200 text-xs font-bold text-slate-900">
+              기술 규칙 및 제약 (Technical Rules)
+            </div>
+            <textarea
+              className="min-h-32 p-6 focus:outline-none resize-none text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
+              value={formData.structuredData.rules}
+              onChange={(e) => updateField('structuredData.rules', e.target.value)}
+              placeholder="프레임워크, 데이터 관리, 반응형·접근성 등 반드시 지켜야 할 기술 규칙을 작성해주세요."
             />
           </div>
         </div>

@@ -5,12 +5,169 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EduApp Builder</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --mga-background: #ffffff;
+      --mga-foreground: #262a33;
+      --mga-primary: #2d323d;
+      --mga-secondary: #f4f5f7;
+      --mga-muted: #606b7d;
+      --mga-accent: #467a66;
+      --mga-border: #e2e5ea;
+      --mga-clay-blue: #eef5ff;
+      --mga-clay-orange: #fff4ec;
+      --mga-clay-green: #eefbf4;
+      --mga-clay-purple: #f4f0ff;
+      --mga-shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+      --mga-shadow-hover: 0 4px 16px rgba(15, 23, 42, 0.08);
+      --mga-shadow-modal: 0 16px 40px rgba(15, 23, 42, 0.14);
+    }
     * {
-      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: 'Pretendard', 'Noto Sans KR', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    body {
+      background: var(--mga-background);
+      color: var(--mga-foreground);
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3 {
+      letter-spacing: -0.02em;
+    }
+    .mga-header {
+      border-bottom: 1px solid rgba(226, 229, 234, 0.8) !important;
+      background: rgba(255, 255, 255, 0.92) !important;
+      box-shadow: none !important;
+      backdrop-filter: blur(12px);
+    }
+    .mga-card {
+      border: 1px solid rgba(226, 229, 234, 0.8) !important;
+      border-radius: 1rem;
+      box-shadow: var(--mga-shadow-card) !important;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .mga-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--mga-shadow-hover) !important;
+    }
+    .mga-primary-button {
+      border: 1px solid var(--mga-primary) !important;
+      background: var(--mga-primary) !important;
+      background-image: none !important;
+      color: white !important;
+      box-shadow: var(--mga-shadow-card) !important;
+    }
+    .mga-primary-button:hover {
+      background: #252a33 !important;
+      transform: translateY(-1px) !important;
+      box-shadow: var(--mga-shadow-hover) !important;
+    }
+    .mga-secondary-button {
+      border: 1px solid var(--mga-border) !important;
+      background: white !important;
+      color: var(--mga-foreground) !important;
+      box-shadow: var(--mga-shadow-card) !important;
+    }
+    .mga-secondary-button:hover {
+      background: var(--mga-secondary) !important;
+      box-shadow: var(--mga-shadow-hover) !important;
+    }
+    #step-content .border-2 {
+      border-width: 1px !important;
+    }
+    #step-content .shadow-lg,
+    #step-content .shadow-xl,
+    #step-content .shadow-2xl {
+      box-shadow: var(--mga-shadow-card) !important;
+    }
+    #step-content .rounded-2xl.bg-white {
+      border-color: var(--mga-border) !important;
+      box-shadow: var(--mga-shadow-card) !important;
+    }
+    #step-content .bg-blue-50,
+    #step-content .bg-cyan-50 {
+      background-color: var(--mga-clay-blue) !important;
+    }
+    #step-content .bg-purple-50,
+    #step-content .bg-pink-50 {
+      background-color: var(--mga-clay-purple) !important;
+    }
+    #step-content .bg-green-50,
+    #step-content .bg-emerald-50 {
+      background-color: var(--mga-clay-green) !important;
+    }
+    #step-content .bg-orange-50,
+    #step-content .bg-yellow-50 {
+      background-color: var(--mga-clay-orange) !important;
+    }
+    #step-content button[class*="bg-gradient-to"] {
+      border: 1px solid var(--mga-primary) !important;
+      background: var(--mga-primary) !important;
+      background-image: none !important;
+      color: white !important;
+      box-shadow: var(--mga-shadow-card) !important;
+    }
+    #step-content button[class*="bg-gradient-to"]:hover {
+      background: #252a33 !important;
+      transform: translateY(-1px) !important;
+    }
+    #step-content div[class*="bg-gradient-to"],
+    #step-content span[class*="bg-gradient-to"] {
+      background: var(--mga-secondary) !important;
+      background-image: none !important;
+    }
+    #step-content input,
+    #step-content textarea {
+      border-width: 1px !important;
+      border-color: var(--mga-border) !important;
+      background: var(--mga-secondary);
+    }
+    #step-content input:focus,
+    #step-content textarea:focus {
+      background: white;
+    }
+    #step-content .text-purple-600,
+    #step-content .text-blue-600,
+    #step-content .text-indigo-600,
+    #step-content .text-purple-700,
+    #step-content .text-blue-700,
+    #step-content .text-indigo-700 {
+      color: var(--mga-primary) !important;
+    }
+    #step-content .text-green-600,
+    #step-content .text-emerald-600,
+    #step-content .text-green-700,
+    #step-content .text-emerald-700 {
+      color: var(--mga-accent) !important;
+    }
+    #step-content h2 {
+      color: var(--mga-foreground) !important;
+      font-weight: 600 !important;
+    }
+    #step-content h3 {
+      font-weight: 600 !important;
+    }
+    .mga-clay-purple { background: var(--mga-clay-purple) !important; }
+    .mga-clay-blue { background: var(--mga-clay-blue) !important; }
+    .mga-clay-green { background: var(--mga-clay-green) !important; }
+    .mga-clay-orange { background: var(--mga-clay-orange) !important; }
+    [role="dialog"] > div > div:first-child,
+    [role="dialog"] button[class*="bg-gradient-to"] {
+      background: var(--mga-primary) !important;
+      background-image: none !important;
+    }
+    [role="dialog"] .border-2 {
+      border-width: 1px !important;
+      border-color: var(--mga-border) !important;
+    }
+    [role="dialog"] input,
+    [role="dialog"] textarea {
+      border-width: 1px !important;
+      border-color: var(--mga-border) !important;
+      background: var(--mga-secondary) !important;
     }
     @keyframes slide-in-from-right {
       from {
@@ -58,48 +215,47 @@
       width: 6px;
     }
     .custom-scrollbar::-webkit-scrollbar-track {
-      background: #f1f5f9;
+      background: var(--mga-secondary);
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
+      background: var(--mga-border);
       border-radius: 3px;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
+      background: var(--mga-muted);
     }
     input, textarea {
       font-size: 16px !important;
     }
     input:focus, textarea:focus {
       outline: none !important;
-      border-color: #9333ea !important;
-      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1) !important;
+      border-color: var(--mga-primary) !important;
+      box-shadow: 0 0 0 3px rgba(45, 50, 61, 0.12) !important;
     }
   </style>
 </head>
 <body>
-  <div id="app" class="min-h-screen bg-slate-50 font-sans text-slate-900 flex flex-col">
+  <div id="app" class="min-h-screen bg-white font-sans text-[#262A33] flex flex-col">
     <!-- Header -->
-    <header class="bg-white border-b-2 border-slate-300 sticky top-0 z-30 shadow-sm">
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4 min-h-[60px] sm:min-h-[80px] flex items-center justify-between">
+    <header class="mga-header sticky top-0 z-30">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <div class="flex items-center gap-2 sm:gap-3">
-          <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg">
-            <svg class="text-white w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-            </svg>
+          <img src="/images/math_game_logo.png" alt="" class="h-7 sm:h-9 w-auto select-none" />
+          <div class="leading-tight">
+            <span class="hidden sm:block text-sm font-semibold tracking-tight text-[#262A33]">Math Game Archive</span>
+            <span class="block text-xs sm:text-[11px] font-medium text-[#606B7D]">EduApp Builder</span>
           </div>
-          <span class="font-bold text-lg sm:text-xl tracking-tight text-slate-900">EduApp Builder</span>
         </div>
         <div class="flex items-center gap-2 sm:gap-3">
           <!-- 커뮤니티 드롭다운 메뉴 -->
           <div class="relative">
-            <button onclick="toggleCommunityMenu()" class="px-3 py-2 text-sm font-medium rounded-lg flex items-center gap-2 transition shadow-sm whitespace-nowrap h-9" style="background-color: #FEE500; color: #000000;">
+            <button onclick="toggleCommunityMenu()" aria-haspopup="true" aria-expanded="false" class="px-3 py-2 text-sm font-medium rounded-lg flex items-center gap-2 transition shadow-sm whitespace-nowrap h-9" style="background-color: #FEE500; color: #000000;">
               <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 3c5.799 0 10.5 3.664 10.5 8.185 0 4.52-4.701 8.184-10.5 8.184a13.5 13.5 0 0 1-1.727-.11l-4.408 2.883c-.501.265-.678.236-.472-.413l.892-3.678c-2.88-1.46-4.785-3.99-4.785-6.866C1.5 6.665 6.201 3 12 3z"/>
               </svg>
               <span>커뮤니티</span>
             </button>
-            <div id="community-dropdown" class="hidden absolute right-0 mt-2 bg-white rounded-lg shadow-xl border-2 border-slate-200 z-50 overflow-hidden" style="min-width: 220px; width: auto;">
+            <div id="community-dropdown" class="hidden absolute right-0 mt-2 bg-white rounded-xl z-50 overflow-hidden" style="min-width: 220px; width: auto; border: 1px solid var(--mga-border); box-shadow: var(--mga-shadow-modal);">
               <a href="https://open.kakao.com/o/gqbARj9h" target="_blank" rel="noopener noreferrer" class="block px-4 py-2 text-black hover:bg-slate-50 transition-colors text-sm font-medium whitespace-nowrap text-center">
                 제작자 카톡방
               </a>
@@ -108,19 +264,12 @@
               </a>
             </div>
           </div>
-          <button onclick="toggleSettings()" class="p-2 sm:p-2.5 rounded-lg hover:bg-slate-100 transition-colors relative z-10 bg-transparent flex items-center justify-center" title="설정" style="min-width: 32px; min-height: 32px;">
-            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="overflow: visible;">
-              <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v4M12 18v4M2 12h4M18 12h4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-              <circle cx="12" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="none"/>
-            </svg>
-          </button>
-          <div class="text-xs sm:text-sm font-semibold text-slate-700 bg-slate-100 px-2 sm:px-4 py-1 sm:py-1.5 rounded-full">Step <span id="step-counter" class="text-purple-600">1</span> of 6</div>
+          <div class="text-xs sm:text-sm font-medium text-[#606B7D] bg-[#F4F5F7] px-2.5 sm:px-4 py-1.5 rounded-full border border-[#E2E5EA]">Step <span id="step-counter" class="font-semibold text-[#2D323D]">1</span> of 6</div>
         </div>
       </div>
       <!-- Step Progress Indicator -->
-      <div class="w-full px-3 sm:px-6 py-3 sm:py-6 bg-white overflow-x-auto">
-        <div class="max-w-4xl mx-auto min-w-[600px] sm:min-w-0">
+      <div class="w-full px-3 sm:px-6 py-3 sm:py-5 bg-white overflow-x-auto border-t border-[#E2E5EA]/70">
+        <div class="max-w-4xl mx-auto min-w-0">
           <div id="step-indicator" class="flex items-center justify-between relative">
             <!-- Steps will be generated here -->
           </div>
@@ -138,12 +287,12 @@
     <div id="footer-nav" class="fixed z-20 pointer-events-none">
       <!-- Mobile: Bottom Center -->
       <div class="sm:hidden fixed bottom-4 left-1/2 -translate-x-1/2 flex gap-4 items-center pointer-events-auto">
-        <button id="prev-btn-mobile" onclick="prevStep()" class="inline-flex items-center justify-center rounded-full text-sm font-semibold transition-all bg-white text-slate-800 hover:bg-slate-100 hover:shadow-lg border-2 border-slate-300 h-12 w-12 px-0 disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed shadow-md">
+        <button id="prev-btn-mobile" onclick="prevStep()" aria-label="이전 단계" class="mga-secondary-button inline-flex items-center justify-center rounded-full text-sm font-semibold transition-all h-12 w-12 px-0 disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <button id="next-btn-mobile" onclick="nextStep()" class="inline-flex items-center justify-center rounded-full text-sm font-bold transition-all bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl h-12 w-12 px-0 transform hover:scale-105">
+        <button id="next-btn-mobile" onclick="nextStep()" aria-label="다음 단계" class="mga-primary-button inline-flex items-center justify-center rounded-full text-sm font-bold transition-all h-12 w-12 px-0 disabled:opacity-40 disabled:pointer-events-none">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
@@ -151,14 +300,14 @@
       </div>
       <!-- Desktop: Left & Right -->
       <div class="hidden sm:block fixed left-4 lg:left-6 top-1/2 -translate-y-1/2 pointer-events-auto">
-        <button id="prev-btn" onclick="prevStep()" class="inline-flex items-center justify-center rounded-full text-base font-semibold transition-all bg-white text-slate-800 hover:bg-slate-100 hover:shadow-lg border-2 border-slate-300 h-14 w-14 px-0 disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed shadow-xl">
+        <button id="prev-btn" onclick="prevStep()" aria-label="이전 단계" class="mga-secondary-button inline-flex items-center justify-center rounded-full text-base font-semibold transition-all h-14 w-14 px-0 disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
       </div>
       <div class="hidden sm:block fixed right-4 lg:right-6 top-1/2 -translate-y-1/2 pointer-events-auto">
-        <button id="next-btn" onclick="nextStep()" class="inline-flex items-center justify-center rounded-full text-base font-bold transition-all bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl h-14 w-14 px-0 transform hover:scale-105">
+        <button id="next-btn" onclick="nextStep()" aria-label="다음 단계" class="mga-primary-button inline-flex items-center justify-center rounded-full text-base font-bold transition-all h-14 w-14 px-0 disabled:opacity-40 disabled:pointer-events-none">
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
@@ -166,53 +315,88 @@
       </div>
     </div>
 
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in">
-        <div class="flex justify-between items-center mb-6">
-          <h3 class="text-2xl font-bold text-slate-900">설정</h3>
-          <button onclick="toggleSettings()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
-        </div>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-bold text-slate-700 mb-2">Gemini API 키</label>
-            <input 
-              type="password"
-              id="settings-api-key-input"
-              placeholder="AIzaSy..."
-              class="w-full p-3 rounded-lg border-2 border-slate-300 focus:border-purple-500 focus:outline-none text-base"
-            />
-            <p class="text-xs text-slate-500 mt-2">API 키는 브라우저에만 저장되며 서버로 전송되지 않습니다.</p>
-          </div>
-          <button onclick="const input = document.getElementById('settings-api-key-input'); if(input) { geminiApiKey = input.value; localStorage.setItem('geminiApiKey', input.value); } toggleSettings();" class="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors">
-            저장 완료
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- AI Idea Booster (Floating) -->
     <div id="idea-booster-container"></div>
     
-    <!-- Background Decor -->
-    <div class="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-      <div class="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-200/20 rounded-full blur-3xl"></div>
-      <div class="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl"></div>
-    </div>
   </div>
 
   <script>
     // Global State
     let currentStep = 1;
-    let geminiApiKey = 'AIzaSyABPfodYclIBvpJOHbKnkg9sFoP6V5DwDg'; // 기본 API 키
-    let promptVersion = 'canva'; // 'canva' or 'gemini'
     let lightbulbClicked = false; // 전구 버튼 클릭 여부
     let step4Timer = null; // Step 4 타이머
+    let isGeneratingPrompt = false;
+    let promptError = '';
+    let generationRequestId = 0;
+
+    // Upstage Solar via Firebase callable (math-reading)
+    const CALL_SOLAR_URL = 'https://asia-northeast3-math-reading.cloudfunctions.net/callSolar';
+    const SOLAR_MODEL = 'solar-pro2';
+    const SOLAR_TIMEOUT_MS = 60000;
+    const DRAFT_STORAGE_KEY = 'eduappBuilderDraftV2';
+
+    async function callSolar(prompt, options = {}) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), options.timeout || SOLAR_TIMEOUT_MS);
+
+      try {
+        const response = await fetch(CALL_SOLAR_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            data: {
+              prompt,
+              model: options.model || SOLAR_MODEL,
+              ...(options.temperature != null ? { temperature: options.temperature } : {}),
+            },
+          }),
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.error) {
+          const err = payload.error;
+          const msg = (err && (err.message || err.status)) || `API 오류: ${response.status}`;
+          throw new Error(typeof msg === 'string' ? msg : 'Solar 호출에 실패했습니다.');
+        }
+        const reply = payload.result && payload.result.reply;
+        if (!reply) throw new Error('응답이 비어 있습니다.');
+        return String(reply).trim();
+      } catch (error) {
+        if (error.name === 'AbortError') {
+          throw new Error('AI 응답 시간이 초과되었습니다. 잠시 후 다시 시도해주세요.');
+        }
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function showNotice(message, type = 'error') {
+      document.getElementById('app-notice')?.remove();
+      const notice = document.createElement('div');
+      notice.id = 'app-notice';
+      notice.setAttribute('role', type === 'error' ? 'alert' : 'status');
+      notice.className = `fixed top-4 left-1/2 -translate-x-1/2 z-[100] max-w-[calc(100vw-2rem)] rounded-xl px-5 py-3 text-sm font-bold text-white ${
+        type === 'error' ? 'bg-red-600' : 'bg-slate-800'
+      }`;
+      notice.textContent = message;
+      document.body.appendChild(notice);
+      setTimeout(() => notice.remove(), 3500);
+    }
     const formData = {
       toolType: '', // '학급경영도구', '수업 관련도구', '업무효율화 도구'
       userInfo: '', // 사용자 정보 (직급, 담당 과목 등)
       painPoint: '',
-      recurringTask: '',
       intent: '',
       solutionMethod: '',
       intentExpanded: false, // intent 필드 확장 상태
@@ -232,6 +416,61 @@
       editedPrompt: '', // 편집된 프롬프트
       promptLevel: '' // 'beginner' 또는 'advanced'
     };
+
+    function saveDraft() {
+      try {
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ currentStep, formData }));
+      } catch (error) {
+        console.warn('초안 저장 실패:', error);
+      }
+    }
+
+    function restoreDraft() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null');
+        if (!saved || !saved.formData) return;
+        Object.assign(formData, saved.formData);
+        formData.structuredData = {
+          features: '',
+          ui: '',
+          data: '',
+          rules: '',
+          ...(saved.formData.structuredData || {}),
+        };
+        currentStep = Math.min(6, Math.max(1, Number(saved.currentStep) || 1));
+      } catch (error) {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
+    }
+
+    function resetApp() {
+      generationRequestId++;
+      isGeneratingPrompt = false;
+      promptError = '';
+      Object.assign(formData, {
+        toolType: '',
+        userInfo: '',
+        painPoint: '',
+        intent: '',
+        solutionMethod: '',
+        intentExpanded: false,
+        solutionExpanded: false,
+        features: '',
+        tools: '',
+        rules: '',
+        vibe: '',
+        workflow: '',
+        structuredData: { features: '', ui: '', data: '', rules: '' },
+        geminiPrompt: '',
+        editedPrompt: '',
+        promptLevel: '',
+      });
+      currentStep = 1;
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      renderStep();
+      updateProgress();
+      showNotice('새 작업을 시작합니다.', 'info');
+    }
 
     // 도구 유형별 예시 데이터
     const toolExamples = {
@@ -264,99 +503,12 @@
       }
     };
 
-    // Gemini API를 사용하여 도구 유형별 맞춤형 예시 생성
-    let exampleCache = {}; // 예시 캐시
-    
-    async function generateToolExample(field, toolType) {
-      if (!geminiApiKey) {
-        return toolExamples[toolType]?.[field] || '';
-      }
-
-      // 캐시 확인
-      const cacheKey = `${toolType}_${field}`;
-      if (exampleCache[cacheKey]) {
-        return exampleCache[cacheKey];
-      }
-
-      const fieldNames = {
-        workflow: '작동 과정',
-        features: '주요 기능',
-        vibe: '디자인 바이브',
-        rules: '기술 스택 및 규칙'
-      };
-
-      const baseExample = toolExamples[toolType]?.[field] || '';
-      
-      const prompt = `${toolType}를 만들기 위한 "${fieldNames[field] || field}" 예시를 작성해주세요.
-
-기본 예시:
-${baseExample}
-
-이 도구 유형에 맞는 구체적이고 실용적인 예시를 작성해주세요. 
-- ${field === 'workflow' ? '단계별로 번호를 매겨서 작성해주세요. 각 단계는 한 줄로 간결하게 작성해주세요.' : ''}
-- ${field === 'features' ? '핵심 기능 3-5개를 나열해주세요. 각 기능은 한 줄로 작성해주세요.' : ''}
-- ${field === 'vibe' ? '형용사 3개로 디자인 느낌을 표현해주세요.' : ''}
-- ${field === 'rules' ? '사용할 기술 스택과 코딩 규칙을 명시해주세요.' : ''}
-
-예시만 반환해주세요. 설명은 필요 없습니다.`;
-
-      try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }]
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            const generatedExample = data.candidates[0].content.parts[0].text.trim();
-            exampleCache[cacheKey] = generatedExample;
-            return generatedExample;
-          }
-        }
-      } catch (error) {
-        console.error('예시 생성 실패:', error);
-      }
-      
-      // 실패 시 기본 예시 반환
-      return baseExample;
-    }
-
-    // Settings Modal
-    function toggleSettings() {
-      const modal = document.getElementById('settings-modal');
-      if (modal) {
-        const isOpening = modal.classList.contains('hidden');
-        modal.classList.toggle('hidden');
-        if (isOpening) {
-          const input = document.getElementById('settings-api-key-input');
-          if (input) {
-            // localStorage에 저장된 값이 있으면 사용, 없으면 기본값 사용
-            const savedKey = localStorage.getItem('geminiApiKey');
-            input.value = savedKey || geminiApiKey;
-          }
-        } else {
-          // 닫을 때 저장
-          const input = document.getElementById('settings-api-key-input');
-          if (input) {
-            geminiApiKey = input.value || geminiApiKey;
-            if (input.value) {
-              localStorage.setItem('geminiApiKey', input.value);
-            }
-          }
-        }
-      }
-    }
-
     function toggleCommunityMenu() {
       const dropdown = document.getElementById('community-dropdown');
       if (dropdown) {
         dropdown.classList.toggle('hidden');
+        const button = document.querySelector('button[onclick*="toggleCommunityMenu"]');
+        button?.setAttribute('aria-expanded', String(!dropdown.classList.contains('hidden')));
       }
     }
 
@@ -394,6 +546,7 @@ ${baseExample}
       }
       // AI 조언 버튼 활성화 상태 업데이트
       updateAICoachButtons(field);
+      saveDraft();
       // renderStep() 호출 제거 - 입력할 때마다 화면이 깜빡이지 않도록
     }
 
@@ -401,7 +554,6 @@ ${baseExample}
     function updateAICoachButtons(field) {
       const fieldMap = {
         painPoint: 'painPoint',
-        recurringTask: 'painPoint',
         vibe: 'vibe',
         features: 'features',
         solutionMethod: 'solutionMethod',
@@ -447,12 +599,12 @@ ${baseExample}
       if (!indicator) return;
       
       // 배경 연결선
-      let html = '<div class="absolute top-3 sm:top-5 left-0 right-0 h-0.5 bg-slate-200 z-0"></div>';
+      let html = '<div class="absolute top-3 sm:top-5 left-0 right-0 h-px bg-[#E2E5EA] z-0"></div>';
       
       // 완료된 연결선
       if (currentStep > 1) {
         const completedWidth = ((currentStep - 1) / 5) * 100;
-        html += `<div class="absolute top-3 sm:top-5 left-0 h-0.5 bg-gradient-to-r from-green-500 to-green-400 z-0 transition-all duration-500" style="width: ${completedWidth}%"></div>`;
+        html += `<div class="absolute top-3 sm:top-5 left-0 h-px bg-[#467A66] z-0 transition-all duration-500" style="width: ${completedWidth}%"></div>`;
       }
       
       // 단계별 원형 아이콘
@@ -466,10 +618,10 @@ ${baseExample}
         let circleContent = '';
         
         if (isCompleted) {
-          circleClass += 'bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg transform scale-110';
+          circleClass += 'bg-[#467A66] text-white shadow-[var(--mga-shadow-card)] transform scale-110';
           circleContent = '<svg class="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>';
         } else if (isCurrent) {
-          circleClass += 'bg-gradient-to-br from-blue-600 to-purple-600 text-white shadow-xl transform scale-110 sm:scale-125 ring-2 sm:ring-4 ring-blue-200';
+          circleClass += 'bg-[#2D323D] text-white shadow-[var(--mga-shadow-card)] transform scale-110 sm:scale-125 ring-2 ring-[#E2E5EA]';
           circleContent = i;
         } else {
           circleClass += 'bg-slate-200 text-slate-400';
@@ -481,7 +633,7 @@ ${baseExample}
             <div class="${circleClass}">
               ${circleContent}
             </div>
-            <div class="mt-1 sm:mt-2 text-[10px] sm:text-xs font-medium text-center max-w-[60px] sm:max-w-[80px] ${isCurrent ? 'text-blue-600 font-bold' : isCompleted ? 'text-green-600' : 'text-slate-400'}">
+            <div class="hidden sm:block mt-1 sm:mt-2 text-[10px] sm:text-xs font-medium text-center max-w-[60px] sm:max-w-[80px] ${isCurrent ? 'text-[#2D323D] font-semibold' : isCompleted ? 'text-[#467A66]' : 'text-[#606B7D]'}">
               ${stepNames[i - 1]}
             </div>
           </div>
@@ -491,10 +643,10 @@ ${baseExample}
       indicator.innerHTML = html;
     }
 
-    // AI 조언 생성 함수 (Gemini 3.0 Pro) - 사용자 입력 내용을 수정해주는 기능
+    // AI 조언 생성 함수 (Solar) - 사용자 입력 내용을 수정해주는 기능
     async function improveWithAI(type, currentValue) {
-      if (!geminiApiKey || !currentValue || currentValue.trim() === '') {
-        alert('내용을 먼저 입력해주세요.');
+      if (!currentValue || currentValue.trim() === '') {
+        showNotice('내용을 먼저 입력해주세요.');
         return null;
       }
 
@@ -514,39 +666,20 @@ ${baseExample}
 이 내용을 더 구체적이고 명확하게 개선해주세요. 원래 의도를 유지하면서 더 자세하고 실용적으로 작성해주세요. 개선된 내용만 반환해주세요.`;
 
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${geminiApiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: prompt }]
-            }]
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-            return data.candidates[0].content.parts[0].text.trim();
-          }
-        }
+        return await callSolar(prompt);
       } catch (error) {
         console.error('AI 개선 실패:', error);
-        alert('AI 개선에 실패했습니다. 다시 시도해주세요.');
+        showNotice(error.message || 'AI 개선에 실패했습니다. 다시 시도해주세요.');
       }
       return null;
     }
 
     // Inline Coach Component
-    function createInlineCoach(type, onApply) {
+    function createInlineCoach(type) {
   const defaultTips = {
     painPoint: {
       text: "거창할 필요 없어요. '엑셀 복사하기 귀찮다' 같은 사소한 것부터 적어보세요!",
       example: "매일 반복되는 엑셀 데이터 취합 업무가 너무 번거롭고 실수도 잦아요."
-    },
-    recurringTask: {
-      text: "가장 시간을 많이 잡아먹거나, 하기 싫어서 미루게 되는 일을 적어보세요.",
-      example: "영수증 사진 찍어서 금액 입력하는 일"
     },
     vibe: {
       text: "형용사 3개를 써보세요. 예: 심플한, 따뜻한, 전문적인.",
@@ -578,7 +711,6 @@ ${baseExample}
       // 현재 입력 필드의 값 확인
       const fieldMap = {
         painPoint: 'painPoint',
-        recurringTask: 'painPoint',
         vibe: 'vibe',
         features: 'features',
         solution: 'solutionMethod',
@@ -598,7 +730,7 @@ ${baseExample}
             ${Icons.Sparkles.replace('w-3 h-3', 'w-4 h-4')}
         AI 조언
       </button>
-          <div id="${coachId}-panel" class="hidden absolute bottom-full right-0 mb-3 w-80 bg-white rounded-2xl shadow-2xl border-2 border-purple-200 p-6 z-50 slide-in-from-bottom-2">
+          <div id="${coachId}-panel" class="hidden absolute bottom-full right-0 mb-3 w-[calc(100vw-2rem)] max-w-xs bg-white rounded-2xl shadow-2xl border-2 border-purple-200 p-6 z-50 slide-in-from-bottom-2">
             <div class="flex justify-between items-start mb-4">
               <span class="text-sm font-bold text-purple-700 flex items-center gap-2">
                 ${Icons.Bot.replace('w-3 h-3', 'w-4 h-4')} AI 개선 중...
@@ -606,12 +738,12 @@ ${baseExample}
               <button onclick="toggleCoach('${coachId}')" class="text-slate-400 hover:text-slate-700 text-xl font-bold">×</button>
           </div>
             <div id="${coachId}-content">
-              <p class="text-base text-slate-800 mb-4 leading-relaxed font-medium">${currentTip.text}</p>
+              <p class="text-base text-slate-800 mb-4 leading-relaxed font-medium">${escapeHtml(currentTip.text)}</p>
               ${currentTip.example ? `
                 <div class="bg-gradient-to-br from-purple-50 to-blue-50 p-4 rounded-xl border-2 border-purple-100">
                   <p class="text-sm font-bold text-purple-700 mb-2">💡 예시:</p>
-                  <p class="text-sm text-slate-800 italic leading-relaxed mb-3">"${currentTip.example}"</p>
-                  <button onclick="applyCoachExample('${coachId}', '${type}', ${JSON.stringify(currentTip.example).replace(/"/g, '&quot;')})" class="w-full text-sm font-bold bg-white border-2 border-purple-300 py-2 rounded-lg text-purple-700 hover:bg-purple-50 hover:border-purple-400 transition-all shadow-sm hover:shadow-md">
+                  <p class="text-sm text-slate-800 italic leading-relaxed mb-3">"${escapeHtml(currentTip.example)}"</p>
+                  <button onclick="applyCoachExample('${coachId}', '${type}', ${escapeHtml(JSON.stringify(currentTip.example))})" class="w-full text-sm font-bold bg-white border-2 border-purple-300 py-2 rounded-lg text-purple-700 hover:bg-purple-50 hover:border-purple-400 transition-all shadow-sm hover:shadow-md">
                   이 예시 적용하기
                 </button>
               </div>
@@ -633,7 +765,7 @@ ${baseExample}
     async function handleAICoach(coachId, type, field) {
       const currentValue = formData[field] || '';
       if (!currentValue.trim()) {
-        alert('내용을 먼저 입력해주세요.');
+        showNotice('내용을 먼저 입력해주세요.');
         return;
       }
 
@@ -670,9 +802,9 @@ ${baseExample}
           <div class="space-y-4">
             <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl border-2 border-green-200">
               <p class="text-sm font-bold text-green-700 mb-2">✨ 개선된 내용:</p>
-              <p class="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">${improvedText}</p>
+              <p class="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">${escapeHtml(improvedText)}</p>
             </div>
-            <button onclick="applyImprovedContent('${coachId}', '${field}', ${JSON.stringify(improvedText).replace(/"/g, '&quot;')})" class="w-full text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg">
+            <button onclick="applyImprovedContent('${coachId}', '${field}', ${escapeHtml(JSON.stringify(improvedText))})" class="w-full text-sm font-bold bg-gradient-to-r from-purple-600 to-pink-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all shadow-md hover:shadow-lg">
               개선된 내용 적용하기
             </button>
           </div>
@@ -696,6 +828,7 @@ ${baseExample}
     // 개선된 내용 적용
     function applyImprovedContent(coachId, field, improvedText) {
       formData[field] = improvedText;
+      saveDraft();
       
       // 입력 필드에 값 직접 설정
       const inputs = document.querySelectorAll('input, textarea');
@@ -707,13 +840,12 @@ ${baseExample}
       });
       
       toggleCoach(coachId);
-      alert('✨ 개선된 내용이 적용되었습니다!');
+      showNotice('개선된 내용이 적용되었습니다.', 'info');
     }
 
     function applyCoachExample(coachId, type, example) {
       const fieldMap = {
         painPoint: 'painPoint',
-        recurringTask: 'recurringTask',
         vibe: 'vibe',
         features: 'features',
         solution: 'solutionMethod',
@@ -721,6 +853,7 @@ ${baseExample}
       };
       const field = fieldMap[type] || type;
       formData[field] = example;
+      saveDraft();
       
       // 입력 필드에 값 직접 설정
       const inputs = document.querySelectorAll('input, textarea');
@@ -781,7 +914,7 @@ ${baseExample}
       
       document.getElementById('idea-booster-container').innerHTML = `
         <div class="fixed top-2 sm:top-3 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center" id="${boosterId}">
-          <div id="${boosterId}-panel" class="hidden mb-4 w-96 bg-white rounded-2xl shadow-2xl border-2 border-yellow-200 overflow-hidden slide-in-from-bottom-5">
+          <div id="${boosterId}-panel" class="hidden mb-4 w-[calc(100vw-2rem)] max-w-sm bg-white rounded-2xl shadow-2xl border-2 border-yellow-200 overflow-hidden slide-in-from-bottom-5">
             <div class="p-5 flex justify-between items-center" style="background: linear-gradient(to right, #FFEF00, #FFE600);">
               <h3 class="text-white font-bold text-lg flex items-center gap-3">
                 ${Icons.Lightbulb.replace('w-4 h-4', 'w-5 h-5')} 아이디어 부스터
@@ -896,15 +1029,39 @@ ${baseExample}
           textarea.value = newValue;
         });
       }
-    alert(`✨ 아이디어가 추가되었습니다: ${idea}`);
+      saveDraft();
+      showNotice(`아이디어가 추가되었습니다: ${idea}`, 'info');
     }
 
   // Step Navigation
+    function validateStep(step) {
+      const requirements = {
+        1: [['toolType', '도구 유형을 선택해주세요.']],
+        2: [['painPoint', '평소의 어려움이나 반복되는 일을 입력해주세요.']],
+        3: [
+          ['intent', '해결하려는 문제를 입력해주세요.'],
+          ['solutionMethod', '해결 방법을 입력해주세요.'],
+        ],
+        4: [
+          ['features', '주요 기능을 입력해주세요.'],
+          ['vibe', '디자인 분위기를 입력해주세요.'],
+          ['workflow', '작동 과정을 입력해주세요.'],
+        ],
+      };
+      const missing = (requirements[step] || []).find(([field]) => !String(formData[field] || '').trim());
+      if (!missing) return true;
+      showNotice(missing[1]);
+      return false;
+    }
+
     function nextStep() {
       // Step 5에서는 다음 버튼이 작동하지 않음 (초급자용/고급자용 버튼을 사용해야 함)
       if (currentStep === 5) {
+        showNotice('아래에서 초급자용 또는 고급자용 프롬프트를 선택해주세요.', 'info');
         return;
       }
+
+      if (!validateStep(currentStep)) return;
       
       if (currentStep < 6) {
         // Step 4가 아니면 타이머 정리
@@ -914,6 +1071,7 @@ ${baseExample}
         }
         
         currentStep++;
+        saveDraft();
         
         // Step 5 진입 시 AI 자동 정리 로직
         if (currentStep === 5) {
@@ -925,13 +1083,14 @@ ${baseExample}
       };
         }
         
-        // Step 6 진입 시 자동으로 Gemini 프롬프트 생성 (초급자용/고급자용 버튼을 통해 진입한 경우만)
+        // Step 6 진입 시 자동으로 Solar 프롬프트 생성 (초급자용/고급자용 버튼을 통해 진입한 경우만)
         if (currentStep === 6) {
-          if (geminiApiKey && !formData.geminiPrompt && formData.promptLevel) {
-            generatePromptWithGemini();
+          if (!formData.geminiPrompt && formData.promptLevel) {
+            generatePromptWithSolar();
           }
         }
-        
+
+        saveDraft();
         renderStep();
         updateProgress();
       }
@@ -946,6 +1105,7 @@ ${baseExample}
         }
         
         currentStep--;
+        saveDraft();
         renderStep();
         updateProgress();
       }
@@ -1012,15 +1172,20 @@ ${baseExample}
 
     // 프롬프트 생성 함수 (초급/고급 선택)
     function generatePrompt(level) {
+      const levelChanged = formData.promptLevel && formData.promptLevel !== level;
       formData.promptLevel = level; // 'beginner' 또는 'advanced'
+      if (levelChanged || formData.geminiPrompt) {
+        formData.geminiPrompt = '';
+        formData.editedPrompt = '';
+      }
+      promptError = '';
       currentStep = 6;
+      saveDraft();
       renderStep();
       updateProgress();
       
-      // Gemini API로 프롬프트 생성 시작
-      if (geminiApiKey && !formData.geminiPrompt) {
-        generatePromptWithGemini();
-      }
+      // Solar API로 프롬프트 생성 시작
+      generatePromptWithSolar();
     }
 
     // Render Steps
@@ -1044,10 +1209,10 @@ ${baseExample}
             </div>
 
               <div class="flex flex-col gap-4 sm:gap-6 max-w-2xl mx-auto w-full px-2">
-                <button onclick="formData.toolType = '학급경영도구'; nextStep();" class="rounded-2xl border-2 ${formData.toolType === '학급경영도구' ? 'border-purple-500 bg-purple-50' : 'border-slate-300 bg-white hover:border-purple-300'} shadow-lg p-6 sm:p-8 lg:p-10 hover:shadow-xl transition-all transform hover:scale-[1.02] text-left">
+                <button onclick="formData.toolType = '학급경영도구'; nextStep();" class="mga-card mga-clay-purple ${formData.toolType === '학급경영도구' ? 'ring-1 ring-[#2D323D]/20' : ''} p-6 sm:p-8 text-left">
                   <div class="flex items-center gap-4 sm:gap-6">
-                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-purple-100 to-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <svg class="w-8 h-8 sm:w-10 sm:h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white/70 rounded-xl flex items-center justify-center flex-shrink-0 border border-white">
+                      <svg class="w-8 h-8 sm:w-10 sm:h-10 text-[#2D323D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
               </div>
@@ -1058,10 +1223,10 @@ ${baseExample}
                   </div>
                 </button>
 
-                <button onclick="formData.toolType = '수업 관련도구'; nextStep();" class="rounded-2xl border-2 ${formData.toolType === '수업 관련도구' ? 'border-blue-500 bg-blue-50' : 'border-slate-300 bg-white hover:border-blue-300'} shadow-lg p-6 sm:p-8 lg:p-10 hover:shadow-xl transition-all transform hover:scale-[1.02] text-left">
+                <button onclick="formData.toolType = '수업 관련도구'; nextStep();" class="mga-card mga-clay-blue ${formData.toolType === '수업 관련도구' ? 'ring-1 ring-[#2D323D]/20' : ''} p-6 sm:p-8 text-left">
                   <div class="flex items-center gap-4 sm:gap-6">
-                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <svg class="w-8 h-8 sm:w-10 sm:h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white/70 rounded-xl flex items-center justify-center flex-shrink-0 border border-white">
+                      <svg class="w-8 h-8 sm:w-10 sm:h-10 text-[#2D323D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                       </svg>
               </div>
@@ -1072,10 +1237,10 @@ ${baseExample}
                   </div>
                 </button>
 
-                <button onclick="formData.toolType = '업무효율화 도구'; nextStep();" class="rounded-2xl border-2 ${formData.toolType === '업무효율화 도구' ? 'border-green-500 bg-green-50' : 'border-slate-300 bg-white hover:border-green-300'} shadow-lg p-6 sm:p-8 lg:p-10 hover:shadow-xl transition-all transform hover:scale-[1.02] text-left">
+                <button onclick="formData.toolType = '업무효율화 도구'; nextStep();" class="mga-card mga-clay-green ${formData.toolType === '업무효율화 도구' ? 'ring-1 ring-[#2D323D]/20' : ''} p-6 sm:p-8 text-left">
                   <div class="flex items-center gap-4 sm:gap-6">
-                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <svg class="w-8 h-8 sm:w-10 sm:h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-white/70 rounded-xl flex items-center justify-center flex-shrink-0 border border-white">
+                      <svg class="w-8 h-8 sm:w-10 sm:h-10 text-[#467A66]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                     </div>
@@ -1097,7 +1262,7 @@ ${baseExample}
             <div class="space-y-4 sm:space-y-8 ${animateClass}">
               <div class="text-center space-y-2 sm:space-y-4 mb-6 sm:mb-10">
                 <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight">떠올리기 <span class="text-purple-600">(Pain Point)</span></h2>
-                <p class="text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto px-2">${formData.toolType}를 만들기 위해, 평소에 어떤 어려움이 있고 반복되는 귀찮은 일이 있나요?</p>
+                <p class="text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto px-2">${escapeHtml(formData.toolType)}를 만들기 위해, 평소에 어떤 어려움이 있고 반복되는 귀찮은 일이 있나요?</p>
             </div>
 
               <div class="rounded-2xl border-2 border-slate-300 bg-white text-slate-950 shadow-lg p-4 sm:p-6 lg:p-8 relative hover:shadow-xl transition-shadow">
@@ -1109,11 +1274,11 @@ ${baseExample}
                     class="w-full min-h-[200px] p-4 rounded-lg border-2 border-slate-300 focus:border-purple-500 text-base resize-none leading-relaxed bg-slate-50 focus:bg-white transition-colors"
                     placeholder="${exampleForTool.painPoint}"
                     oninput="updateField('painPoint', this.value)"
-                  >${formData.painPoint}</textarea>
+                  >${escapeHtml(formData.painPoint)}</textarea>
             </div>
                 <div class="mt-3 flex items-center justify-between">
                   <button onclick="updateField('painPoint', '${exampleForTool.painPoint.replace(/'/g, "\\'")}'); const textarea = document.querySelector('textarea[oninput*=\\'painPoint\\']'); if(textarea) textarea.value = '${exampleForTool.painPoint.replace(/'/g, "\\'")}';" class="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 font-semibold rounded-lg transition-colors text-sm">
-                    💡 ${formData.toolType} 예시 적용하기
+                    💡 ${escapeHtml(formData.toolType)} 예시 적용하기
                   </button>
                   <div id="painPoint-coach-container-step2"></div>
                 </div>
@@ -1134,7 +1299,7 @@ ${baseExample}
 
               <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-2xl border-2 border-blue-200 mb-8 shadow-md">
                 <h4 class="text-sm font-bold text-blue-800 uppercase mb-3 tracking-wider">My Pain Point</h4>
-                <p class="text-base text-blue-900 font-medium leading-relaxed">"${formData.painPoint || '입력된 내용 없음'}"</p>
+                <p class="text-base text-blue-900 font-medium leading-relaxed">"${escapeHtml(formData.painPoint || '입력된 내용 없음')}"</p>
                 </div>
                 
               <div class="rounded-2xl border-2 border-slate-300 bg-white text-slate-950 shadow-lg p-10 hover:shadow-xl transition-shadow">
@@ -1147,7 +1312,7 @@ ${baseExample}
                         type="text" 
                         class="border-b-4 border-slate-300 focus:border-purple-600 focus:outline-none px-3 py-2 bg-transparent text-slate-900 font-bold text-xl placeholder:font-normal placeholder:text-slate-400 transition-colors w-full"
                         placeholder="${exampleForTool3.intent}"
-                        value="${formData.intent}"
+                        value="${escapeHtml(formData.intent)}"
                         oninput="updateField('intent', this.value)"
                         ${formData.intentExpanded ? 'style="display: none;"' : ''}
                       />
@@ -1157,7 +1322,7 @@ ${baseExample}
                         placeholder="${exampleForTool3.intent}"
                         oninput="updateField('intent', this.value)"
                         ${formData.intentExpanded ? '' : 'style="display: none;"'}
-                      >${formData.intent}</textarea>
+                      >${escapeHtml(formData.intent)}</textarea>
                       <button 
                         onclick="toggleExpandField('intent')"
                         class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-black bg-white hover:bg-slate-100 rounded-full transition-colors border-2 border-slate-300 hover:border-slate-400 shadow-sm hover:shadow-md text-xl font-bold"
@@ -1176,7 +1341,7 @@ ${baseExample}
                         type="text" 
                         class="w-full border-b-4 border-slate-300 focus:border-purple-600 focus:outline-none px-3 py-2 bg-transparent text-slate-900 font-bold text-xl placeholder:font-normal placeholder:text-slate-400 transition-colors"
                         placeholder="${exampleForTool3.solutionMethod}"
-                        value="${formData.solutionMethod}"
+                        value="${escapeHtml(formData.solutionMethod)}"
                         oninput="updateField('solutionMethod', this.value)"
                         ${formData.solutionExpanded ? 'style="display: none;"' : ''}
                       />
@@ -1186,7 +1351,7 @@ ${baseExample}
                         placeholder="${exampleForTool3.solutionMethod}"
                         oninput="updateField('solutionMethod', this.value)"
                         ${formData.solutionExpanded ? '' : 'style="display: none;"'}
-                      >${formData.solutionMethod}</textarea>
+                      >${escapeHtml(formData.solutionMethod)}</textarea>
                       <button 
                         onclick="toggleExpandField('solution')"
                         class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-black bg-white hover:bg-slate-100 rounded-full transition-colors border-2 border-slate-300 hover:border-slate-400 shadow-sm hover:shadow-md text-xl font-bold"
@@ -1251,7 +1416,7 @@ ${baseExample}
                       class="w-full text-base p-3 rounded-lg bg-slate-50 border-2 border-slate-300 focus:border-blue-500 focus:bg-white transition-colors"
                       placeholder="예: 중학교 2학년 담임, 수학 담당, 30명 학급 관리"
                       oninput="updateField('userInfo', this.value)"
-                      value="${formData.userInfo}"
+                      value="${escapeHtml(formData.userInfo)}"
                     />
                     <p class="text-xs text-slate-500 mt-1">직급, 담당 과목, 학급 규모 등 도구 개발에 필요한 정보를 입력해주세요.</p>
                   </div>
@@ -1266,8 +1431,8 @@ ${baseExample}
                         class="w-full min-h-[180px] text-base p-4 rounded-lg bg-slate-50 border-2 border-slate-300 focus:border-purple-500 focus:bg-white transition-colors leading-relaxed"
                       placeholder="${exampleForTool4.features}"
                         oninput="updateField('features', this.value)"
-                      >${formData.features}</textarea>
-                      ${createInlineCoach('features', updateField)}
+                      >${escapeHtml(formData.features)}</textarea>
+                      ${createInlineCoach('features')}
                     </div>
 
                     <div class="rounded-2xl border-2 border-pink-200 bg-white text-slate-950 shadow-lg p-6 relative hover:shadow-xl transition-shadow">
@@ -1279,8 +1444,8 @@ ${baseExample}
                         class="w-full min-h-[180px] text-base p-4 rounded-lg bg-slate-50 border-2 border-slate-300 focus:border-pink-500 focus:bg-white transition-colors leading-relaxed"
                       placeholder="${exampleForTool4.vibe}"
                         oninput="updateField('vibe', this.value)"
-                      >${formData.vibe}</textarea>
-                      ${createInlineCoach('vibe', updateField)}
+                      >${escapeHtml(formData.vibe)}</textarea>
+                      ${createInlineCoach('vibe')}
                   </div>
 
                     <div class="rounded-2xl border-2 border-emerald-200 bg-white text-slate-950 shadow-lg p-6 md:col-span-2 relative hover:shadow-xl transition-shadow">
@@ -1296,10 +1461,23 @@ ${baseExample}
                         class="w-full min-h-[120px] text-base p-4 rounded-lg bg-slate-50 border-2 border-slate-300 focus:border-emerald-500 focus:bg-white transition-colors leading-relaxed"
                       placeholder="${exampleForTool4.workflow || '1. 첫 번째 단계를 수행한다\n2. 두 번째 단계를 수행한다\n3. 세 번째 단계를 수행한다\n4. 결과를 확인한다'}"
                         oninput="updateField('workflow', this.value)"
-                      >${formData.workflow}</textarea>
+                      >${escapeHtml(formData.workflow)}</textarea>
                       <p class="text-xs text-slate-500 mt-2">도구가 작동하는 단계별 과정을 순서대로 적어주세요.</p>
-                      ${createInlineCoach('workflow', updateField)}
+                      ${createInlineCoach('workflow')}
                   </div>
+
+                    <div class="rounded-2xl border-2 border-slate-300 bg-white text-slate-950 shadow-lg p-6 md:col-span-2 relative hover:shadow-xl transition-shadow">
+                      <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2 bg-slate-100 rounded-lg text-slate-600">${Icons.Terminal}</div>
+                        <label class="text-lg font-bold text-slate-900">기술 스택 및 규칙 <span class="text-slate-500">(선택사항)</span></label>
+                      </div>
+                      <textarea
+                        class="w-full min-h-[120px] text-base p-4 rounded-lg bg-slate-50 border-2 border-slate-300 focus:border-slate-500 focus:bg-white transition-colors leading-relaxed"
+                        placeholder="${exampleForTool4.rules}"
+                        oninput="updateField('rules', this.value)"
+                      >${escapeHtml(formData.rules)}</textarea>
+                      ${createInlineCoach('rules')}
+                    </div>
               </div>
             </div>
           `;
@@ -1376,7 +1554,7 @@ UI 구성:
                     <span>예시보기</span>
                   </button>
                 </div>
-                <p class="text-center text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto px-2">입력하신 내용을 바탕으로 AI가 구조를 잡았습니다. 내용을 다듬어보세요.</p>
+                <p class="text-center text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto px-2">입력하신 내용을 개발 프롬프트 구조로 정리했습니다. 내용을 직접 다듬어보세요.</p>
               </div>
 
               <!-- 메인 콘텐츠 영역 (스크롤 가능) -->
@@ -1388,19 +1566,19 @@ UI 구성:
                   <div class="bg-gradient-to-br from-slate-50 to-blue-50 p-6 rounded-2xl border-2 border-slate-300 text-base space-y-5 shadow-md">
                     <div>
                       <span class="font-bold block text-slate-900 mb-2 text-lg">Pain Point:</span>
-                      <p class="text-slate-700 leading-relaxed">${formData.painPoint || '입력 없음'}</p>
+                      <p class="text-slate-700 leading-relaxed">${escapeHtml(formData.painPoint || '입력 없음')}</p>
                     </div>
                     <div>
                       <span class="font-bold block text-slate-900 mb-2 text-lg">Solution:</span>
-                      <p class="text-slate-700 leading-relaxed">${formData.solutionMethod || '입력 없음'}</p>
+                      <p class="text-slate-700 leading-relaxed">${escapeHtml(formData.solutionMethod || '입력 없음')}</p>
                     </div>
                     <div>
                       <span class="font-bold block text-slate-900 mb-2 text-lg">Features:</span>
-                      <pre class="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed">${formData.features || '입력 없음'}</pre>
+                      <pre class="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed">${escapeHtml(formData.features || '입력 없음')}</pre>
                     </div>
                     <div>
                       <span class="font-bold block text-slate-900 mb-2 text-lg">작동 과정:</span>
-                      <pre class="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed">${formData.workflow || '입력 없음'}</pre>
+                      <pre class="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed">${escapeHtml(formData.workflow || '입력 없음')}</pre>
                     </div>
                   </div>
                 </div>
@@ -1419,15 +1597,29 @@ UI 구성:
                     </div>
                     <textarea 
                       class="flex-1 w-full p-5 text-base focus:outline-none resize-none leading-relaxed"
-                      oninput="formData.structuredData.features = this.value"
-                    >${formData.structuredData.features}</textarea>
+                      oninput="updateField('structuredData.features', this.value)"
+                    >${escapeHtml(formData.structuredData.features)}</textarea>
                     <div class="bg-gradient-to-r from-blue-100 to-blue-50 px-5 py-3 text-sm font-bold text-blue-900 border-y-2 border-blue-200">
                       UI & Vibe
                     </div>
                     <textarea 
                       class="h-36 w-full p-5 text-base focus:outline-none resize-none leading-relaxed"
-                      oninput="formData.structuredData.ui = this.value"
-                    >${formData.structuredData.ui}</textarea>
+                      oninput="updateField('structuredData.ui', this.value)"
+                    >${escapeHtml(formData.structuredData.ui)}</textarea>
+                    <div class="bg-gradient-to-r from-emerald-100 to-emerald-50 px-5 py-3 text-sm font-bold text-emerald-900 border-y-2 border-emerald-200">
+                      Data & Backend
+                    </div>
+                    <textarea
+                      class="h-28 w-full p-5 text-base focus:outline-none resize-none leading-relaxed"
+                      oninput="updateField('structuredData.data', this.value)"
+                    >${escapeHtml(formData.structuredData.data)}</textarea>
+                    <div class="bg-gradient-to-r from-slate-100 to-slate-50 px-5 py-3 text-sm font-bold text-slate-900 border-y-2 border-slate-200">
+                      Technical Rules
+                    </div>
+                    <textarea
+                      class="h-28 w-full p-5 text-base focus:outline-none resize-none leading-relaxed"
+                      oninput="updateField('structuredData.rules', this.value)"
+                    >${escapeHtml(formData.structuredData.rules)}</textarea>
                   </div>
                 </div>
                 </div>
@@ -1460,7 +1652,7 @@ UI 구성:
           break;
 
         case 6:
-          // 레벨별 가이드라인 (Step 6 표시용 - generatePromptWithGemini와 동일)
+          // 레벨별 가이드라인 (Step 6 표시용 - generatePromptWithSolar와 동일)
           const beginnerGuidelines = `# Role
 당신은 교육용 웹앱 전문 개발자입니다. 사용자가 제공한 도구 설계 내용을 충실히 반영하여, Cursor/Windsurf AI 에디터에 바로 붙여넣을 수 있는 완전한 개발 프롬프트를 작성해주세요.
 
@@ -1564,8 +1756,11 @@ ${formData.structuredData.features || formData.features || ''}
 # UI 및 사용자 경험
 ${formData.structuredData.ui || formData.vibe || ''}
 
+# 데이터 및 백엔드 구조
+${formData.structuredData.data || '별도 데이터 구조 요구사항 없음'}
+
 # 기술 요구사항
-${formData.rules || ''}
+${formData.rules || formData.structuredData.rules || ''}
 
 ${selectedGuidelines ? `\n# 프롬프트 작성 가이드라인\n${selectedGuidelines}\n` : ''}
 
@@ -1585,13 +1780,19 @@ ${formData.promptLevel === 'beginner' ? `
 ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 준수하여 작성해주세요.' : ''}
         `.trim();
 
-          const isGenerating = !formData.geminiPrompt && geminiApiKey && currentStep === 6;
+          const isGenerating = isGeneratingPrompt && currentStep === 6;
 
           html = `
             <div class="space-y-4 sm:space-y-8 ${animateClass} pb-20 sm:pb-24">
               <div class="text-center space-y-2 sm:space-y-4 mb-6 sm:mb-10">
                 <h2 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight">최종 프롬프트 생성 <span class="text-green-600">(Result)</span></h2>
-                <p class="text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto px-2">${isGenerating ? 'Gemini AI가 프롬프트를 생성 중입니다...' : '프롬프트를 편집한 후 복사해서 사용하세요!'}</p>
+                <p class="text-sm sm:text-base lg:text-lg text-slate-600 leading-relaxed max-w-2xl mx-auto px-2">${
+                  isGenerating
+                    ? 'AI가 프롬프트를 생성 중입니다...'
+                    : promptError
+                      ? '기본 초안을 제공했습니다. 다시 생성하거나 직접 편집할 수 있습니다.'
+                      : '프롬프트를 편집한 후 복사해서 사용하세요!'
+                }</p>
             </div>
 
               ${isGenerating ? `
@@ -1601,8 +1802,17 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
               </div>
               ` : ''}
 
+              ${promptError ? `
+                <div class="rounded-2xl border-2 border-red-200 bg-red-50 p-6 text-center" role="alert">
+                  <p class="mb-4 font-semibold text-red-800">${escapeHtml(promptError)}</p>
+                  <button onclick="generatePromptWithSolar()" class="rounded-lg bg-red-600 px-5 py-2.5 font-bold text-white hover:bg-red-700">
+                    다시 생성
+                  </button>
+                </div>
+              ` : ''}
+
               <!-- 프롬프트 표시 영역 (생성 완료 후에만 표시) -->
-              ${!isGenerating ? `
+              ${!isGenerating && formData.geminiPrompt ? `
               <div class="rounded-2xl border-2 border-slate-400 bg-slate-900 text-slate-100 shadow-2xl p-0 overflow-hidden flex flex-col" style="max-height: calc(100vh - 250px); min-height: 300px;">
                 <div class="flex justify-between items-center px-3 sm:px-6 py-3 sm:py-4 bg-slate-950 border-b-2 border-slate-700 flex-shrink-0">
                   <div class="flex items-center gap-2 sm:gap-3">
@@ -1619,10 +1829,11 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
                   style="min-height: 250px;"
                   oninput="updateEditedPrompt(this.value)"
                   placeholder="프롬프트를 편집하세요..."
-                >${formData.editedPrompt || formData.geminiPrompt || ''}</textarea>
+                >${escapeHtml(formData.editedPrompt || formData.geminiPrompt || '')}</textarea>
               </div>
               ` : ''}
               
+              ${!isGenerating && formData.geminiPrompt && !promptError ? `
               <div class="flex flex-col items-center justify-center pt-6 pb-4 space-y-4">
                 <div class="text-center">
                   <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -1631,10 +1842,11 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
                   <h3 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">프롬프트 생성이 완료되었습니다! 🎉</h3>
                   <p class="text-sm sm:text-base text-slate-600">이제 생성된 프롬프트를 사용하여 선생님만의 멋진 앱을 개발해보세요.</p>
             </div>
-                <button onclick="currentStep = 1; renderStep(); updateProgress();" class="inline-flex items-center justify-center rounded-lg text-sm sm:text-base font-semibold transition-all border-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-slate-400 text-slate-900 h-10 sm:h-12 px-6 sm:px-8 py-2 sm:py-3 shadow-md hover:shadow-lg">
+                <button onclick="resetApp()" class="inline-flex items-center justify-center rounded-lg text-sm sm:text-base font-semibold transition-all border-2 border-slate-300 bg-white hover:bg-slate-50 hover:border-slate-400 text-slate-900 h-10 sm:h-12 px-6 sm:px-8 py-2 sm:py-3 shadow-md hover:shadow-lg">
                   처음으로 돌아가기
                 </button>
               </div>
+              ` : ''}
             </div>
           `;
           footer.style.display = 'block';
@@ -1648,11 +1860,22 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
       // Update button states for both mobile and desktop
       const prevBtn = document.getElementById('prev-btn');
       const prevBtnMobile = document.getElementById('prev-btn-mobile');
+      const nextBtn = document.getElementById('next-btn');
+      const nextBtnMobile = document.getElementById('next-btn-mobile');
+      const disableNext = currentStep >= 5;
       if (prevBtn) {
         prevBtn.disabled = currentStep === 1;
       }
       if (prevBtnMobile) {
         prevBtnMobile.disabled = currentStep === 1;
+      }
+      if (nextBtn) {
+        nextBtn.disabled = disableNext;
+        nextBtn.title = currentStep === 5 ? '아래 생성 버튼에서 난이도를 선택해주세요.' : '';
+      }
+      if (nextBtnMobile) {
+        nextBtnMobile.disabled = disableNext;
+        nextBtnMobile.title = currentStep === 5 ? '아래 생성 버튼에서 난이도를 선택해주세요.' : '';
       }
       
       // Step 2: AI 조언 버튼을 하단에 추가
@@ -1673,7 +1896,7 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
                   ${Icons.Sparkles.replace('w-3 h-3', 'w-4 h-4')}
                   AI 조언
                 </button>
-                <div id="${coachId}-panel" class="hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 w-80 bg-white rounded-2xl shadow-2xl border-2 border-purple-200 p-6 z-50 slide-in-from-bottom-2">
+                <div id="${coachId}-panel" class="hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 w-[calc(100vw-2rem)] max-w-xs bg-white rounded-2xl shadow-2xl border-2 border-purple-200 p-6 z-50 slide-in-from-bottom-2">
                   <div class="flex justify-between items-start mb-4">
                     <span class="text-sm font-bold text-purple-700 flex items-center gap-2">
                       ${Icons.Bot.replace('w-3 h-3', 'w-4 h-4')} AI 개선 중...
@@ -1718,7 +1941,7 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
                   ${Icons.Sparkles.replace('w-3 h-3', 'w-4 h-4')}
                   AI 조언
                 </button>
-                <div id="${coachId}-panel" class="hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 w-80 bg-white rounded-2xl shadow-2xl border-2 border-purple-200 p-6 z-50 slide-in-from-bottom-2">
+                <div id="${coachId}-panel" class="hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 w-[calc(100vw-2rem)] max-w-xs bg-white rounded-2xl shadow-2xl border-2 border-purple-200 p-6 z-50 slide-in-from-bottom-2">
                   <div class="flex justify-between items-start mb-4">
                     <span class="text-sm font-bold text-purple-700 flex items-center gap-2">
                       ${Icons.Bot.replace('w-3 h-3', 'w-4 h-4')} AI 개선 중...
@@ -1753,16 +1976,13 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
       }, 100);
     }
 
-    // Gemini API 호출 함수
-    async function generatePromptWithGemini() {
-      if (!geminiApiKey) {
-        return; // API 키가 없으면 기본 프롬프트 사용
-      }
-
-      // 이미 생성된 프롬프트가 있으면 재생성하지 않음
-      if (formData.geminiPrompt) {
-        return;
-      }
+    // Solar API 호출 함수 (프롬프트 생성)
+    async function generatePromptWithSolar() {
+      if (isGeneratingPrompt) return;
+      const requestId = ++generationRequestId;
+      isGeneratingPrompt = true;
+      promptError = '';
+      renderStep();
 
       // 레벨별 가이드라인
       const beginnerGuidelines = `# Role
@@ -1868,8 +2088,11 @@ ${formData.structuredData.features || formData.features || ''}
 # UI 및 사용자 경험
 ${formData.structuredData.ui || formData.vibe || ''}
 
+# 데이터 및 백엔드 구조
+${formData.structuredData.data || '별도 데이터 구조 요구사항 없음'}
+
 # 기술 요구사항
-${formData.rules || ''}
+${formData.rules || formData.structuredData.rules || ''}
 
 ${selectedGuidelines ? `\n# 프롬프트 작성 가이드라인\n${selectedGuidelines}\n` : ''}
 
@@ -1890,43 +2113,29 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
       `.trim();
 
       try {
-        // Gemini 2.0 Flash Experimental 모델 사용 (최신 모델)
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: promptInput
-              }]
-            }]
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error(`API 오류: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-          const generatedPrompt = data.candidates[0].content.parts[0].text;
-          formData.geminiPrompt = generatedPrompt;
-          renderStep();
-        } else {
-          throw new Error('프롬프트 생성에 실패했습니다.');
-        }
+        const generatedPrompt = await callSolar(promptInput);
+        if (requestId !== generationRequestId) return;
+        formData.geminiPrompt = generatedPrompt;
+        formData.editedPrompt = '';
+        saveDraft();
       } catch (error) {
-        console.error('Gemini API 오류:', error);
-        // 에러가 발생해도 기본 프롬프트를 사용하도록 함
+        if (requestId !== generationRequestId) return;
+        console.error('Solar API 오류:', error);
+        promptError = error.message || '프롬프트 생성에 실패했습니다. 잠시 후 다시 시도해주세요.';
+        formData.geminiPrompt = promptInput;
+        formData.editedPrompt = '';
+        saveDraft();
+      } finally {
+        if (requestId === generationRequestId) {
+          isGeneratingPrompt = false;
+          renderStep();
+        }
       }
     }
 
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text).then(() => {
-        alert('복사되었습니다!');
+        showNotice('복사되었습니다.', 'info');
       }).catch(err => {
         console.error('복사 실패:', err);
         // Fallback for older browsers
@@ -1936,13 +2145,14 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        alert('복사되었습니다!');
+        showNotice('복사되었습니다.', 'info');
       });
     }
 
     // 편집된 프롬프트 업데이트
     function updateEditedPrompt(value) {
       formData.editedPrompt = value;
+      saveDraft();
     }
 
     // 편집된 프롬프트 복사
@@ -1954,28 +2164,6 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
         // 폴백: 저장된 값 사용
         if (formData.editedPrompt) {
           copyToClipboard(formData.editedPrompt);
-        }
-      }
-    }
-
-    // 예시 패널 토글 함수 (양쪽 분할 형식)
-    async function toggleExamplePanel(step) {
-      const panel = document.getElementById(`example-panel-${step}`);
-      const toggleText = document.getElementById(`example-toggle-text-${step}`);
-      
-      if (panel) {
-        const isHidden = panel.classList.contains('hidden');
-        
-        // 아코디언 형식으로 토글
-        panel.classList.toggle('hidden');
-        
-        if (toggleText) {
-          toggleText.textContent = isHidden ? '예시 닫기' : '예시보기';
-        }
-        
-        // 패널이 열릴 때 Gemini API로 예시 생성 (step 4만)
-        if (isHidden && step === 4) {
-          await loadDynamicExamples(step);
         }
       }
     }
@@ -2006,6 +2194,9 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
         }
         
         modal.className = 'fixed inset-0 bg-black/60 z-50 flex flex-col opacity-0 transition-opacity duration-300';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', '세부 요소 예시');
         modal.innerHTML = `
           <div class="flex-1 flex flex-col bg-white overflow-hidden">
             <!-- 모달 헤더 -->
@@ -2015,7 +2206,7 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
             </div>
             
             <!-- 메인 콘텐츠 영역 -->
-            <div class="flex-1 flex overflow-hidden">
+            <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
               <!-- 왼쪽: 메인 콘텐츠 (편집 가능) -->
               <div class="flex-1 overflow-y-auto p-6 bg-slate-50">
                 <div class="max-w-4xl mx-auto space-y-6">
@@ -2036,7 +2227,7 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
                       id="modal-userInfo-edit"
                       class="w-full text-base p-3 rounded-lg bg-slate-50 border-2 border-slate-300 focus:border-blue-500 focus:bg-white transition-colors"
                       placeholder="예: 중학교 2학년 담임, 수학 담당, 30명 학급 관리"
-                      value="${tempData.userInfo}"
+                      value="${escapeHtml(tempData.userInfo)}"
                     />
                     <p class="text-xs text-slate-500 mt-2">직급, 담당 과목, 학급 규모 등 도구 개발에 필요한 정보를 입력해주세요.</p>
                   </div>
@@ -2051,7 +2242,7 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
                       id="modal-features-edit-4"
                       class="w-full min-h-[180px] text-base p-4 rounded-lg bg-slate-50 border-2 border-slate-300 focus:border-purple-500 focus:bg-white transition-colors leading-relaxed resize-none"
                       placeholder="${exampleForTool4.features}"
-                    >${tempData.features}</textarea>
+                    >${escapeHtml(tempData.features)}</textarea>
                   </div>
                   
                   <!-- 디자인 바이브 -->
@@ -2064,7 +2255,7 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
                       id="modal-vibe-edit-4"
                       class="w-full min-h-[180px] text-base p-4 rounded-lg bg-slate-50 border-2 border-slate-300 focus:border-pink-500 focus:bg-white transition-colors leading-relaxed resize-none"
                       placeholder="${exampleForTool4.vibe}"
-                    >${tempData.vibe}</textarea>
+                    >${escapeHtml(tempData.vibe)}</textarea>
                   </div>
                   
                   <!-- 작동 과정 -->
@@ -2081,7 +2272,7 @@ ${selectedGuidelines ? '\n위 프롬프트 작성 가이드라인을 반드시 �
                       id="modal-workflow-edit-4"
                       class="w-full min-h-[120px] text-base p-4 rounded-lg bg-slate-50 border-2 border-slate-300 focus:border-emerald-500 focus:bg-white transition-colors leading-relaxed resize-none"
                       placeholder="${exampleForTool4.workflow || '1. 첫 번째 단계를 수행한다\n2. 두 번째 단계를 수행한다\n3. 세 번째 단계를 수행한다\n4. 결과를 확인한다'}"
-                    >${tempData.workflow}</textarea>
+                    >${escapeHtml(tempData.workflow)}</textarea>
                     <p class="text-xs text-slate-500 mt-2">도구가 작동하는 단계별 과정을 순서대로 적어주세요.</p>
                   </div>
                 </div>
@@ -2227,6 +2418,9 @@ UI 구성:
       }
       
       modal.className = 'fixed inset-0 bg-black/60 z-50 flex flex-col opacity-0 transition-opacity duration-300';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.setAttribute('aria-label', '프롬프트 구조 예시');
       modal.innerHTML = `
         <div class="flex-1 flex flex-col bg-white overflow-hidden">
           <!-- 모달 헤더 -->
@@ -2236,7 +2430,7 @@ UI 구성:
           </div>
           
           <!-- 메인 콘텐츠 영역 -->
-          <div class="flex-1 flex overflow-hidden">
+          <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
             <!-- 왼쪽: 메인 콘텐츠 (편집 가능) -->
             <div class="flex-1 overflow-y-auto p-6 bg-slate-50">
               <div class="max-w-4xl mx-auto space-y-6">
@@ -2248,19 +2442,19 @@ UI 구성:
                   <div class="space-y-4 text-base">
                     <div>
                       <span class="font-bold block text-slate-900 mb-2">Pain Point:</span>
-                      <p class="text-slate-700 leading-relaxed">${formData.painPoint || '입력 없음'}</p>
+                      <p class="text-slate-700 leading-relaxed">${escapeHtml(formData.painPoint || '입력 없음')}</p>
                     </div>
                     <div>
                       <span class="font-bold block text-slate-900 mb-2">Solution:</span>
-                      <p class="text-slate-700 leading-relaxed">${formData.solutionMethod || '입력 없음'}</p>
+                      <p class="text-slate-700 leading-relaxed">${escapeHtml(formData.solutionMethod || '입력 없음')}</p>
                     </div>
                     <div>
                       <span class="font-bold block text-slate-900 mb-2">Features:</span>
-                      <pre class="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed">${formData.features || '입력 없음'}</pre>
+                      <pre class="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed">${escapeHtml(formData.features || '입력 없음')}</pre>
                     </div>
                     <div>
                       <span class="font-bold block text-slate-900 mb-2">작동 과정:</span>
-                      <pre class="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed">${formData.workflow || '입력 없음'}</pre>
+                      <pre class="whitespace-pre-wrap font-sans text-slate-700 leading-relaxed">${escapeHtml(formData.workflow || '입력 없음')}</pre>
                     </div>
                   </div>
                 </div>
@@ -2282,7 +2476,7 @@ UI 구성:
                       <textarea 
                         id="modal-features-edit"
                         class="w-full min-h-[200px] p-4 text-base border-2 border-slate-300 rounded-lg focus:border-purple-500 focus:outline-none resize-none leading-relaxed"
-                      >${tempData.features}</textarea>
+                      >${escapeHtml(tempData.features)}</textarea>
                     </div>
                     
                     <div>
@@ -2292,7 +2486,7 @@ UI 구성:
                       <textarea 
                         id="modal-ui-edit"
                         class="w-full min-h-[150px] p-4 text-base border-2 border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none resize-none leading-relaxed"
-                      >${tempData.ui}</textarea>
+                      >${escapeHtml(tempData.ui)}</textarea>
                     </div>
                   </div>
                 </div>
@@ -2315,7 +2509,7 @@ UI 구성:
                 </div>
                 
                 <div class="bg-slate-50 p-4 rounded-lg border-2 border-slate-200">
-                  <p class="text-sm text-slate-700"><strong>💡 팁:</strong> 위 예시를 참고하여 ${formData.toolType}에 맞게 구조를 정리해보세요. 각 섹션을 명확하게 구분하고, 실제 사용 시나리오를 고려하여 작성하면 더 좋습니다.</p>
+                  <p class="text-sm text-slate-700"><strong>💡 팁:</strong> 위 예시를 참고하여 ${escapeHtml(formData.toolType)}에 맞게 구조를 정리해보세요. 각 섹션을 명확하게 구분하고, 실제 사용 시나리오를 고려하여 작성하면 더 좋습니다.</p>
                 </div>
               </div>
             </div>
@@ -2371,6 +2565,7 @@ UI 구성:
         if (featuresEdit) formData.features = featuresEdit.value;
         if (vibeEdit) formData.vibe = vibeEdit.value;
         if (workflowEdit) formData.workflow = workflowEdit.value;
+        saveDraft();
         
         // step 4 다시 렌더링
         renderStep();
@@ -2384,6 +2579,7 @@ UI 구성:
         if (featuresEdit && uiEdit) {
           formData.structuredData.features = featuresEdit.value;
           formData.structuredData.ui = uiEdit.value;
+          saveDraft();
           
           // step 5 다시 렌더링
           renderStep();
@@ -2394,283 +2590,23 @@ UI 구성:
       }
     }
 
-    // 모바일용 예시 모달
-    function showExampleModal(step) {
-      const modalId = `example-modal-${step}`;
-      let modal = document.getElementById(modalId);
-      
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = modalId;
-        modal.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4';
-        document.body.appendChild(modal);
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      const openModal = document.querySelector('[id^="example-modal-fullscreen-"]');
+      if (openModal) {
+        const step = Number(openModal.id.split('-').pop());
+        closeExampleModal(step);
       }
-      
-      const exampleForTool = toolExamples[formData.toolType] || toolExamples['업무효율화 도구'];
-      let modalContent = '';
-      
-      if (step === 4) {
-        modalContent = `
-          <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 animate-in">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-xl font-bold text-slate-900">${formData.toolType} 예시</h3>
-              <button onclick="document.getElementById('${modalId}').remove()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
-            </div>
-            <div class="space-y-4">
-              <div class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-                <h4 class="text-sm font-bold text-purple-900 mb-2">주요 기능 (Features) 예시:</h4>
-                <pre class="bg-white p-3 rounded-lg text-xs whitespace-pre-wrap border border-purple-100">${exampleForTool.features}</pre>
-              </div>
-              <div class="bg-pink-50 p-4 rounded-lg border-2 border-pink-200">
-                <h4 class="text-sm font-bold text-pink-900 mb-2">디자인 바이브 (Vibe) 예시:</h4>
-                <pre class="bg-white p-3 rounded-lg text-xs whitespace-pre-wrap border border-pink-100">${exampleForTool.vibe}</pre>
-              </div>
-              <div class="bg-slate-50 p-4 rounded-lg border-2 border-slate-200">
-                <h4 class="text-sm font-bold text-slate-900 mb-2">도구 & 규칙 예시:</h4>
-                <pre class="bg-white p-3 rounded-lg text-xs whitespace-pre-wrap border border-slate-100">${exampleForTool.rules}</pre>
-              </div>
-              <div class="bg-emerald-50 p-4 rounded-lg border-2 border-emerald-200">
-                <h4 class="text-sm font-bold text-emerald-900 mb-2">작동 과정 예시:</h4>
-                <pre class="bg-white p-3 rounded-lg text-xs whitespace-pre-wrap border border-emerald-100">${exampleForTool.workflow || '로딩 중...'}</pre>
-              </div>
-            </div>
-          </div>
-        `;
-      } else if (step === 5) {
-        const structureExamples = {
-          '학급경영도구': {
-            features: `${exampleForTool.features}\n\n추가 고려사항:\n- 학생별 개인 정보 관리\n- 출석 통계 및 그래프 표시`,
-            ui: `${exampleForTool.vibe}\n\nUI 구성:\n- 학급 대시보드\n- 학생 목록 및 개별 상세 페이지`
-          },
-          '수업 관련도구': {
-            features: `${exampleForTool.features}\n\n추가 고려사항:\n- 수업 계획서 템플릿 관리\n- 학생별 평가 점수 자동 계산`,
-            ui: `${exampleForTool.vibe}\n\nUI 구성:\n- 수업 목록 및 캘린더 뷰\n- 수업 계획서 작성/편집 페이지`
-          },
-          '업무효율화 도구': {
-            features: `${exampleForTool.features}\n\n추가 고려사항:\n- 문서 템플릿 라이브러리\n- 자동 보고서 생성 엔진`,
-            ui: `${exampleForTool.vibe}\n\nUI 구성:\n- 메인 대시보드\n- 문서 작성/편집 페이지`
-          }
-        };
-        const structureExample = structureExamples[formData.toolType] || structureExamples['업무효율화 도구'];
-        
-        modalContent = `
-          <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 animate-in">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="text-xl font-bold text-slate-900">${formData.toolType} 예시</h3>
-              <button onclick="document.getElementById('${modalId}').remove()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
-            </div>
-            <div class="space-y-4">
-              <div class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-                <h4 class="text-sm font-bold text-purple-900 mb-2">Features & Logic 예시:</h4>
-                <pre class="bg-white p-3 rounded-lg text-xs whitespace-pre-wrap border border-purple-100">${structureExample.features}</pre>
-              </div>
-              <div class="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
-                <h4 class="text-sm font-bold text-blue-900 mb-2">UI & Vibe 예시:</h4>
-                <pre class="bg-white p-3 rounded-lg text-xs whitespace-pre-wrap border border-blue-100">${structureExample.ui}</pre>
-              </div>
-            </div>
-          </div>
-        `;
-      }
-      
-      modal.innerHTML = modalContent;
-      modal.classList.remove('hidden');
-    }
-
-    // Gemini API로 동적 예시 로드
-    async function loadDynamicExamples(step) {
-      if (!formData.toolType || step !== 4) return;
-      
-      const toolType = formData.toolType;
-      const fields = ['features', 'vibe', 'rules', 'workflow'];
-      
-      for (const field of fields) {
-        const element = document.getElementById(`example-${field}-${step}`);
-        if (element) {
-          // 로딩 표시
-          element.textContent = 'AI가 예시를 생성 중입니다...';
-          
-          try {
-            const example = await generateToolExample(field, toolType);
-            if (example) {
-              element.textContent = example;
-            }
-          } catch (error) {
-            console.error(`예시 생성 실패 (${field}):`, error);
-            // 실패 시 기본 예시 사용
-            const baseExample = toolExamples[toolType]?.[field] || '';
-            element.textContent = baseExample;
-          }
-        }
-      }
-    }
-
-    // 예시 모달 함수
-    function toggleExampleModal(step) {
-      const modalId = 'example-modal';
-      let modal = document.getElementById(modalId);
-      
-      if (!modal) {
-        modal = document.createElement('div');
-        modal.id = modalId;
-        modal.className = 'hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4';
-        document.body.appendChild(modal);
-      }
-
-      const exampleForTool = toolExamples[formData.toolType] || toolExamples['업무효율화 도구'];
-      
-      let exampleContent = '';
-      if (step === 4) {
-        exampleContent = `
-          <div class="space-y-6">
-            <div class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-              <h4 class="text-lg font-bold text-purple-900 mb-3">주요 기능 (Features) 예시:</h4>
-              <pre class="bg-white p-4 rounded-lg text-sm whitespace-pre-wrap border border-purple-100">${exampleForTool.features}</pre>
-              <p class="text-xs text-purple-700 mt-2">💡 핵심 기능 3-5개를 명확하게 나열하세요. 각 기능은 한 줄로 간결하게 작성합니다.</p>
-                </div>
-            
-            <div class="bg-pink-50 p-4 rounded-lg border-2 border-pink-200">
-              <h4 class="text-lg font-bold text-pink-900 mb-3">디자인 바이브 (Vibe) 예시:</h4>
-              <pre class="bg-white p-4 rounded-lg text-sm whitespace-pre-wrap border border-pink-100">${exampleForTool.vibe}</pre>
-              <p class="text-xs text-pink-700 mt-2">💡 형용사 3개로 디자인 느낌을 표현하세요. 색상, 분위기, 스타일을 포함하면 좋습니다.</p>
-                </div>
-            
-            <div class="bg-slate-50 p-4 rounded-lg border-2 border-slate-200">
-              <h4 class="text-lg font-bold text-slate-900 mb-3">도구 & 규칙 (.cursorrules) 예시:</h4>
-              <pre class="bg-white p-4 rounded-lg text-sm whitespace-pre-wrap border border-slate-100">${exampleForTool.rules}</pre>
-              <p class="text-xs text-slate-700 mt-2">💡 사용할 기술 스택과 코딩 규칙을 명시하세요. 프레임워크, 언어, 스타일 가이드를 포함합니다.</p>
-            </div>
-            
-            <div class="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
-              <h4 class="text-lg font-bold text-blue-900 mb-3">사용자 정보 예시:</h4>
-              <pre class="bg-white p-4 rounded-lg text-sm whitespace-pre-wrap border border-blue-100">중학교 2학년 담임, 수학 담당, 30명 학급 관리
-
-또는
-
-초등학교 3학년 담임, 전과목 담당, 25명 학급
-
-또는
-
-고등학교 1학년 담임, 영어 담당, 35명 학급</pre>
-              <p class="text-xs text-blue-700 mt-2">💡 직급, 담당 과목, 학급 규모 등 도구 개발에 필요한 구체적인 정보를 입력하세요.</p>
-          </div>
-          </div>
-        `;
-      } else if (step === 5) {
-        const structureExamples = {
-          '학급경영도구': {
-            features: `${exampleForTool.features}
-
-추가 고려사항:
-- 학생별 개인 정보 관리 (이름, 학번, 연락처)
-- 출석 통계 및 그래프 표시
-- 생활기록부 자동 연동 기능
-- 부모님 알림 시스템 (SMS/이메일)`,
-            ui: `${exampleForTool.vibe}
-
-UI 구성:
-- 학급 대시보드 (전체 출석 현황)
-- 학생 목록 및 개별 상세 페이지
-- 출석 체크 인터페이스 (QR코드/버튼)
-- 통계 및 리포트 페이지
-- 알림 설정 페이지`
-          },
-          '수업 관련도구': {
-            features: `${exampleForTool.features}
-
-추가 고려사항:
-- 수업 계획서 템플릿 관리
-- 학생별 평가 점수 자동 계산
-- 수업 자료 분류 및 검색
-- 평가 기준표 자동 생성 및 적용`,
-            ui: `${exampleForTool.vibe}
-
-UI 구성:
-- 수업 목록 및 캘린더 뷰
-- 수업 계획서 작성/편집 페이지
-- 평가 점수 입력 및 관리 페이지
-- 수업 자료 라이브러리
-- 통계 대시보드`
-          },
-          '업무효율화 도구': {
-            features: `${exampleForTool.features}
-
-추가 고려사항:
-- 문서 템플릿 라이브러리
-- 자동 보고서 생성 엔진
-- 데이터 분석 및 시각화
-- 일정 관리 및 알림 시스템`,
-            ui: `${exampleForTool.vibe}
-
-UI 구성:
-- 메인 대시보드 (최근 문서, 통계)
-- 문서 작성/편집 페이지
-- 템플릿 라이브러리
-- 데이터 관리 페이지
-- 일정 관리 캘린더`
-          }
-        };
-        
-        const structureExample = structureExamples[formData.toolType] || structureExamples['업무효율화 도구'];
-        
-        exampleContent = `
-          <div class="space-y-6">
-            <div class="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-              <h4 class="text-lg font-bold text-purple-900 mb-3">Features & Logic 예시:</h4>
-              <pre class="bg-white p-4 rounded-lg text-sm whitespace-pre-wrap border border-purple-100">${structureExample.features}</pre>
-            </div>
-            
-            <div class="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
-              <h4 class="text-lg font-bold text-blue-900 mb-3">UI & Vibe 예시:</h4>
-              <pre class="bg-white p-4 rounded-lg text-sm whitespace-pre-wrap border border-blue-100">${structureExample.ui}</pre>
-          </div>
-            
-            <div class="bg-slate-50 p-4 rounded-lg border-2 border-slate-200">
-              <p class="text-sm text-slate-700"><strong>💡 팁:</strong> 위 예시를 참고하여 ${formData.toolType}에 맞게 구조를 정리해보세요. 각 섹션을 명확하게 구분하고, 실제 사용 시나리오를 고려하여 작성하면 더 좋습니다.</p>
-          </div>
-        </div>
-        `;
-      }
-
-      modal.innerHTML = `
-        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 animate-in">
-          <div class="flex justify-between items-center mb-6">
-            <h3 class="text-2xl font-bold text-slate-900">${formData.toolType} 예시</h3>
-            <button onclick="document.getElementById('example-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">×</button>
-          </div>
-          ${exampleContent}
-          <div class="mt-6 flex justify-end">
-            <button onclick="document.getElementById('example-modal').classList.add('hidden')" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors">
-              닫기
-            </button>
-      </div>
-    </div>
-      `;
-      
-      modal.classList.toggle('hidden');
-    }
+    });
 
     // Initialize
+    restoreDraft();
     renderStep();
     updateProgress();
+    if (currentStep === 6 && formData.promptLevel && !formData.geminiPrompt) {
+      generatePromptWithSolar();
+    }
   </script>
 
-  <!-- Footer -->
-  <footer class="bg-white border-t-2 border-slate-200 py-6 mt-auto">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-2">
-      <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-        <p class="text-sm text-slate-600">
-          행복한 수학, 함께 만들어요 😊
-        </p>
-        <span class="hidden sm:inline text-slate-300">|</span>
-        <p class="text-sm text-slate-600">
-          MATH쌤, 열정은 MAX, 야근은 X
-        </p>
-      </div>
-      <p class="text-xs text-slate-500 sm:translate-x-[-1rem]">
-        © 행복한윤쌤 & MAXX쌤
-      </p>
-    </div>
-  </footer>
 </body>
 </html>

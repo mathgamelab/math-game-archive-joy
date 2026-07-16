@@ -33,8 +33,26 @@ const createInitialFormData = (): FormData => ({
   promptLevel: undefined
 });
 
+const isBrowserReload = (): boolean => {
+  const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  if (navigationEntry) return navigationEntry.type === 'reload';
+  return 'navigation' in performance && performance.navigation.type === 1;
+};
+
+const clearEduGameStorage = () => {
+  localStorage.removeItem(DRAFT_STORAGE_KEY);
+  for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+    const key = localStorage.key(index);
+    if (key?.startsWith('gameIdeas_')) localStorage.removeItem(key);
+  }
+};
+
 const loadDraft = (): { currentStep: number; formData: FormData } => {
   try {
+    if (isBrowserReload()) {
+      clearEduGameStorage();
+      return { currentStep: 1, formData: createInitialFormData() };
+    }
     const saved = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null') as {
       currentStep?: number;
       formData?: Partial<FormData>;
@@ -54,7 +72,7 @@ const loadDraft = (): { currentStep: number; formData: FormData } => {
     };
   } catch {
     try {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      clearEduGameStorage();
     } catch {
       // 저장소 접근이 차단된 환경에서는 메모리 상태로 계속 진행합니다.
     }
@@ -151,7 +169,7 @@ const App: React.FC = () => {
     setFormData(createInitialFormData());
     setCurrentStep(1);
     try {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      clearEduGameStorage();
     } catch {
       // 저장소 접근이 차단되어도 앱 초기화는 유지합니다.
     }

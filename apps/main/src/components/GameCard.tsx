@@ -42,7 +42,7 @@ const CLAY_ICONS: Record<string, string> = {
   'dots-and-boxes': '/images/clay/games/dots-and-boxes.png',
   suyeon: '/images/clay/games/suyeon.png',
   'linear-flicking-marbles': '/images/clay/games/linear-flicking-marbles.png',
-  'pi-bulloon': '/images/clay/games/pi-bulloon.png',
+  'pi-balloon': '/images/clay/games/pi-balloon.png',
   'pi-draw': '/images/clay/games/pi-draw.png',
   'pi-timer': '/images/clay/games/pi-timer.png',
   'polynomial-card-battle': '/images/clay/games/polynomial-card-battle.png',

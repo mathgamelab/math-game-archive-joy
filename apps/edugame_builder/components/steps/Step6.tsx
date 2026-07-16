@@ -1,5 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { FormData } from '../../types';
 import { generateFinalPromptWithAI } from '../../services/geminiService';
 import { Icons } from '../../constants';
@@ -36,6 +38,7 @@ const createDefaultPrompt = (formData: FormData): string => {
 2) Level 1을 끝까지 플레이 가능한 게임 루프 구현
 3) 기본 점수/보상 처리와 피드백(정답/오답/클리어) 구현
 4) 데이터는 프론트엔드 코드 내 JSON 구조로 관리
+${!isAdvanced ? '\nHTML 웹앱 만들어서 여기서 실행해줘' : ''}
 \`\`\`
 
 ## 2차 붙여넣기 프롬프트 (보상 강화 + 다음 레벨 + 미반영 보완)
@@ -74,6 +77,7 @@ ${isAdvanced ? '- 3차 적용으로 백엔드 확장 가능' : ''}`;
 const Step6: React.FC<Step6Props> = ({ formData, updateField, onReset }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   const [copiedTarget, setCopiedTarget] = useState<'all' | '1' | '2' | '3' | null>(null);
   const [lastPromptLevel, setLastPromptLevel] = useState<string | undefined>(undefined);
   const requestIdRef = useRef(0);
@@ -175,9 +179,17 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, onReset }) => {
             <div className="flex justify-between items-center px-6 py-4 bg-slate-950 border-b-2 border-slate-700 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-mono font-semibold text-slate-400">prompt.md</span>
-                <span className="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">편집 가능</span>
+                <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">
+                  {isEditing ? '마크다운 편집' : '마크다운 미리보기'}
+                </span>
               </div>
               <div className="flex items-center justify-end gap-2 flex-wrap">
+                <button
+                  onClick={() => setIsEditing((editing) => !editing)}
+                  className="inline-flex h-8 items-center justify-center rounded-lg bg-slate-700 px-3 text-xs font-bold text-slate-100 transition-all hover:bg-slate-600"
+                >
+                  {isEditing ? '미리보기' : '편집'}
+                </button>
                 <button
                   onClick={() => prompt1 && copyWithFeedback(prompt1, '1')}
                   disabled={!prompt1}
@@ -213,18 +225,25 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, onReset }) => {
                   title="전체 프롬프트 복사"
                 >
                   {copiedTarget === 'all' ? <Icons.Check className="w-4 h-4" /> : <Icons.Copy className="w-4 h-4" />}
-                  {copiedTarget === 'all' ? '전체 복사 완료!' : '전체 복사'}
+                  {copiedTarget === 'all' ? '마크다운 복사 완료!' : '마크다운 전체 복사'}
                 </button>
               </div>
             </div>
             
-            <textarea 
-              className="flex-1 w-full p-8 text-sm font-mono leading-relaxed whitespace-pre-wrap text-slate-200 bg-slate-900 border-0 focus:outline-none resize-none custom-scrollbar"
-              style={{ minHeight: '250px' }}
-              value={currentPrompt}
-              onChange={(e) => updateField('editedPrompt', e.target.value)}
-              placeholder="프롬프트를 편집하세요..."
-            />
+            {isEditing ? (
+              <textarea
+                aria-label="마크다운 프롬프트 편집"
+                className="flex-1 w-full p-8 text-sm font-mono leading-relaxed whitespace-pre-wrap text-slate-200 bg-slate-900 border-0 focus:outline-none resize-none custom-scrollbar"
+                style={{ minHeight: '250px' }}
+                value={currentPrompt}
+                onChange={(e) => updateField('editedPrompt', e.target.value)}
+                placeholder="프롬프트를 편집하세요..."
+              />
+            ) : (
+              <div className="markdown-preview custom-scrollbar min-h-[250px] flex-1 overflow-y-auto bg-white p-6 text-slate-800 sm:p-8">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentPrompt}</ReactMarkdown>
+              </div>
+            )}
           </div>
 
           {currentPrompt && !error && (

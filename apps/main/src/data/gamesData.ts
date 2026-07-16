@@ -428,7 +428,7 @@ export const gamesData: Record<string, GameData[]> = {
   ],
   'math-experience': [
     {
-      id: 'pi-bulloon',
+      id: 'pi-balloon',
       title: 'π 풍선 슈팅',
       description: `🎮게임명 : π 풍선 슈팅
 📘 교과명 : 파이데이
@@ -442,7 +442,7 @@ export const gamesData: Record<string, GameData[]> = {
       status: 'playable',
       difficulty: '초급',
       estimatedTime: '5분',
-      url: '/pi_bulloon.html',
+      url: '/pi_balloon.html',
       type: '파이데이 체험 게임',
       summary: '원주율 순서에 맞는 숫자 풍선을 쏘아 막는 슈팅 디펜스 게임',
       mobile: '지원'

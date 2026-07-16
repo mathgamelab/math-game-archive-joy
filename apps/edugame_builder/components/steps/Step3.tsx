@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { FormData } from '../../types';
 import { Icons } from '../../constants';
-import { generateGameIdeas, GameIdea } from '../../services/geminiService';
+import { generateGameIdeas, GameIdea, stripMarkdownFormatting } from '../../services/geminiService';
 
 interface Step3Props {
   formData: FormData;
@@ -17,15 +17,20 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
   const [error, setError] = useState<string | null>(null);
 
   const normalizeIdea = (idea: Partial<GameIdea>): GameIdea | null => {
-    const title = typeof idea.title === 'string' ? idea.title.trim() : '';
-    const description = typeof idea.description === 'string' ? idea.description.trim() : '';
+    const title = typeof idea.title === 'string' ? stripMarkdownFormatting(idea.title) : '';
+    const description = typeof idea.description === 'string' ? stripMarkdownFormatting(idea.description) : '';
     const keyFeatures = Array.isArray(idea.keyFeatures)
-      ? idea.keyFeatures.filter((item): item is string => typeof item === 'string' && item.trim().length > 0).slice(0, 3)
+      ? idea.keyFeatures
+          .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+          .map(stripMarkdownFormatting)
+          .slice(0, 3)
       : [];
     const curriculumAlignment = Array.isArray(idea.curriculumAlignment)
-      ? idea.curriculumAlignment.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+      ? idea.curriculumAlignment
+          .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+          .map(stripMarkdownFormatting)
       : [];
-    const classroomValue = typeof idea.classroomValue === 'string' ? idea.classroomValue.trim() : '';
+    const classroomValue = typeof idea.classroomValue === 'string' ? stripMarkdownFormatting(idea.classroomValue) : '';
 
     if (!title || !description || keyFeatures.length === 0) {
       return null;

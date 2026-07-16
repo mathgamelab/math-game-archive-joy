@@ -1,5 +1,7 @@
 
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { FormData } from '../../types';
 import { GAME_EXAMPLES } from '../../constants';
 import { Icons } from '../../constants';
@@ -13,6 +15,8 @@ interface Step4Props {
 const Step4: React.FC<Step4Props> = ({ formData, updateField }) => {
   const example = (formData.subject && GAME_EXAMPLES[formData.subject]) || GAME_EXAMPLES['기타'];
   const [isEditingConcept, setIsEditingConcept] = useState(false);
+  const [isEditingMechanics, setIsEditingMechanics] = useState(!formData.mechanics.trim());
+  const [isEditingVibe, setIsEditingVibe] = useState(!formData.vibe.trim());
 
   // gameConcept 파싱
   const parseGameConcept = (concept: string) => {
@@ -106,22 +110,35 @@ const Step4: React.FC<Step4Props> = ({ formData, updateField }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Mechanics */}
           <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-xl relative">
-            <label className="block text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm">✨</span>
-              핵심 기능
-            </label>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-lg font-bold text-slate-800">
+                <span className="w-8 h-8 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-sm">✨</span>
+                핵심 기능
+              </label>
+              {formData.mechanics.trim() && (
+                <button onClick={() => setIsEditingMechanics((editing) => !editing)} className="secondary-button px-3 py-1.5 text-xs">
+                  {isEditingMechanics ? '미리보기' : '편집'}
+                </button>
+              )}
+            </div>
             <div className="relative">
-              <textarea 
-                className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 focus:outline-none focus:bg-white min-h-[220px] resize-none"
-                placeholder={example.mechanics}
-                value={formData.mechanics}
-                onChange={(e) => updateField('mechanics', e.target.value)}
-              />
+              {isEditingMechanics ? (
+                <textarea
+                  className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 focus:outline-none focus:bg-white min-h-[220px] resize-none"
+                  placeholder={example.mechanics}
+                  value={formData.mechanics}
+                  onChange={(e) => updateField('mechanics', e.target.value)}
+                />
+              ) : (
+                <div className="markdown-preview min-h-[220px] rounded-xl border border-slate-100 bg-slate-50 p-4 text-slate-700">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{formData.mechanics}</ReactMarkdown>
+                </div>
+              )}
               <AICoach 
                 type="mechanics" 
                 toolType={formData.subject} 
                 currentValue={formData.mechanics} 
-                onApply={(v) => updateField('mechanics', v)}
+                onApply={(v) => { updateField('mechanics', v); setIsEditingMechanics(false); }}
                 gameConcept={formData.gameConcept}
               />
             </div>
@@ -129,22 +146,35 @@ const Step4: React.FC<Step4Props> = ({ formData, updateField }) => {
 
           {/* Vibe */}
           <div className="bg-white p-8 rounded-3xl border-2 border-slate-200 shadow-xl relative">
-            <label className="block text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span className="w-8 h-8 bg-pink-100 text-pink-600 rounded-lg flex items-center justify-center text-sm">🎨</span>
-              디자인 및 분위기
-            </label>
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-lg font-bold text-slate-800">
+                <span className="w-8 h-8 bg-pink-100 text-pink-600 rounded-lg flex items-center justify-center text-sm">🎨</span>
+                디자인 및 분위기
+              </label>
+              {formData.vibe.trim() && (
+                <button onClick={() => setIsEditingVibe((editing) => !editing)} className="secondary-button px-3 py-1.5 text-xs">
+                  {isEditingVibe ? '미리보기' : '편집'}
+                </button>
+              )}
+            </div>
             <div className="relative">
-              <textarea 
-                className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 focus:outline-none focus:bg-white min-h-[220px] resize-none"
-                placeholder={example.vibe}
-                value={formData.vibe}
-                onChange={(e) => updateField('vibe', e.target.value)}
-              />
+              {isEditingVibe ? (
+                <textarea
+                  className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 focus:outline-none focus:bg-white min-h-[220px] resize-none"
+                  placeholder={example.vibe}
+                  value={formData.vibe}
+                  onChange={(e) => updateField('vibe', e.target.value)}
+                />
+              ) : (
+                <div className="markdown-preview min-h-[220px] rounded-xl border border-slate-100 bg-slate-50 p-4 text-slate-700">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{formData.vibe}</ReactMarkdown>
+                </div>
+              )}
               <AICoach 
                 type="vibe" 
                 toolType={formData.subject} 
                 currentValue={formData.vibe} 
-                onApply={(v) => updateField('vibe', v)}
+                onApply={(v) => { updateField('vibe', v); setIsEditingVibe(false); }}
                 gameConcept={formData.gameConcept}
               />
             </div>

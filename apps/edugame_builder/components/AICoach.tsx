@@ -1,5 +1,7 @@
 
 import React, { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Icons } from '../constants';
 import { improveContentWithAI } from '../services/geminiService';
 
@@ -82,7 +84,9 @@ const AICoach: React.FC<AICoachProps> = ({ type, toolType, currentValue, onApply
           ) : improvedText ? (
             <div className="space-y-4">
               <div className="rounded-xl border border-[#d9e5da] bg-[#f3f7f3] p-3">
-                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{improvedText}</p>
+                <div className="markdown-preview text-sm text-slate-700">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{improvedText}</ReactMarkdown>
+                </div>
               </div>
               <button 
                 onClick={() => { onApply(improvedText); setIsOpen(false); }}

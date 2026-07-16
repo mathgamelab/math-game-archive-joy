@@ -1,5 +1,7 @@
 
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { FormData } from '../../types';
 import { Icons } from '../../constants';
 
@@ -32,11 +34,15 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
             </div>
             <div className="border-t border-slate-200 pt-6">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">게임 설계</span>
-              <p className="text-slate-800 mt-2 text-sm whitespace-pre-wrap">{formData.mechanics || '입력 없음'}</p>
+              <div className="markdown-preview mt-2 text-sm text-slate-800">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{formData.mechanics || '입력 없음'}</ReactMarkdown>
+              </div>
             </div>
             <div className="border-t border-slate-200 pt-6">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">디자인 및 분위기</span>
-              <p className="text-slate-800 mt-2 text-sm whitespace-pre-wrap">{formData.vibe || '입력 없음'}</p>
+              <div className="markdown-preview mt-2 text-sm text-slate-800">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{formData.vibe || '입력 없음'}</ReactMarkdown>
+              </div>
             </div>
           </div>
         </div>

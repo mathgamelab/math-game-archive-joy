@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { STEP_NAMES, Icons } from '../constants';
+import mathGameLogo from '../../../public/images/math_game_logo.png';
 
 interface HeaderProps {
   currentStep: number;
@@ -28,9 +29,9 @@ const Header: React.FC<HeaderProps> = ({ currentStep }) => {
   return (
     <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur">
       <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <img src="/images/math_game_logo.png" alt="Math Game Archive" className="h-8 w-auto sm:h-10" />
-          <span className="hidden border-l border-slate-200 pl-3 text-sm font-bold text-slate-700 sm:block">EduGame Builder</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <img src={mathGameLogo} alt="" className="h-7 w-auto select-none sm:h-9" />
+          <h1 className="whitespace-nowrap text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">EduGame Builder</h1>
         </div>
         <div className="flex items-center gap-3">
           {/* 커뮤니티 드롭다운 메뉴 */}

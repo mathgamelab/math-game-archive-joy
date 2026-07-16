@@ -71,7 +71,7 @@ const AICoach: React.FC<AICoachProps> = ({ type, toolType, currentValue, onApply
         <div role="dialog" aria-label="AI 코치 제안" className="absolute bottom-full right-0 mb-3 w-72 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl animate-in sm:w-80">
           <div className="flex justify-between items-center mb-4">
             <span className="flex items-center gap-2 text-xs font-bold text-[#5e7c62]">
-              <Icons.Bot className="w-4 h-4" /> SOLAR AI COACH
+              <Icons.Bot className="w-4 h-4" /> AI COACH
             </span>
             <button onClick={() => setIsOpen(false)} aria-label="AI 코치 닫기" className="text-slate-400 hover:text-slate-600">&times;</button>
           </div>

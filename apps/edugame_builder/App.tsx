@@ -33,12 +33,6 @@ const createInitialFormData = (): FormData => ({
   promptLevel: undefined
 });
 
-const isBrowserReload = (): boolean => {
-  const navigationEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-  if (navigationEntry) return navigationEntry.type === 'reload';
-  return 'navigation' in performance && performance.navigation.type === 1;
-};
-
 const clearEduGameStorage = () => {
   localStorage.removeItem(DRAFT_STORAGE_KEY);
   for (let index = localStorage.length - 1; index >= 0; index -= 1) {
@@ -49,27 +43,8 @@ const clearEduGameStorage = () => {
 
 const loadDraft = (): { currentStep: number; formData: FormData } => {
   try {
-    if (isBrowserReload()) {
-      clearEduGameStorage();
-      return { currentStep: 1, formData: createInitialFormData() };
-    }
-    const saved = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || 'null') as {
-      currentStep?: number;
-      formData?: Partial<FormData>;
-    } | null;
-    const defaults = createInitialFormData();
-    if (!saved?.formData) return { currentStep: 1, formData: defaults };
-    return {
-      currentStep: Math.min(6, Math.max(1, Number(saved.currentStep) || 1)),
-      formData: {
-        ...defaults,
-        ...saved.formData,
-        structuredData: {
-          ...defaults.structuredData,
-          ...(saved.formData.structuredData || {})
-        }
-      }
-    };
+    clearEduGameStorage();
+    return { currentStep: 1, formData: createInitialFormData() };
   } catch {
     try {
       clearEduGameStorage();

@@ -1,7 +1,7 @@
 import { FormData } from "../types";
 
 const SOLAR_ENDPOINT = 'https://asia-northeast3-math-reading.cloudfunctions.net/callSolar';
-const SOLAR_MODEL = 'solar-pro2';
+const SOLAR_MODEL = 'solar-pro3';
 const SOLAR_TIMEOUT_MS = 60_000;
 
 export const stripMarkdownFormatting = (value: string): string => value

@@ -257,52 +257,135 @@ export const generateGameIdeas = async (learningGoal: string, subject: string, c
 
 검증 규칙:
 - keyFeatures는 정확히 3개
-- curriculumAlignment는 최소 2개
+- keyFeatures와 curriculumAlignment는 반드시 JSON 문자열 배열이어야 하며, 단일 문자열로 반환하지 마세요.
+- curriculumAlignment는 최소 1개
 - 각 curriculumAlignment 항목은 '->'를 포함
 - "재미"보다 "학습 정렬성"을 우선하세요.`;
 
-  const text = await callSolar(prompt);
-  const parsed = extractJsonValue<unknown>(text, 'array');
-
-  if (!Array.isArray(parsed)) {
-    throw new Error('게임 아이디어 응답이 JSON 배열이 아닙니다.');
-  }
-
   const normalizeStringArray = (value: unknown): string[] => {
-    if (!Array.isArray(value)) return [];
-    return value
-      .map((item) => (typeof item === 'string' ? stripMarkdownFormatting(item) : ''))
+    const splitLooseString = (text: string): string[] => {
+      const trimmed = text.trim();
+      if (!trimmed) return [];
+      if (/[\n•]/.test(trimmed) || /^\s*[-*+]\s+/m.test(trimmed) || /^\s*\d+[.)]\s+/m.test(trimmed)) {
+        return trimmed
+          .split(/\n+/)
+          .map((line) => line.replace(/^\s*(?:[-*+•]|\d+[.)])\s*/, '').trim())
+          .filter(Boolean);
+      }
+      if (trimmed.includes(',')) {
+        return trimmed.split(',').map((part) => part.trim()).filter(Boolean);
+      }
+      return [trimmed];
+    };
+
+    const values = Array.isArray(value)
+      ? value.flatMap((item) => (typeof item === 'string' ? splitLooseString(item) : []))
+      : typeof value === 'string'
+        ? splitLooseString(value)
+        : [];
+
+    return values
+      .map((item) => stripMarkdownFormatting(item))
       .filter((item) => item.length > 0);
   };
 
-  const normalizedIdeas = parsed
-    .map((item): GameIdea | null => {
-      if (!item || typeof item !== 'object') return null;
-      const raw = item as Record<string, unknown>;
-
-      const title = typeof raw.title === 'string' ? stripMarkdownFormatting(raw.title) : '';
-      const description = typeof raw.description === 'string' ? stripMarkdownFormatting(raw.description) : '';
-      const keyFeatures = normalizeStringArray(raw.keyFeatures).slice(0, 3);
-      const curriculumAlignment = normalizeStringArray(raw.curriculumAlignment);
-      const classroomValue = typeof raw.classroomValue === 'string' ? stripMarkdownFormatting(raw.classroomValue) : '';
-
-      const hasEnoughAlignment = standards.length > 0
-        ? curriculumAlignment.length >= 2
-        : curriculumAlignment.length >= 1;
-
-      if (!title || !description || keyFeatures.length < 3 || !hasEnoughAlignment || !classroomValue) {
-        return null;
+  const pickString = (raw: Record<string, unknown>, keys: string[]): string => {
+    for (const key of keys) {
+      const value = raw[key];
+      if (typeof value === 'string' && value.trim()) {
+        return stripMarkdownFormatting(value);
       }
+    }
+    return '';
+  };
 
-      return {
-        title,
-        description,
-        keyFeatures,
-        curriculumAlignment,
-        classroomValue
-      };
-    })
-    .filter((idea): idea is GameIdea => idea !== null);
+  const pickArray = (raw: Record<string, unknown>, keys: string[]): string[] => {
+    for (const key of keys) {
+      if (raw[key] !== undefined) {
+        return normalizeStringArray(raw[key]);
+      }
+    }
+    return [];
+  };
+
+  const extractIdeasArray = (payload: unknown): unknown[] => {
+    if (Array.isArray(payload)) return payload;
+    if (!payload || typeof payload !== 'object') return [];
+
+    const record = payload as Record<string, unknown>;
+    for (const key of ['ideas', 'gamesIdeas', 'games_ideas', 'results', 'data', 'items']) {
+      if (Array.isArray(record[key])) return record[key] as unknown[];
+    }
+
+    for (const value of Object.values(record)) {
+      if (Array.isArray(value) && value.some((item) => item && typeof item === 'object')) {
+        return value;
+      }
+    }
+    return [];
+  };
+
+  const normalizeIdea = (item: unknown): GameIdea | null => {
+    if (!item || typeof item !== 'object') return null;
+    const raw = item as Record<string, unknown>;
+
+    const title = pickString(raw, ['title', 'name', 'gameTitle', 'game_title', '제목']);
+    const description = pickString(raw, ['description', 'summary', 'concept', 'desc', '설명']);
+    let keyFeatures = pickArray(raw, ['keyFeatures', 'key_features', 'features', '주요특징', '주요기능']).slice(0, 5);
+    const curriculumAlignment = pickArray(raw, ['curriculumAlignment', 'curriculum_alignment', 'alignment', '성취기준']);
+    const classroomValue = pickString(raw, ['classroomValue', 'classroom_value', 'value', '교육효과', '수업활용']);
+
+    if (keyFeatures.length === 0 && description) {
+      keyFeatures = description
+        .split(/[.。!?]\s+/)
+        .map((part) => part.trim())
+        .filter((part) => part.length > 8)
+        .slice(0, 3);
+    }
+
+    if (!title || !description || keyFeatures.length === 0) {
+      return null;
+    }
+
+    while (keyFeatures.length < 3) {
+      keyFeatures.push(keyFeatures[keyFeatures.length - 1]);
+    }
+
+    return {
+      title,
+      description,
+      keyFeatures: keyFeatures.slice(0, 3),
+      curriculumAlignment,
+      classroomValue: classroomValue || '수업에서 학습 목표 달성 여부를 바로 확인할 수 있습니다.'
+    };
+  };
+
+  const parseIdeasFromText = (text: string): GameIdea[] => {
+    let parsed: unknown;
+    try {
+      parsed = extractJsonValue<unknown>(text, 'array');
+    } catch {
+      parsed = extractJsonValue<unknown>(text, 'object');
+    }
+
+    return extractIdeasArray(parsed)
+      .map(normalizeIdea)
+      .filter((idea): idea is GameIdea => idea !== null);
+  };
+
+  let text = await callSolar(prompt);
+  let normalizedIdeas = parseIdeasFromText(text);
+
+  if (normalizedIdeas.length === 0) {
+    const repairPrompt = `아래 응답을 교육용 웹 게임 아이디어 JSON 배열로만 다시 작성하세요.
+설명 문장, 코드블록, 마크다운 없이 JSON 배열만 출력하세요.
+각 항목은 title, description, keyFeatures(문자열 3개), curriculumAlignment(문자열 배열), classroomValue를 포함해야 합니다.
+
+원본 응답:
+${text}`;
+    text = await callSolar(repairPrompt);
+    normalizedIdeas = parseIdeasFromText(text);
+  }
 
   if (normalizedIdeas.length === 0) {
     throw new Error('정규화 후 유효한 게임 아이디어가 없습니다.');

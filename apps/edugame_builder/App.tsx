@@ -41,6 +41,34 @@ const clearEduGameStorage = () => {
   }
 };
 
+const toPlainString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return '';
+};
+
+const sanitizeFormData = (data: FormData): FormData => ({
+  subject: toPlainString(data.subject) as FormData['subject'],
+  grade: toPlainString(data.grade),
+  curriculumStandard: toPlainString(data.curriculumStandard),
+  gameConcept: toPlainString(data.gameConcept),
+  learningGoal: toPlainString(data.learningGoal),
+  mechanics: toPlainString(data.mechanics),
+  vibe: toPlainString(data.vibe),
+  rules: toPlainString(data.rules),
+  structuredData: {
+    gameLogic: toPlainString(data.structuredData?.gameLogic),
+    learningFlow: toPlainString(data.structuredData?.learningFlow),
+    uiAssets: toPlainString(data.structuredData?.uiAssets),
+    rules: toPlainString(data.structuredData?.rules),
+  },
+  geminiPrompt: toPlainString(data.geminiPrompt),
+  editedPrompt: toPlainString(data.editedPrompt),
+  promptLevel: data.promptLevel === 'beginner' || data.promptLevel === 'advanced'
+    ? data.promptLevel
+    : undefined,
+});
+
 const loadDraft = (): { currentStep: number; formData: FormData } => {
   try {
     clearEduGameStorage();
@@ -63,7 +91,11 @@ const App: React.FC = () => {
 
   useEffect(() => {
     try {
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ currentStep, formData }));
+      const payload = {
+        currentStep,
+        formData: sanitizeFormData(formData),
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
     } catch (error) {
       console.warn('초안 저장 실패:', error);
     }
@@ -75,18 +107,29 @@ const App: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  const updateField = (field: string, value: any) => {
+  const updateField = (field: string, value: unknown) => {
+    if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean' && value !== undefined) {
+      console.warn('잘못된 필드 값 무시:', field, value);
+      return;
+    }
+
     if (field.includes('.')) {
       const [parent, child] = field.split('.') as [keyof FormData, string];
+      if (parent !== 'structuredData') return;
       setFormData(prev => ({
         ...prev,
-        [parent]: {
-          ...(prev[parent] as object),
-          [child]: value
-        }
+        structuredData: {
+          ...prev.structuredData,
+          [child]: toPlainString(value),
+        },
+      }));
+    } else if (field === 'promptLevel') {
+      setFormData(prev => ({
+        ...prev,
+        promptLevel: value === 'beginner' || value === 'advanced' ? value : undefined,
       }));
     } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
+      setFormData(prev => ({ ...prev, [field]: toPlainString(value) }));
     }
   };
 

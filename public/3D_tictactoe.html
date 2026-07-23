@@ -110,6 +110,17 @@
         }
         .mode-btn:hover { color: #2b313c; }
         .mode-btn.active { color: #2b313c; background: #f1f3f6; }
+        .ai-diff-wrap {
+            display: none; margin-top: 0.35rem;
+        }
+        .ai-diff-wrap.show { display: block; }
+        .ai-diff-sel {
+            width: 100%; padding: 0.32rem 0.45rem; border-radius: 0.5rem;
+            border: 1px solid #e1e4ea; background: rgba(255,255,255,0.95);
+            font-size: 0.75rem; font-weight: 600; color: #2b313c;
+            font-family: inherit; cursor: pointer; outline: none;
+        }
+        .ai-diff-sel:hover { border-color: #94a0b0; }
 
         .control-hint {
             position: absolute;
@@ -260,9 +271,19 @@
                 </div>
             </div>
             <div class="top-right">
-                <div class="mode-toggle">
-                    <button class="mode-btn active" id="btn-pvp">👥 2인</button>
-                    <button class="mode-btn" id="btn-pve">🤖 AI</button>
+                <div style="display:flex;flex-direction:column;align-items:stretch;">
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" id="btn-pvp">👥 2인</button>
+                        <button class="mode-btn" id="btn-pve">🤖 AI</button>
+                    </div>
+                    <div class="ai-diff-wrap" id="ai-diff-wrap">
+                        <select class="ai-diff-sel" id="ai-diff" title="AI 난이도">
+                            <option value="easy">쉬움</option>
+                            <option value="medium" selected>보통</option>
+                            <option value="hard">어려움</option>
+                            <option value="super">슈퍼</option>
+                        </select>
+                    </div>
                 </div>
                 <button class="icon-btn" id="btn-rules" title="게임 규칙">📖</button>
             </div>
@@ -290,7 +311,7 @@
                 </div>
                 <div class="rule-item">
                     <span class="rule-num">5</span>
-                    <div><b>AI 모드</b>에서는 후공(X)을 컴퓨터가 자동으로 둡니다.</div>
+                    <div><b>AI 모드</b>에서는 후공(X)을 컴퓨터가 자동으로 둡니다. 난이도: 쉬움(랜덤) · 보통(완성/차단) · 어려움(휴리스틱) · 슈퍼(미니맥스).</div>
                 </div>
                 <div class="modal-tip">터치 기기에서는 먼저 칸을 선택하고, 같은 칸을 한 번 더 탭하면 돌이 놓입니다.</div>
                 <div class="controls-hint">
@@ -314,6 +335,7 @@
             // --- Game State ---
             let currentPlayer = 1; // 1 = O (Blue), 2 = X (Red)
             let mode = 'pvp'; // pvp | pve
+            let aiDiff = 'medium'; // easy | medium | hard | super
             let isGameOver = false;
             let board = new Array(3).fill(null).map(() => new Array(3).fill(null).map(() => new Array(3).fill(0)));
             let pieces = []; // To store created meshes for restart
@@ -768,11 +790,11 @@
                 }
                 if (!empties.length) return;
 
-                const countLinesFor = (player, centerConsumedNow) => {
+                const countLinesFor = (bd, player, centerConsumedNow) => {
                     let cnt = 0;
                     let centerUsedHere = centerConsumedNow;
                     for (const line of winLines) {
-                        const complete = line.every(([a,b,c]) => board[a][b][c] === player);
+                        const complete = line.every(([a,b,c]) => bd[a][b][c] === player);
                         if (!complete) continue;
                         const centerLine = lineHasCenter(line);
                         if (centerLine && centerUsedHere) continue;
@@ -782,33 +804,163 @@
                     return cnt;
                 };
 
-                let pick = null;
-                for (const [x,y,z] of empties) {
-                    board[x][y][z] = 2;
-                    const l2 = countLinesFor(2, centerLineConsumed);
-                    board[x][y][z] = 0;
-                    if (l2 >= 2) { pick = [x,y,z]; break; }
-                }
-                if (!pick) {
-                    for (const [x,y,z] of empties) {
-                        board[x][y][z] = 1;
-                        const l1 = countLinesFor(1, centerLineConsumed);
-                        board[x][y][z] = 0;
-                        if (l1 >= 2) { pick = [x,y,z]; break; }
+                const withMove = (bd, x, y, z, player) => {
+                    const nb = bd.map(plane => plane.map(row => row.slice()));
+                    nb[x][y][z] = player;
+                    return nb;
+                };
+
+                const findImmediateWin = (player) => {
+                    for (const [x, y, z] of empties) {
+                        const nb = withMove(board, x, y, z, player);
+                        if (countLinesFor(nb, player, centerLineConsumed) >= 2) return [x, y, z];
                     }
-                }
-                if (!pick) {
-                    const scored = empties.map(([x, y, z]) => {
-                        board[x][y][z] = 2;
-                        const myLines = countLinesFor(2, centerLineConsumed);
-                        const oppLines = countLinesFor(1, centerLineConsumed);
-                        board[x][y][z] = 0;
-                        const centerWeight = (x === 1 && y === 1 && z === 1) ? 0.2 : ((x === 1) + (y === 1) + (z === 1)) * 0.4;
-                        return { c: [x,y,z], s: myLines * 30 - oppLines * 8 + centerWeight };
-                    });
+                    return null;
+                };
+
+                const heuristicScore = (x, y, z) => {
+                    const nb = withMove(board, x, y, z, 2);
+                    const myLines = countLinesFor(nb, 2, centerLineConsumed);
+                    const oppLines = countLinesFor(nb, 1, centerLineConsumed);
+                    const centerWeight = (x === 1 && y === 1 && z === 1) ? 0.2 : ((x === 1) + (y === 1) + (z === 1)) * 0.4;
+                    let threats = 0;
+                    for (const line of winLines) {
+                        let mine = 0, empty = 0, opp = 0;
+                        for (const [a, b, c] of line) {
+                            const v = nb[a][b][c];
+                            if (v === 2) mine++;
+                            else if (v === 1) opp++;
+                            else empty++;
+                        }
+                        if (opp === 0 && mine === 2 && empty === 1) threats += 3;
+                        if (opp === 0 && mine === 1 && empty === 2) threats += 0.5;
+                    }
+                    return myLines * 30 - oppLines * 8 + centerWeight + threats;
+                };
+
+                const pickFromScored = (scored) => {
                     const best = Math.max(...scored.map(v => v.s));
                     const top = scored.filter(v => v.s >= best - 0.05);
-                    pick = top[Math.floor(Math.random() * top.length)].c;
+                    return top[Math.floor(Math.random() * top.length)].c;
+                };
+
+                // ── SUPER: Minimax + Alpha-Beta ──
+                const cloneBoard = (bd) => bd.map(p => p.map(r => r.slice()));
+                const applySim = (st, x, y, z) => {
+                    const ns = {
+                        bd: cloneBoard(st.bd),
+                        center: st.center,
+                        lines: { 1: st.lines[1], 2: st.lines[2] },
+                        counted: { 1: new Set(st.counted[1]), 2: new Set(st.counted[2]) },
+                        player: st.player
+                    };
+                    ns.bd[x][y][z] = ns.player;
+                    for (const line of winLines) {
+                        const key = lineKey(line);
+                        if (ns.counted[ns.player].has(key)) continue;
+                        const complete = line.every(([a, b, c]) => ns.bd[a][b][c] === ns.player);
+                        if (!complete) continue;
+                        const usesCenter = lineHasCenter(line);
+                        if (usesCenter && ns.center) continue;
+                        if (usesCenter) ns.center = true;
+                        ns.counted[ns.player].add(key);
+                        ns.lines[ns.player] += 1;
+                    }
+                    ns.player = ns.player === 1 ? 2 : 1;
+                    return ns;
+                };
+                const emptiesOf = (bd) => {
+                    const out = [];
+                    for (let x = 0; x < 3; x++) for (let y = 0; y < 3; y++) for (let z = 0; z < 3; z++) {
+                        if (bd[x][y][z] === 0) out.push([x, y, z]);
+                    }
+                    return out;
+                };
+                const evalLeaf = (st) => {
+                    if (st.lines[2] >= 2) return 10000;
+                    if (st.lines[1] >= 2) return -10000;
+                    let score = (st.lines[2] - st.lines[1]) * 120;
+                    for (const line of winLines) {
+                        let c1 = 0, c2 = 0, e = 0;
+                        for (const [a, b, c] of line) {
+                            const v = st.bd[a][b][c];
+                            if (v === 1) c1++;
+                            else if (v === 2) c2++;
+                            else e++;
+                        }
+                        if (c1 && c2) continue;
+                        if (c2 === 2 && e === 1) score += 18;
+                        if (c2 === 1 && e === 2) score += 3;
+                        if (c1 === 2 && e === 1) score -= 16;
+                        if (c1 === 1 && e === 2) score -= 2;
+                    }
+                    return score;
+                };
+                const minimaxAB = (st, depth, alpha, beta) => {
+                    if (st.lines[2] >= 2) return 10000 + depth;
+                    if (st.lines[1] >= 2) return -10000 - depth;
+                    const moves = emptiesOf(st.bd);
+                    if (!moves.length || depth === 0) return evalLeaf(st);
+                    if (st.player === 2) {
+                        let best = -Infinity;
+                        for (const [x, y, z] of moves) {
+                            const val = minimaxAB(applySim(st, x, y, z), depth - 1, alpha, beta);
+                            if (val > best) best = val;
+                            if (val > alpha) alpha = val;
+                            if (beta <= alpha) break;
+                        }
+                        return best;
+                    }
+                    let best = Infinity;
+                    for (const [x, y, z] of moves) {
+                        const val = minimaxAB(applySim(st, x, y, z), depth - 1, alpha, beta);
+                        if (val < best) best = val;
+                        if (val < beta) beta = val;
+                        if (beta <= alpha) break;
+                    }
+                    return best;
+                };
+                const getDepth = (nEmpty) => {
+                    if (nEmpty >= 20) return 2;
+                    if (nEmpty >= 14) return 3;
+                    if (nEmpty >= 8) return 4;
+                    return 5;
+                };
+
+                let pick = null;
+                if (aiDiff === 'easy') {
+                    pick = empties[Math.floor(Math.random() * empties.length)];
+                } else if (aiDiff === 'medium') {
+                    pick = findImmediateWin(2) || findImmediateWin(1);
+                    if (!pick) pick = empties[Math.floor(Math.random() * empties.length)];
+                } else if (aiDiff === 'hard') {
+                    pick = findImmediateWin(2) || findImmediateWin(1);
+                    if (!pick) {
+                        const scored = empties.map(([x, y, z]) => ({ c: [x, y, z], s: heuristicScore(x, y, z) }));
+                        pick = pickFromScored(scored);
+                    }
+                } else {
+                    // super
+                    pick = findImmediateWin(2) || findImmediateWin(1);
+                    if (!pick) {
+                        const root = {
+                            bd: cloneBoard(board),
+                            center: centerLineConsumed,
+                            lines: { 1: lineCounts[1], 2: lineCounts[2] },
+                            counted: { 1: new Set(countedLines[1]), 2: new Set(countedLines[2]) },
+                            player: 2
+                        };
+                        const depth = getDepth(empties.length);
+                        let bestVal = -Infinity;
+                        const scored = [];
+                        for (const [x, y, z] of empties) {
+                            const val = minimaxAB(applySim(root, x, y, z), depth - 1, -Infinity, Infinity);
+                            scored.push({ c: [x, y, z], s: val });
+                            if (val > bestVal) bestVal = val;
+                        }
+                        const top = scored.filter(v => v.s >= bestVal);
+                        pick = top[Math.floor(Math.random() * top.length)].c;
+                    }
                 }
 
                 const mesh = getTargetMesh(pick[0], pick[1], pick[2]);
@@ -976,18 +1128,31 @@
             btnCloseRules.addEventListener('click', closeRules);
             const btnPvp = document.getElementById('btn-pvp');
             const btnPve = document.getElementById('btn-pve');
+            const aiDiffWrap = document.getElementById('ai-diff-wrap');
+            const aiDiffSel = document.getElementById('ai-diff');
+            function syncAiDiffUI() {
+                aiDiffWrap.classList.toggle('show', mode === 'pve');
+                aiDiff = aiDiffSel.value;
+            }
             btnPvp.addEventListener('click', () => {
                 mode = 'pvp';
                 btnPvp.classList.add('active');
                 btnPve.classList.remove('active');
+                syncAiDiffUI();
                 resetGame();
             });
             btnPve.addEventListener('click', () => {
                 mode = 'pve';
                 btnPve.classList.add('active');
                 btnPvp.classList.remove('active');
+                syncAiDiffUI();
                 resetGame();
             });
+            aiDiffSel.addEventListener('change', () => {
+                aiDiff = aiDiffSel.value;
+                if (mode === 'pve') resetGame();
+            });
+            syncAiDiffUI();
             rulesModal.addEventListener('click', e => {
                 if (e.target === rulesModal) closeRules();
             });

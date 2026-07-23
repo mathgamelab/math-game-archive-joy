@@ -39,6 +39,15 @@
         }
         .play-mode-btn:hover { color: #2b313c; }
         .play-mode-btn.active { color: #2b313c; background: #f1f3f6; }
+        .ai-diff-wrap { display: none; margin-top: 0.35rem; }
+        .ai-diff-wrap.show { display: block; }
+        .ai-diff-sel {
+            width: 100%; padding: 0.32rem 0.45rem; border-radius: 0.5rem;
+            border: 1px solid #e1e4ea; background: rgba(255,255,255,0.95);
+            font-size: 0.75rem; font-weight: 600; color: #2b313c;
+            font-family: inherit; cursor: pointer; outline: none;
+        }
+        .ai-diff-sel:hover { border-color: #94a0b0; }
         .icon-btn {
             min-width: 2.4rem; height: 2.4rem; border-radius: 0.6rem;
             background: rgba(255,255,255,0.92);
@@ -323,6 +332,7 @@
             const [showModeModal, setShowModeModal] = useState(true);
             const [showRulesModal, setShowRulesModal] = useState(false);
             const [playMode, setPlayMode] = useState('pvp');
+            const [aiDiff, setAiDiff] = useState('medium'); // easy | medium | hard | super
             const [aiStatus, setAiStatus] = useState({ active: false, depth: 0, time: 0 });
             const [classicBoard, setClassicBoard] = useState(Array(9).fill(null));
             const [classicXNext, setClassicXNext] = useState(true);
@@ -364,6 +374,41 @@
                     resetClassicState();
                 }
             }, [resetClassicState, resetUltimateState]);
+
+            const getLegalUltimateMoves = (tempBoards, tempWinners, currentIdx) => {
+                let targets = (currentIdx === null || tempWinners[currentIdx])
+                    ? tempWinners.map((w, i) => w === null ? i : null).filter(v => v !== null)
+                    : [currentIdx];
+                const moves = [];
+                for (const bIdx of targets) {
+                    for (let i = 0; i < 9; i++) {
+                        if (!tempBoards[bIdx][i]) moves.push({ bIdx, sIdx: i });
+                    }
+                }
+                return moves;
+            };
+
+            const scoreUltimateHeuristic = (tempWinners, tempBoards, mark, bIdx, sIdx) => {
+                const opp = mark === 'X' ? 'O' : 'X';
+                let score = 0;
+                const weights = [3, 2, 3, 2, 5, 2, 3, 2, 3];
+                tempWinners.forEach((w, i) => {
+                    if (w === mark) score += weights[i] * 50;
+                    else if (w === opp) score -= weights[i] * 50;
+                });
+                if (sIdx === 4) score += 4;
+                if ([0, 2, 6, 8].includes(sIdx)) score += 2;
+                // Prefer sending opponent to a finished/full board (free choice next) carefully:
+                if (tempWinners[sIdx]) score += 6;
+                // Prefer winning this small board
+                const boardCopy = [...tempBoards[bIdx]];
+                boardCopy[sIdx] = mark;
+                if (checkWinner(boardCopy) === mark) score += 80;
+                // Prefer blocking opponent from winning this small board
+                boardCopy[sIdx] = opp;
+                if (checkWinner(boardCopy) === opp) score += 70;
+                return score;
+            };
 
             // 보드 상태 평가 함수 (Heuristic)
             const evaluate = (tempWinners, mark) => {
@@ -411,7 +456,7 @@
                             if (beta <= alpha) return maxEval;
                         }
                     }
-                    return maxEval;
+                    return maxEval === -Infinity ? evaluate(tempWinners, mark) : maxEval;
                 } else {
                     let minEval = Infinity;
                     for (let bIdx of targetBoards) {
@@ -429,32 +474,46 @@
                             if (beta <= alpha) return minEval;
                         }
                     }
-                    return minEval;
+                    return minEval === Infinity ? evaluate(tempWinners, mark) : minEval;
                 }
             };
 
             const getBestMove = async () => {
                 const mark = xNext ? 'X' : 'O';
-                let bIdx = activeIdx;
-                
-                if (bIdx === null || smallWinners[bIdx]) {
-                    const valid = smallWinners.map((w, i) => w === null ? i : null).filter(v => v !== null);
-                    bIdx = valid[Math.floor(Math.random() * valid.length)];
-                }
-                const available = boards[bIdx].map((s, i) => s === null ? i : null).filter(v => v !== null);
+                const moves = getLegalUltimateMoves(boards, smallWinners, activeIdx);
+                if (!moves.length) return null;
 
-                let bestV = -Infinity;
-                let bestS = available[0];
-                setAiStatus({ active: true, depth: 3, time: 0 });
-                await new Promise(r => setTimeout(r, 10));
-                for (let s of available) {
-                    const nB = boards.map(b => [...b]); nB[bIdx][s] = mark;
-                    const nW = [...smallWinners]; const bw = checkWinner(nB[bIdx]); if (bw) nW[bIdx] = bw;
-                    const v = minimax(nB, nW, nW[s] ? null : s, 3, -Infinity, Infinity, false, mark);
-                    if (v > bestV) { bestV = v; bestS = s; }
+                // easy: random
+                if (aiDiff === 'easy') {
+                    return moves[Math.floor(Math.random() * moves.length)];
                 }
-                setAiStatus({ active: false, depth: 0, time: 0 });
-                return { bIdx, sIdx: bestS };
+
+                // medium: 1-ply greedy (win board / block / heuristic)
+                if (aiDiff === 'medium') {
+                    let bestS = -Infinity;
+                    let best = moves[0];
+                    for (const mv of moves) {
+                        const s = scoreUltimateHeuristic(smallWinners, boards, mark, mv.bIdx, mv.sIdx);
+                        if (s > bestS) { bestS = s; best = mv; }
+                    }
+                    return best;
+                }
+
+                // hard: minimax depth 2, super: depth 4
+                const depth = aiDiff === 'super' ? 4 : 2;
+                let bestV = -Infinity;
+                let bestMove = moves[0];
+                setAiStatus({ active: true, depth, time: 0 });
+                await new Promise(r => setTimeout(r, 10));
+                const t0 = performance.now();
+                for (const mv of moves) {
+                    const nB = boards.map(b => [...b]); nB[mv.bIdx][mv.sIdx] = mark;
+                    const nW = [...smallWinners]; const bw = checkWinner(nB[mv.bIdx]); if (bw) nW[mv.bIdx] = bw;
+                    const v = minimax(nB, nW, nW[mv.sIdx] ? null : mv.sIdx, depth, -Infinity, Infinity, false, mark);
+                    if (v > bestV) { bestV = v; bestMove = mv; }
+                }
+                setAiStatus({ active: false, depth: 0, time: Math.round((performance.now() - t0) / 100) / 10 });
+                return bestMove;
             };
 
             const handleUltimateMove = useCallback((bIdx, sIdx) => {
@@ -507,10 +566,10 @@
                 }
                 if (isAiTurn) {
                     getBestMove().then(move => {
-                        handleUltimateMove(move.bIdx, move.sIdx);
+                        if (move) handleUltimateMove(move.bIdx, move.sIdx);
                     });
                 }
-            }, [xNext, started, winner, selectedGame, playMode, handleUltimateMove, pieAvailable, pieUsed, ultimateMoves, boards]);
+            }, [xNext, started, winner, selectedGame, playMode, aiDiff, handleUltimateMove, pieAvailable, pieUsed, ultimateMoves, boards]);
 
             useEffect(() => {
                 if (selectedGame !== 'ultimate') return;
@@ -556,6 +615,70 @@
                 const humanMark = mark === 'X' ? 'O' : 'X';
                 const available = classicBoard.map((v, i) => v === null ? i : null).filter(v => v !== null);
                 if (!available.length) return null;
+
+                // easy: random
+                if (aiDiff === 'easy') {
+                    return available[Math.floor(Math.random() * available.length)];
+                }
+
+                const findWinning = (m) => {
+                    for (const idx of available) {
+                        const b = [...classicBoard];
+                        b[idx] = m;
+                        if (checkClassicWinner(b) === m) return idx;
+                    }
+                    return null;
+                };
+
+                // medium: win / block / center·corner preference
+                if (aiDiff === 'medium') {
+                    const win = findWinning(mark);
+                    if (win !== null) return win;
+                    const block = findWinning(humanMark);
+                    if (block !== null) return block;
+                    const prefs = [4, 0, 2, 6, 8, 1, 3, 5, 7];
+                    for (const i of prefs) if (classicBoard[i] === null) return i;
+                    return available[0];
+                }
+
+                // hard: win/block + shallow look-ahead (depth-limited style via heuristic on replies)
+                if (aiDiff === 'hard') {
+                    const win = findWinning(mark);
+                    if (win !== null) return win;
+                    const block = findWinning(humanMark);
+                    if (block !== null) return block;
+                    let bestVal = -Infinity;
+                    let bestMove = available[0];
+                    for (const idx of available) {
+                        const b = [...classicBoard];
+                        b[idx] = mark;
+                        // 1-ply opponent reply evaluation
+                        let worst = Infinity;
+                        let oppMoves = 0;
+                        for (let j = 0; j < 9; j++) {
+                            if (b[j]) continue;
+                            oppMoves++;
+                            const b2 = [...b];
+                            b2[j] = humanMark;
+                            const res = checkClassicWinner(b2);
+                            let v = 0;
+                            if (res === humanMark) v = -8;
+                            else if (res === 'Draw') v = 0;
+                            else if (res === mark) v = 8;
+                            else {
+                                // center/corners for us remaining
+                                if (idx === 4) v += 2;
+                                if ([0, 2, 6, 8].includes(idx)) v += 1;
+                            }
+                            if (v < worst) worst = v;
+                        }
+                        if (!oppMoves) worst = checkClassicWinner(b) === mark ? 10 : 0;
+                        if (worst > bestVal) { bestVal = worst; bestMove = idx; }
+                    }
+                    return bestMove;
+                }
+
+                // super: perfect minimax
                 let bestVal = -Infinity;
                 let bestMove = available[0];
                 for (const idx of available) {
@@ -619,9 +742,9 @@
                 const t = setTimeout(() => {
                     const move = getClassicBestMove();
                     if (move !== null) handleClassicMove(move);
-                }, 120);
+                }, aiDiff === 'super' ? 80 : 120);
                 return () => clearTimeout(t);
-            }, [started, selectedGame, classicWinner, classicXNext, playMode, classicBoard, handleClassicMove, pieAvailable, pieUsed, classicMoves, applyPieRule]);
+            }, [started, selectedGame, classicWinner, classicXNext, playMode, aiDiff, classicBoard, handleClassicMove, pieAvailable, pieUsed, classicMoves, applyPieRule]);
 
             const resetGame = () => {
                 stopAiFlag.current = false;
@@ -686,19 +809,34 @@
                             </div>
                         </div>
                         <div className="top-right-stack">
-                            <div className="mode-toggle">
-                                <button
-                                    className={`play-mode-btn ${playMode === 'pvp' ? 'active' : ''}`}
-                                    onClick={() => setPlayMode('pvp')}
-                                >
-                                    👥 2인
-                                </button>
-                                <button
-                                    className={`play-mode-btn ${playMode === 'pve' ? 'active' : ''}`}
-                                    onClick={() => setPlayMode('pve')}
-                                >
-                                    🤖 AI
-                                </button>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+                                <div className="mode-toggle">
+                                    <button
+                                        className={`play-mode-btn ${playMode === 'pvp' ? 'active' : ''}`}
+                                        onClick={() => setPlayMode('pvp')}
+                                    >
+                                        👥 2인
+                                    </button>
+                                    <button
+                                        className={`play-mode-btn ${playMode === 'pve' ? 'active' : ''}`}
+                                        onClick={() => setPlayMode('pve')}
+                                    >
+                                        🤖 AI
+                                    </button>
+                                </div>
+                                <div className={`ai-diff-wrap ${playMode === 'pve' ? 'show' : ''}`}>
+                                    <select
+                                        className="ai-diff-sel"
+                                        value={aiDiff}
+                                        title="AI 난이도"
+                                        onChange={(e) => setAiDiff(e.target.value)}
+                                    >
+                                        <option value="easy">쉬움</option>
+                                        <option value="medium">보통</option>
+                                        <option value="hard">어려움</option>
+                                        <option value="super">슈퍼</option>
+                                    </select>
+                                </div>
                             </div>
                             <button className="icon-btn" onClick={() => setShowRulesModal(true)} title="게임 규칙">
                                 📖
@@ -798,7 +936,7 @@
                                     </div>
                                     <div className="rule-item">
                                         <span className="rule-num">3</span>
-                                        <div><strong>AI 모드</strong>에서는 O를 컴퓨터가 자동으로 둡니다.</div>
+                                        <div><strong>AI 모드</strong>에서는 O를 컴퓨터가 자동으로 둡니다. 난이도: 쉬움(랜덤) · 보통(완성/차단) · 어려움(휴리스틱) · 슈퍼(완전 미니맥스).</div>
                                     </div>
                                     <div className="rule-item">
                                         <span className="rule-num">4</span>
@@ -822,6 +960,10 @@
                                     <div className="rule-item">
                                         <span className="rule-num">4</span>
                                         <div><b>파이룰:</b> 첫 수 이후 후공은 1회에 한해 <strong>진영을 스왑(⇄)</strong>할 수 있습니다.</div>
+                                    </div>
+                                    <div className="rule-item">
+                                        <span className="rule-num">5</span>
+                                        <div><strong>AI 모드</strong>에서는 O를 컴퓨터가 둡니다. 난이도: 쉬움(랜덤) · 보통(탐욕) · 어려움(미니맥스 깊이2) · 슈퍼(깊이4).</div>
                                     </div>
                                 </>
                             )}

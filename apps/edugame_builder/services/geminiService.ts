@@ -2,7 +2,7 @@ import { FormData } from "../types";
 
 const SOLAR_ENDPOINT = 'https://asia-northeast3-math-reading.cloudfunctions.net/callSolar';
 const SOLAR_MODEL = 'solar-pro3';
-const SOLAR_TIMEOUT_MS = 60_000;
+const SOLAR_TIMEOUT_MS = 180_000;
 
 export const stripMarkdownFormatting = (value: string): string => value
   .replace(/```(?:\w+)?\s*([\s\S]*?)```/g, '$1')
@@ -88,7 +88,7 @@ export const callSolar = async (prompt: string): Promise<string> => {
     return reply.trim();
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Solar 요청 시간이 60초를 초과했습니다.');
+      throw new Error('Solar 요청 시간이 180초를 초과했습니다.');
     }
     if (error instanceof Error) throw error;
     throw new Error('Solar 요청 중 알 수 없는 오류가 발생했습니다.');

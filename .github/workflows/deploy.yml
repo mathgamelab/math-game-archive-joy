@@ -106,6 +106,9 @@ jobs:
           if [ -f "CNAME" ]; then
             cp CNAME docs/CNAME
           fi
+          # SPA 직접 접속/새로고침용: 없는 경로도 index.html로 서빙
+          # (GitHub Pages는 404 시 404.html을 내려주며, URL은 /games 등으로 유지됨)
+          cp docs/index.html docs/404.html
           echo "✓ Prepared docs/ folder for deployment"
 
       # 9) 변경된 docs/를 커밋·푸시

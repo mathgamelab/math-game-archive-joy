@@ -122,15 +122,19 @@ const Index = () => {
     };
   }, [filteredGames]);
 
-  const handlePlayClick = async (game: GameData) => {
-    try {
-      await incrementPlayCount(game.id);
-      const newCount = await getPlayCount(game.id);
-      setPlayCounts((prev) => ({ ...prev, [game.id]: newCount }));
-    } catch (error) {
-      console.error('플레이 카운트 업데이트 실패:', error);
-    }
-    if (game.url) window.open(game.url, '_blank');
+  const handlePlayClick = (game: GameData) => {
+    // Open immediately so tablet/Safari popup blockers don't swallow the gesture.
+    if (game.url) window.open(game.url, '_blank', 'noopener,noreferrer');
+
+    void (async () => {
+      try {
+        await incrementPlayCount(game.id);
+        const newCount = await getPlayCount(game.id);
+        setPlayCounts((prev) => ({ ...prev, [game.id]: newCount }));
+      } catch (error) {
+        console.error('플레이 카운트 업데이트 실패:', error);
+      }
+    })();
   };
 
   const handleModalClose = () => {

@@ -249,7 +249,7 @@ const Privacy = () => {
               </p>
               <ul className="space-y-2 text-base text-muted-foreground">
                 <li>
-                  <span className="font-medium text-foreground">성명:</span> 행복한윤쌤
+                  <span className="font-medium text-foreground">성명:</span> 윤현준
                 </li>
                 <li>
                   <span className="font-medium text-foreground">이메일:</span>{' '}

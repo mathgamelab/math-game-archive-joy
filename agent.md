@@ -3,7 +3,7 @@
 > **대상 독자**: Cursor, Claude, ChatGPT 등 코드 편집 AI 및 개발자  
 > **사람용 소개**: [README.md](./README.md)  
 > **프로젝트**: 현직 교사 제작 수학 게임·교육 도구 아카이브  
-> **운영 도메인**: `mathgame.kr` (GitHub Pages + 커스텀 도메인)
+> **운영 도메인**: `mathgame.kr` (GitHub Pages + Cloudflare 프록시 + 커스텀 도메인)
 
 이 문서는 저장소 구조, 페이지 구성, 배포 파이프라인, 자주 하는 작업을 한 번에 파악하기 위한 **기술 온보딩**입니다.
 
@@ -374,3 +374,70 @@ apps/edugame_builder/
 | 배포 CI | `.github/workflows/deploy.yml` |
 | 도메인 | `CNAME` |
 | 루트 스크립트 | `package.json` |
+| dorms-check 설정·증빙 | `apps/main/dorms-check.config.json`, `apps/main/.dorms-check/` |
+
+---
+
+## 13. 보안·학운위(dorms-check) · Cloudflare
+
+### 호스팅 구조
+
+```
+방문객 → Cloudflare(프록시·보안 헤더) → GitHub Pages(원본)
+```
+
+- 배포는 기존과 동일: `main` 푸시 → Actions → `docs/` → GitHub Pages
+- **보안 응답 헤더는 Cloudflare Transform Rules**에서 붙임 (GitHub Pages는 커스텀 헤더 불가)
+- 도메인 등록: 호스팅케이알. 네임서버는 Cloudflare (`izabella` / `jarred`)
+- DNS(Cloudflare): `mathgame.kr` A×4 → `185.199.108–111.153`(프록시 ON), `www` CNAME → `mathgamelab.github.io`(프록시 ON), Google TXT는 DNS only
+
+### dorms-check 사용법
+
+```bash
+cd apps/main
+npx -y github:shinnanchanguk/dorms-check detect
+npx -y github:shinnanchanguk/dorms-check init --name "Play Math Archive" --url "https://mathgame.kr" --track security,edzip --stack vite
+npx -y github:shinnanchanguk/dorms-check scan --url "https://mathgame.kr"
+npx -y github:shinnanchanguk/dorms-check judge --in .dorms-check/answers.json   # ai-review 항목
+npx -y github:shinnanchanguk/dorms-check status
+npx -y github:shinnanchanguk/dorms-check submit   # → .dorms-check/evidence/report.json
+```
+
+- npm 패키지명으로 설치하지 말 것. `github:shinnanchanguk/dorms-check` 만 사용
+- 마크는 도구가 아니라 **도름스(dorms.school)** 가 앱 URL을 재검사해 발급
+- SPA라 `/privacy` HTML 껍데기만 보이면 도름스가 방침을 못 읽을 수 있음 → `evidence/report.json`을 신청 화면「dorms-check 결과 올리기」에 업로드
+
+### Cloudflare 보안 헤더 (Transform Rules → 응답 헤더 수정)
+
+규칙명 예: `security-headers`, 조건: 모든 수신 요청, 동작: **정적 설정**
+
+| Header | Value |
+|--------|--------|
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'` |
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | `camera=(), microphone=(), geolocation=()` |
+
+헤더 변경 후 **GitHub 재배포 불필요**. DNS 전파 전엔 일부 경로가 예전 GitHub IP로 가서 스캐너가 헤더를 못 볼 수 있음.
+
+### 개인정보처리방침
+
+- 앱 라우트: `/privacy` (`apps/main/src/pages/Privacy.tsx`) — 에듀집 필수항목 내용 구비
+- 푸터·학습SW 페이지에서 링크
+- 바깥 크롤러는 SPA 때문에 본문을 못 읽을 수 있음 (정적 HTML화 또는 `report.json` 업로드로 대응)
+
+---
+
+## 14. 작업 로그
+
+### 2026-08-03 — dorms-check · Cloudflare 보안 헤더
+
+- `npx -y github:shinnanchanguk/dorms-check` 로 `security,edzip` 트랙 점검 (`apps/main`)
+- 코드·방침 기준 edzip 9항목 judge **pass** (방침 내용은 이미 있음)
+- 초기 스캔: 보안 헤더 없음(GitHub Pages), SPA로 `legal.privacy-policy` 미탐지 → 마크 미충족
+- Cloudflare에 `mathgame.kr` 연결, 호스팅케이알 네임서버 → Cloudflare로 교체, Active 확인
+- Transform Rules로 보안 헤더 5종 배포. Cloudflare IP 경로에서는 헤더 확인됨
+- 당시 로컬/일부 DNS는 아직 `185.199.*`(GitHub)라 dorms-check 재스캔이 헤더를 못 봄 → **DNS 전파 후 재스캔** 필요
+- 증빙: `apps/main/.dorms-check/evidence/report.json` (도름스 신청 시 업로드 가능)
+- 남은 이슈: DNS 전파 후 헤더 재검, SPA 방침 크롤 대응(정적 `/privacy` 또는 report.json)

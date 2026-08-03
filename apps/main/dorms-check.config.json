@@ -1,0 +1,16 @@
+{
+  "app": {
+    "name": "Play Math Archive",
+    "url": "https://mathgame.kr",
+    "stack": "vite"
+  },
+  "tracks": [
+    "security",
+    "edzip"
+  ],
+  "edzipCase": "A",
+  "teacher": {
+    "dormsHandle": ""
+  },
+  "ownershipConfirmed": true
+}

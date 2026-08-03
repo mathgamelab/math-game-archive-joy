@@ -1,0 +1,714 @@
+{
+  "schemaVersion": 1,
+  "tool": {
+    "name": "dorms-check",
+    "version": "0.1.0"
+  },
+  "generatedAt": "2026-08-03T09:40:57.048Z",
+  "app": {
+    "name": "Play Math Archive",
+    "url": "https://mathgame.kr",
+    "stack": "vite",
+    "tracks": [
+      "security",
+      "edzip"
+    ],
+    "edzipCase": "A"
+  },
+  "teacher": {
+    "dormsHandle": null
+  },
+  "tracks": {
+    "security": {
+      "claimed": true,
+      "score": 66,
+      "grade": "D",
+      "eligible": false
+    },
+    "edzip": {
+      "claimed": true,
+      "eligible": false,
+      "policyPresent": false
+    }
+  },
+  "items": [
+    {
+      "id": "sec.header.csp",
+      "track": "security",
+      "severity": "high",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "fail",
+      "observed": "누락: content-security-policy",
+      "evidence": {
+        "header": "content-security-policy",
+        "value": null,
+        "observedAt": "2026-08-03T09:40:43.719Z"
+      }
+    },
+    {
+      "id": "sec.header.hsts",
+      "track": "security",
+      "severity": "medium",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "strict-transport-security: max-age=31556952",
+      "evidence": {
+        "header": "strict-transport-security",
+        "value": "max-age=31556952",
+        "observedAt": "2026-08-03T09:40:43.721Z"
+      }
+    },
+    {
+      "id": "sec.header.frame",
+      "track": "security",
+      "severity": "medium",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "fail",
+      "observed": "누락: x-frame-options",
+      "evidence": {
+        "header": "x-frame-options",
+        "value": null,
+        "observedAt": "2026-08-03T09:40:43.721Z"
+      }
+    },
+    {
+      "id": "sec.header.nosniff",
+      "track": "security",
+      "severity": "low",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "fail",
+      "observed": "누락: x-content-type-options",
+      "evidence": {
+        "header": "x-content-type-options",
+        "value": null,
+        "observedAt": "2026-08-03T09:40:43.721Z"
+      }
+    },
+    {
+      "id": "sec.header.referrer",
+      "track": "security",
+      "severity": "low",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "fail",
+      "observed": "누락: referrer-policy",
+      "evidence": {
+        "header": "referrer-policy",
+        "value": null,
+        "observedAt": "2026-08-03T09:40:43.721Z"
+      }
+    },
+    {
+      "id": "sec.header.permissions",
+      "track": "security",
+      "severity": "low",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "fail",
+      "observed": "누락: permissions-policy",
+      "evidence": {
+        "header": "permissions-policy",
+        "value": null,
+        "observedAt": "2026-08-03T09:40:43.721Z"
+      }
+    },
+    {
+      "id": "sec.fingerprint.powered-by",
+      "track": "security",
+      "severity": "info",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "x-powered-by 미노출(양호)",
+      "evidence": {
+        "poweredBy": null,
+        "server": "GitHub.com"
+      }
+    },
+    {
+      "id": "sec.transport.https-redirect",
+      "track": "security",
+      "severity": "high",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "HTTP 요청이 HTTPS로 리다이렉트됨 (HTTP 301 -> https://mathgame.kr/)",
+      "evidence": {
+        "httpProbe": "HTTP 301 -> https://mathgame.kr/",
+        "redirectsHttps": true
+      }
+    },
+    {
+      "id": "sec.transport.ssl-valid",
+      "track": "security",
+      "severity": "critical",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "TLS 연결 성공 (TLSv1.3)",
+      "evidence": {
+        "protocol": "TLSv1.3",
+        "authorized": true,
+        "authError": null
+      }
+    },
+    {
+      "id": "sec.transport.old-tls",
+      "track": "security",
+      "severity": "medium",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "TLS 버전 양호: TLSv1.3",
+      "evidence": {
+        "protocol": "TLSv1.3"
+      }
+    },
+    {
+      "id": "sec.transport.cookie-flags",
+      "track": "security",
+      "severity": "medium",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "na",
+      "observed": "응답에 쿠키 없음",
+      "evidence": {}
+    },
+    {
+      "id": "info.secret-exposed",
+      "track": "security",
+      "severity": "critical",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "민감 파일(.env/.git) 노출 없음",
+      "evidence": {
+        "probed": [
+          {
+            "path": "/.env",
+            "httpStatus": 404,
+            "exposed": false
+          },
+          {
+            "path": "/.env.local",
+            "httpStatus": 404,
+            "exposed": false
+          },
+          {
+            "path": "/.env.production",
+            "httpStatus": 404,
+            "exposed": false
+          },
+          {
+            "path": "/.git/config",
+            "httpStatus": 404,
+            "exposed": false
+          },
+          {
+            "path": "/.git/HEAD",
+            "httpStatus": 404,
+            "exposed": false
+          }
+        ],
+        "exposedPaths": []
+      }
+    },
+    {
+      "id": "info.config-exposed",
+      "track": "security",
+      "severity": "medium",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "설정 파일 비노출",
+      "evidence": {
+        "exposed": []
+      }
+    },
+    {
+      "id": "info.source-map",
+      "track": "security",
+      "severity": "low",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "소스맵 참조 없음",
+      "evidence": {
+        "sourceMappingURL": false
+      }
+    },
+    {
+      "id": "info.stack-trace",
+      "track": "security",
+      "severity": "medium",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "스택트레이스 노출 없음",
+      "evidence": {
+        "stackTrace": false
+      }
+    },
+    {
+      "id": "info.mixed-content",
+      "track": "security",
+      "severity": "low",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "mixed content 없음",
+      "evidence": {
+        "mixedContent": false
+      }
+    },
+    {
+      "id": "cors.policy",
+      "track": "security",
+      "severity": "high",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "info",
+      "observed": "와일드카드(*) 허용 — 공개 API면 무방, 인증 API면 위험",
+      "evidence": {
+        "allowOrigin": "*",
+        "allowCredentials": false,
+        "reflectsOrigin": false,
+        "wildcard": true
+      }
+    },
+    {
+      "id": "seo.title",
+      "track": "security",
+      "severity": "info",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "<title> 있음",
+      "evidence": {}
+    },
+    {
+      "id": "seo.description",
+      "track": "security",
+      "severity": "info",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "설명 메타",
+      "evidence": {}
+    },
+    {
+      "id": "seo.viewport",
+      "track": "security",
+      "severity": "info",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "viewport 메타",
+      "evidence": {}
+    },
+    {
+      "id": "seo.og",
+      "track": "security",
+      "severity": "info",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "Open Graph 태그",
+      "evidence": {}
+    },
+    {
+      "id": "seo.canonical",
+      "track": "security",
+      "severity": "info",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "info",
+      "observed": "canonical 링크",
+      "evidence": {}
+    },
+    {
+      "id": "perf.ttfb",
+      "track": "security",
+      "severity": "info",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "응답 시간 112ms",
+      "evidence": {
+        "ms": 112
+      }
+    },
+    {
+      "id": "perf.page-size",
+      "track": "security",
+      "severity": "info",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "문서 크기 2KB",
+      "evidence": {
+        "bytes": 1627
+      }
+    },
+    {
+      "id": "perf.compression",
+      "track": "security",
+      "severity": "info",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "압축: gzip",
+      "evidence": {
+        "encoding": "gzip"
+      }
+    },
+    {
+      "id": "legal.privacy-policy",
+      "track": "security",
+      "severity": "high",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "fail",
+      "observed": "개인정보처리방침 페이지/링크 없음",
+      "evidence": {
+        "found": false
+      }
+    },
+    {
+      "id": "legal.terms",
+      "track": "security",
+      "severity": "low",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "info",
+      "observed": "이용약관 페이지/링크 없음",
+      "evidence": {
+        "found": false
+      }
+    },
+    {
+      "id": "legal.contact",
+      "track": "security",
+      "severity": "low",
+      "method": "deterministic",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "연락처/문의 정보 있음",
+      "evidence": {
+        "found": true
+      }
+    },
+    {
+      "id": "code.rls.anon-read",
+      "track": "security",
+      "severity": "critical",
+      "method": "ai",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "익명 SELECT로 행이 새는 테이블 없음(RLS 양호)",
+      "evidence": {
+        "supabaseUrl": "https://gpdjxoogukmjlalgufpq.supabase.co",
+        "swaggerStatus": 401,
+        "tablesTested": 32,
+        "usedCommonTableFallback": true,
+        "readableTables": [],
+        "piiLeaks": [],
+        "method": "익명 anon 키로 /rest/v1 SELECT limit 1 (비파괴)"
+      }
+    },
+    {
+      "id": "code.firebase.public-read",
+      "track": "security",
+      "severity": "critical",
+      "method": "ai",
+      "serverVerifiable": true,
+      "status": "na",
+      "observed": "Firebase 실시간 DB 주소를 앱에서 찾지 못함(비-Firebase 앱이거나 미사용) — 프로브 생략",
+      "evidence": {}
+    },
+    {
+      "id": "code.endpoint.unauth",
+      "track": "security",
+      "severity": "high",
+      "method": "ai",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "미인증 호출로 데이터를 반환하는 API 후보 없음",
+      "evidence": {
+        "tested": [
+          "/api/broadcast"
+        ],
+        "openCandidates": []
+      }
+    },
+    {
+      "id": "code.hardcoded-secret",
+      "track": "security",
+      "severity": "critical",
+      "method": "ai",
+      "serverVerifiable": false,
+      "status": "pass",
+      "observed": "하드코딩 시크릿 미검출",
+      "evidence": {
+        "hits": []
+      }
+    },
+    {
+      "id": "code.client-secret-leak",
+      "track": "security",
+      "severity": "critical",
+      "method": "ai",
+      "serverVerifiable": false,
+      "status": "pass",
+      "observed": "클라 시크릿 노출 미검출",
+      "evidence": {
+        "hits": []
+      }
+    },
+    {
+      "id": "code.headers-config",
+      "track": "security",
+      "severity": "info",
+      "method": "ai",
+      "serverVerifiable": false,
+      "status": "fail",
+      "observed": "GitHub Pages 배포이며 CSP/X-Frame-Options/nosniff/Referrer-Policy/Permissions-Policy 설정 파일·헤더 없음. 라이브 응답에도 해당 헤더 누락 확인.",
+      "evidence": {
+        "configuredHeaders": {},
+        "filesScanned": [],
+        "aiJudgment": {
+          "status": "fail",
+          "evidence": "GitHub Pages 배포이며 CSP/X-Frame-Options/nosniff/Referrer-Policy/Permissions-Policy 설정 파일·헤더 없음. 라이브 응답에도 해당 헤더 누락 확인.",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.135Z"
+        }
+      }
+    },
+    {
+      "id": "code.dangerous-pattern",
+      "track": "security",
+      "severity": "info",
+      "method": "ai",
+      "serverVerifiable": false,
+      "status": "pass",
+      "observed": "src/components/ui/chart.tsx:79 — shadcn ChartStyle가 테마 CSS 변수만 dangerouslySetInnerHTML로 주입. 사용자 입력 HTML이 아니며 XSS 경로 아님.",
+      "evidence": {
+        "hits": [
+          {
+            "file": "src\\components\\ui\\chart.tsx",
+            "line": 79,
+            "kind": "dangerouslySetInnerHTML"
+          }
+        ],
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/components/ui/chart.tsx:79 — shadcn ChartStyle가 테마 CSS 변수만 dangerouslySetInnerHTML로 주입. 사용자 입력 HTML이 아니며 XSS 경로 아님.",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    },
+    {
+      "id": "edzip.1-1",
+      "track": "edzip",
+      "severity": "high",
+      "method": "hybrid",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "src/pages/Privacy.tsx:111-131 — 회원가입·개인식별정보 미수집, 문의 시 자발 제공만 처리. 코드에도 회원/학생 정보 수집 없음(플레이 횟수 집계만).",
+      "evidence": {
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/pages/Privacy.tsx:111-131 — 회원가입·개인식별정보 미수집, 문의 시 자발 제공만 처리. 코드에도 회원/학생 정보 수집 없음(플레이 횟수 집계만).",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    },
+    {
+      "id": "edzip.1-2",
+      "track": "edzip",
+      "severity": "high",
+      "method": "hybrid",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "src/pages/Privacy.tsx:109-116 — 제1조에 교육용 게임 제공·문의 응대 목적만 명시. 개인 식별 정보 수집·이용하지 않음 명시.",
+      "evidence": {
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/pages/Privacy.tsx:109-116 — 제1조에 교육용 게임 제공·문의 응대 목적만 명시. 개인 식별 정보 수집·이용하지 않음 명시.",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    },
+    {
+      "id": "edzip.1-3",
+      "track": "edzip",
+      "severity": "high",
+      "method": "hybrid",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "src/pages/Privacy.tsx:121-144 — 제2조 수집 항목(회원정보 미수집, 문의 시 연락처), 제3조 보유·파기(문의 처리 후 지체 없이 파기) 명시.",
+      "evidence": {
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/pages/Privacy.tsx:121-144 — 제2조 수집 항목(회원정보 미수집, 문의 시 연락처), 제3조 보유·파기(문의 처리 후 지체 없이 파기) 명시.",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    },
+    {
+      "id": "edzip.2-1",
+      "track": "edzip",
+      "severity": "critical",
+      "method": "hybrid",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "src/pages/Privacy.tsx:203-213 — 제8조 HTTPS, 접근권한 최소화, 미수집 원칙. 스캔상 HTTPS/HSTS·RLS 양호.",
+      "evidence": {
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/pages/Privacy.tsx:203-213 — 제8조 HTTPS, 접근권한 최소화, 미수집 원칙. 스캔상 HTTPS/HSTS·RLS 양호.",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    },
+    {
+      "id": "edzip.3-1",
+      "track": "edzip",
+      "severity": "high",
+      "method": "hybrid",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "src/pages/Privacy.tsx:217-228 — 제9조 열람·정정·삭제·처리정지 요청 방법(이메일/블로그) 및 보유정보 없을 때 안내 명시.",
+      "evidence": {
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/pages/Privacy.tsx:217-228 — 제9조 열람·정정·삭제·처리정지 요청 방법(이메일/블로그) 및 보유정보 없을 때 안내 명시.",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    },
+    {
+      "id": "edzip.4-1",
+      "track": "edzip",
+      "severity": "critical",
+      "method": "ai",
+      "serverVerifiable": false,
+      "status": "pass",
+      "observed": "src/pages/Privacy.tsx:233-239 — 제10조 만14세 미만 아동 개인정보 미수집, 확인 시 즉시 삭제, 법정대리인 동의 회원가입 미운영.",
+      "evidence": {
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/pages/Privacy.tsx:233-239 — 제10조 만14세 미만 아동 개인정보 미수집, 확인 시 즉시 삭제, 법정대리인 동의 회원가입 미운영.",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    },
+    {
+      "id": "edzip.5-1",
+      "track": "edzip",
+      "severity": "medium",
+      "method": "hybrid",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "src/pages/Privacy.tsx:244-274 — 제11조 보호책임자 성명(윤현준)·이메일(whymath22@korea.kr)·블로그 연락처 명시.",
+      "evidence": {
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/pages/Privacy.tsx:244-274 — 제11조 보호책임자 성명(윤현준)·이메일(whymath22@korea.kr)·블로그 연락처 명시.",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    },
+    {
+      "id": "edzip.5-2",
+      "track": "edzip",
+      "severity": "high",
+      "method": "hybrid",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "src/pages/Privacy.tsx:168-174 — 제5조 제3자 판매·마케팅 제공 안 함, 법령 요청 시에만 제공 가능 명시.",
+      "evidence": {
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/pages/Privacy.tsx:168-174 — 제5조 제3자 판매·마케팅 제공 안 함, 법령 요청 시에만 제공 가능 명시.",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    },
+    {
+      "id": "edzip.5-3",
+      "track": "edzip",
+      "severity": "high",
+      "method": "hybrid",
+      "serverVerifiable": true,
+      "status": "pass",
+      "observed": "src/pages/Privacy.tsx:179-186 — 제6조 회원 개인정보 위탁 없음. 비식별 통계·웹 호스팅 인프라는 외부 사업자 이용 가능하나 개인식별정보 위탁 아님으로 고지. Supabase는 플레이 횟수 집계만(src/lib/playCount.ts).",
+      "evidence": {
+        "aiJudgment": {
+          "status": "pass",
+          "evidence": "src/pages/Privacy.tsx:179-186 — 제6조 회원 개인정보 위탁 없음. 비식별 통계·웹 호스팅 인프라는 외부 사업자 이용 가능하나 개인식별정보 위탁 아님으로 고지. Supabase는 플레이 횟수 집계만(src/lib/playCount.ts).",
+          "by": "teacher-assistant",
+          "at": "2026-08-03T09:40:13.137Z"
+        }
+      }
+    }
+  ],
+  "reverifyHints": {
+    "revalidate": [
+      "sec.header.csp",
+      "sec.header.hsts",
+      "sec.header.frame",
+      "sec.header.nosniff",
+      "sec.header.referrer",
+      "sec.header.permissions",
+      "sec.fingerprint.powered-by",
+      "sec.transport.https-redirect",
+      "sec.transport.ssl-valid",
+      "sec.transport.old-tls",
+      "sec.transport.cookie-flags",
+      "info.secret-exposed",
+      "info.config-exposed",
+      "info.source-map",
+      "info.stack-trace",
+      "info.mixed-content",
+      "cors.policy",
+      "seo.title",
+      "seo.description",
+      "seo.viewport",
+      "seo.og",
+      "seo.canonical",
+      "perf.ttfb",
+      "perf.page-size",
+      "perf.compression",
+      "legal.privacy-policy",
+      "legal.terms",
+      "legal.contact",
+      "code.rls.anon-read",
+      "code.firebase.public-read",
+      "code.endpoint.unauth",
+      "edzip.1-1",
+      "edzip.1-2",
+      "edzip.1-3",
+      "edzip.2-1",
+      "edzip.3-1",
+      "edzip.5-1",
+      "edzip.5-2",
+      "edzip.5-3"
+    ],
+    "note": "서버는 이 항목을 앱 URL 로 독립 재스캔해 대조한다. 불일치 시 발급 거부. 나머지(code.hardcoded-secret 등)는 자기신고로 투명 표기."
+  },
+  "manifestSha256": "3363939dd855f40040b3f0d29e73c795b794729ec919ec7d1fed5532648d86e6"
+}

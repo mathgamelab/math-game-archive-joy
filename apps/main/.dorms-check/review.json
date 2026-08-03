@@ -1,0 +1,68 @@
+{
+  "code.headers-config": {
+    "status": "fail",
+    "evidence": "GitHub Pages 배포이며 CSP/X-Frame-Options/nosniff/Referrer-Policy/Permissions-Policy 설정 파일·헤더 없음. 라이브 응답에도 해당 헤더 누락 확인.",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.135Z"
+  },
+  "code.dangerous-pattern": {
+    "status": "pass",
+    "evidence": "src/components/ui/chart.tsx:79 — shadcn ChartStyle가 테마 CSS 변수만 dangerouslySetInnerHTML로 주입. 사용자 입력 HTML이 아니며 XSS 경로 아님.",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  },
+  "edzip.1-1": {
+    "status": "pass",
+    "evidence": "src/pages/Privacy.tsx:111-131 — 회원가입·개인식별정보 미수집, 문의 시 자발 제공만 처리. 코드에도 회원/학생 정보 수집 없음(플레이 횟수 집계만).",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  },
+  "edzip.1-2": {
+    "status": "pass",
+    "evidence": "src/pages/Privacy.tsx:109-116 — 제1조에 교육용 게임 제공·문의 응대 목적만 명시. 개인 식별 정보 수집·이용하지 않음 명시.",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  },
+  "edzip.1-3": {
+    "status": "pass",
+    "evidence": "src/pages/Privacy.tsx:121-144 — 제2조 수집 항목(회원정보 미수집, 문의 시 연락처), 제3조 보유·파기(문의 처리 후 지체 없이 파기) 명시.",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  },
+  "edzip.2-1": {
+    "status": "pass",
+    "evidence": "src/pages/Privacy.tsx:203-213 — 제8조 HTTPS, 접근권한 최소화, 미수집 원칙. 스캔상 HTTPS/HSTS·RLS 양호.",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  },
+  "edzip.3-1": {
+    "status": "pass",
+    "evidence": "src/pages/Privacy.tsx:217-228 — 제9조 열람·정정·삭제·처리정지 요청 방법(이메일/블로그) 및 보유정보 없을 때 안내 명시.",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  },
+  "edzip.4-1": {
+    "status": "pass",
+    "evidence": "src/pages/Privacy.tsx:233-239 — 제10조 만14세 미만 아동 개인정보 미수집, 확인 시 즉시 삭제, 법정대리인 동의 회원가입 미운영.",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  },
+  "edzip.5-1": {
+    "status": "pass",
+    "evidence": "src/pages/Privacy.tsx:244-274 — 제11조 보호책임자 성명(윤현준)·이메일(whymath22@korea.kr)·블로그 연락처 명시.",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  },
+  "edzip.5-2": {
+    "status": "pass",
+    "evidence": "src/pages/Privacy.tsx:168-174 — 제5조 제3자 판매·마케팅 제공 안 함, 법령 요청 시에만 제공 가능 명시.",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  },
+  "edzip.5-3": {
+    "status": "pass",
+    "evidence": "src/pages/Privacy.tsx:179-186 — 제6조 회원 개인정보 위탁 없음. 비식별 통계·웹 호스팅 인프라는 외부 사업자 이용 가능하나 개인식별정보 위탁 아님으로 고지. Supabase는 플레이 횟수 집계만(src/lib/playCount.ts).",
+    "by": "teacher-assistant",
+    "at": "2026-08-03T09:40:13.137Z"
+  }
+}

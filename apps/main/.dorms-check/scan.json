@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-03T10:27:58.955Z",
+  "at": "2026-08-03T10:41:39.561Z",
   "url": "https://mathgame.kr",
   "results": [
     {
@@ -9,7 +9,7 @@
       "evidence": {
         "header": "content-security-policy",
         "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'",
-        "observedAt": "2026-08-03T10:27:53.177Z"
+        "observedAt": "2026-08-03T10:41:32.919Z"
       }
     },
     {
@@ -19,7 +19,7 @@
       "evidence": {
         "header": "strict-transport-security",
         "value": "max-age=31556952",
-        "observedAt": "2026-08-03T10:27:53.179Z"
+        "observedAt": "2026-08-03T10:41:32.921Z"
       }
     },
     {
@@ -29,7 +29,7 @@
       "evidence": {
         "header": "x-frame-options",
         "value": "DENY",
-        "observedAt": "2026-08-03T10:27:53.179Z"
+        "observedAt": "2026-08-03T10:41:32.921Z"
       }
     },
     {
@@ -39,7 +39,7 @@
       "evidence": {
         "header": "x-content-type-options",
         "value": "nosniff",
-        "observedAt": "2026-08-03T10:27:53.179Z"
+        "observedAt": "2026-08-03T10:41:32.921Z"
       }
     },
     {
@@ -49,7 +49,7 @@
       "evidence": {
         "header": "referrer-policy",
         "value": "strict-origin-when-cross-origin",
-        "observedAt": "2026-08-03T10:27:53.179Z"
+        "observedAt": "2026-08-03T10:41:32.921Z"
       }
     },
     {
@@ -59,7 +59,7 @@
       "evidence": {
         "header": "permissions-policy",
         "value": "camera=(), microphone=(), geolocation=()",
-        "observedAt": "2026-08-03T10:27:53.179Z"
+        "observedAt": "2026-08-03T10:41:32.921Z"
       }
     },
     {
@@ -215,9 +215,9 @@
     {
       "id": "perf.ttfb",
       "status": "pass",
-      "observed": "응답 시간 240ms",
+      "observed": "응답 시간 599ms",
       "evidence": {
-        "ms": 240
+        "ms": 599
       }
     },
     {
@@ -225,7 +225,7 @@
       "status": "pass",
       "observed": "문서 크기 2KB",
       "evidence": {
-        "bytes": 1627
+        "bytes": 2015
       }
     },
     {
@@ -238,10 +238,12 @@
     },
     {
       "id": "legal.privacy-policy",
-      "status": "fail",
-      "observed": "개인정보처리방침 페이지/링크 없음",
+      "status": "pass",
+      "observed": "개인정보처리방침 발견(link: /privacy)",
       "evidence": {
-        "found": false
+        "found": true,
+        "via": "link",
+        "where": "/privacy"
       }
     },
     {
@@ -464,7 +466,7 @@
     "url": "https://mathgame.kr",
     "finalUrl": "https://mathgame.kr/",
     "httpStatus": 200,
-    "ttfbMs": 240,
+    "ttfbMs": 599,
     "observedHeaders": [
       "access-control-allow-origin",
       "age",
@@ -499,6 +501,6 @@
       "x-served-by",
       "x-timer"
     ],
-    "scannedAt": "2026-08-03T10:27:57.282Z"
+    "scannedAt": "2026-08-03T10:41:37.151Z"
   }
 }

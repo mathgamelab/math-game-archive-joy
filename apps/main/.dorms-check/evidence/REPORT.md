@@ -9,7 +9,7 @@
 
 ## 보안 검토
 - 점수: 100/100 (A+)
-- 마크 자격(critical/high 0): 미충족
+- 마크 자격(critical/high 0): 충족
 
 ### 통과 항목(증빙)
 - [v] Content-Security-Policy — 헤더값: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'
@@ -31,9 +31,10 @@
 - [v] 설명 메타 — 설명 메타
 - [v] 모바일 viewport — viewport 메타
 - [v] Open Graph — Open Graph 태그
-- [v] 응답 속도 — 응답 시간 240ms
+- [v] 응답 속도 — 응답 시간 599ms
 - [v] 문서 크기 — 문서 크기 2KB
 - [v] 압축 — 압축: br
+- [v] 개인정보처리방침 — 개인정보처리방침 발견(link: /privacy)
 - [v] 연락처 — 연락처/문의 정보 있음
 - [v] 익명 접근 차단(Supabase RLS) — 익명 SELECT로 행이 새는 테이블 없음(RLS 양호)
 - [v] 미인증 API 접근 — 미인증 호출로 데이터를 반환하는 API 후보 없음
@@ -42,11 +43,6 @@
 - [v] 위험 코드 패턴(검토 후보) — src\components\ui\chart.tsx:79
 
 ### 아직 고쳐야 할 항목
-#### [high] 개인정보처리방침
-- 무엇: 개인정보를 다루는 서비스는 개인정보처리방침을 반드시 공개해야 해요(개인정보 보호법 제30조).
-- 지금 상태: 개인정보처리방침 페이지/링크 없음
-- AI에게 이렇게 시켜주세요: `개인정보처리방침 페이지(/privacy)를 만들어 링크를 노출해줘. dorms-check templates/privacy-policy.ko.md 를 골격으로 실제 수집 항목에 맞게 채워줘.`
-
 #### [info] 헤더 설정 위치
 - 무엇: 보안 헤더가 설정 파일에 있는지 참고로 확인한 항목이에요(실제 판정은 라이브 관측을 우선해요).
 - 지금 상태: GitHub Pages 배포이며 CSP/X-Frame-Options/nosniff/Referrer-Policy/Permissions-Policy 설정 파일·헤더 없음. 라이브 응답에도 해당 헤더 누락 확인.
@@ -57,7 +53,7 @@
 - 이용약관: 이용약관 페이지/링크 없음
 
 ## 학운위 심사 준비(에듀집 필수기준)
-- 준비 상태: 미충족
-- 개인정보처리방침 공개: 없음
+- 준비 상태: 충족(제출 서류 준비됨)
+- 개인정보처리방침 공개: 있음
 
 > "학운위 심사 준비 완료"는 학교 심의에 낼 서류가 갖춰졌다는 뜻이며, 심의 통과를 보장하지 않습니다. 심의와 최종 결정은 각 학교가 합니다.

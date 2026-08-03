@@ -458,3 +458,4 @@ npx -y github:shinnanchanguk/dorms-check submit   # → .dorms-check/evidence/re
 - **정적 방침**: `public/privacy/index.html` 추가 + deploy에 `privacy`/`sorce` 복사
 - 증빙: `apps/main/.dorms-check/evidence/report.json`
 - **다음**: `main` 푸시로 Pages 배포 후 `dorms-check scan` 재실행 → 통과 시 submit → 도름스에 `report.json` 업로드
+- **배포 후 재스캔 (동일일)**: 보안 100/100 마크자격 충족, 학운위 준비 충족. 남은 건 info(헤더가 코드가 아닌 Cloudflare에 있음). 증빙 갱신됨.

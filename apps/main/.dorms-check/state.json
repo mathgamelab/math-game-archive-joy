@@ -118,6 +118,20 @@
         "eligible": false,
         "unmet": []
       }
+    },
+    {
+      "n": 7,
+      "at": "2026-08-03T10:41:39.558Z",
+      "security": {
+        "score": 100,
+        "grade": "A+",
+        "eligible": true,
+        "blocking": []
+      },
+      "edzip": {
+        "eligible": true,
+        "unmet": []
+      }
     }
   ],
   "items": {
@@ -350,9 +364,9 @@
       "regressed": false
     },
     "legal.privacy-policy": {
-      "status": "fail",
+      "status": "pass",
       "firstFailRound": 2,
-      "fixedRound": null,
+      "fixedRound": 7,
       "regressed": false
     },
     "legal.terms": {
@@ -387,8 +401,8 @@
     }
   },
   "passed": {
-    "security": false,
-    "edzip": false
+    "security": true,
+    "edzip": true
   },
   "submitted": {}
 }

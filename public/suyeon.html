@@ -37,7 +37,140 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 20px 20px 88px;
+  }
+
+  /* ─── 툴바 (새 게임 · 룰북) ─── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 2.4rem;
+    padding: 0 14px;
+    border-radius: 0.6rem;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--board-border);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    font-family: inherit;
+    transition: background 0.18s, transform 0.18s, color 0.18s;
+  }
+  .icon-btn:hover {
+    background: #fff;
+    transform: translateY(-1px);
+  }
+  .icon-btn:active { transform: translateY(0); }
+  .icon-btn.primary {
+    background: #2b313c;
+    color: #fff;
+    border-color: #2b313c;
+  }
+  .icon-btn.primary:hover {
+    background: #3d4554;
+    color: #fff;
+  }
+
+  /* ─── 룰북 모달 ─── */
+  .rules-modal .modal {
+    text-align: left;
+    max-width: 420px;
+    padding: 28px 28px 24px;
+    position: relative;
+  }
+  .rules-modal .modal h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .rules-modal .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 0.5rem;
+    background: #f1f3f6;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  .rules-modal .modal-close:hover { background: #e8ecf2; color: var(--text); }
+  .rule-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .rule-num {
+    flex-shrink: 0;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 9999px;
+    background: #2b313c;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+  }
+  .rules-modal .modal-tip {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 0.6rem;
+    background: #f1f3f6;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.45;
+  }
+
+  /* ─── 푸터 ─── */
+  .creator-info {
+    position: fixed;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: #4a5568;
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 8px 15px;
+    border-radius: 10px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+    border: 1px solid var(--board-border);
+    z-index: 150;
+    width: fit-content;
+    max-width: calc(100vw - 24px);
+  }
+  .creator-info p { margin: 2px 0; }
+  .creator-info a { color: #457a68; text-decoration: none; }
+  .creator-info a:hover { text-decoration: underline; }
+  @media (max-width: 768px) {
+    .creator-info {
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      bottom: calc(8px + env(safe-area-inset-bottom));
+    }
   }
 
   /* ─── 타이틀 ─── */
@@ -439,6 +572,11 @@
   <p>SUYEON — 숫자 영역 전략 게임</p>
 </div>
 
+<div class="toolbar">
+  <button type="button" class="icon-btn primary" id="btn-restart" title="새 게임 (R)">🔄 새 게임</button>
+  <button type="button" class="icon-btn" id="btn-rules" title="게임 규칙 (?)">📖 룰북</button>
+</div>
+
 <div class="info-bar">
   <div class="player-info p1" id="info-p1">
     <span class="turn-badge">턴</span>
@@ -487,6 +625,43 @@
     </div>
     <button class="btn-restart" onclick="restartGame()">다시 하기</button>
   </div>
+</div>
+
+<!-- 룰북 모달 -->
+<div class="modal-overlay rules-modal" id="rules-modal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <button type="button" class="modal-close" id="btn-close-rules" title="닫기">✕</button>
+    <h2>📖 게임 규칙</h2>
+    <div class="rule-item">
+      <span class="rule-num">1</span>
+      <div>6×6 보드에서 <strong>1P(주황)</strong>와 <strong>2P(청록)</strong>가 번갈아 둡니다.</div>
+    </div>
+    <div class="rule-item">
+      <span class="rule-num">2</span>
+      <div>시작 시 각 플레이어는 대각선에 <strong>1, 2, 3</strong>이 놓인 상태로 시작합니다.</div>
+    </div>
+    <div class="rule-item">
+      <span class="rule-num">3</span>
+      <div>자신의 숫자 칸을 고른 뒤, <strong>인접한 8방향</strong>의 빈 칸에 <strong>(선택한 숫자 + 1)</strong>을 놓습니다.</div>
+    </div>
+    <div class="rule-item">
+      <span class="rule-num">4</span>
+      <div>상대가 둘 곳이 없으면 그 턴은 건너뛰고, 양쪽 모두 둘 곳이 없으면 게임이 끝납니다.</div>
+    </div>
+    <div class="rule-item">
+      <span class="rule-num">5</span>
+      <div>종료 시 보드에 놓은 <strong>최댓값</strong>이 더 큰 플레이어가 승리합니다.</div>
+    </div>
+    <div class="modal-tip">
+      <b>조작:</b> 칸 클릭으로 선택·배치 · 같은 칸을 다시 누르면 선택 해제<br>
+      <b>단축키:</b> R 새 게임 · ? 룰북 · ESC 닫기
+    </div>
+  </div>
+</div>
+
+<div class="creator-info">
+  <p>행복한 수학, 함께 만들어요 😊</p>
+  <p>© 행복한윤쌤 | <a href="https://blog.naver.com/happy_yoonssam" target="_blank" rel="noopener noreferrer">https://blog.naver.com/happy_yoonssam</a></p>
 </div>
 
 <script>
@@ -802,10 +977,39 @@ function showToast(msg) {
 // ─── 리스타트 ────────────────────────────────────────────────
 function restartGame() {
   document.getElementById('modal-overlay').classList.remove('show');
+  closeRules();
   document.getElementById('log-wrap').innerHTML = '<span class="log-entry">게임 시작!</span>';
   initBoard();
   render();
 }
+
+// ─── 룰북 ────────────────────────────────────────────────────
+function openRules() {
+  document.getElementById('rules-modal').classList.add('show');
+}
+function closeRules() {
+  document.getElementById('rules-modal').classList.remove('show');
+}
+
+document.getElementById('btn-restart').addEventListener('click', restartGame);
+document.getElementById('btn-rules').addEventListener('click', openRules);
+document.getElementById('btn-close-rules').addEventListener('click', closeRules);
+document.getElementById('rules-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'rules-modal') closeRules();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeRules();
+    document.getElementById('modal-overlay').classList.remove('show');
+  } else if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+    openRules();
+  } else if (e.key === 'r' || e.key === 'R') {
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    restartGame();
+  }
+});
 
 // ─── 시작 ────────────────────────────────────────────────────
 initBoard();

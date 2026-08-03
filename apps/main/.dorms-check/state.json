@@ -102,6 +102,22 @@
         "eligible": false,
         "unmet": []
       }
+    },
+    {
+      "n": 6,
+      "at": "2026-08-03T10:27:58.944Z",
+      "security": {
+        "score": 100,
+        "grade": "A+",
+        "eligible": false,
+        "blocking": [
+          "legal.privacy-policy"
+        ]
+      },
+      "edzip": {
+        "eligible": false,
+        "unmet": []
+      }
     }
   ],
   "items": {
@@ -184,9 +200,9 @@
       "regressed": false
     },
     "sec.header.csp": {
-      "status": "fail",
+      "status": "pass",
       "firstFailRound": 2,
-      "fixedRound": null,
+      "fixedRound": 6,
       "regressed": false
     },
     "sec.header.hsts": {
@@ -196,27 +212,27 @@
       "regressed": false
     },
     "sec.header.frame": {
-      "status": "fail",
+      "status": "pass",
       "firstFailRound": 2,
-      "fixedRound": null,
+      "fixedRound": 6,
       "regressed": false
     },
     "sec.header.nosniff": {
-      "status": "fail",
+      "status": "pass",
       "firstFailRound": 2,
-      "fixedRound": null,
+      "fixedRound": 6,
       "regressed": false
     },
     "sec.header.referrer": {
-      "status": "fail",
+      "status": "pass",
       "firstFailRound": 2,
-      "fixedRound": null,
+      "fixedRound": 6,
       "regressed": false
     },
     "sec.header.permissions": {
-      "status": "fail",
+      "status": "pass",
       "firstFailRound": 2,
-      "fixedRound": null,
+      "fixedRound": 6,
       "regressed": false
     },
     "sec.fingerprint.powered-by": {

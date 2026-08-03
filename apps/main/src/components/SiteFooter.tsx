@@ -56,13 +56,9 @@ export const SiteFooter: React.FC = () => {
               </button>
             </li>
             <li>
-              <button
-                type="button"
-                onClick={() => navigate('/privacy')}
-                className="hover:text-foreground"
-              >
+              <a href="/privacy" className="hover:text-foreground">
                 개인정보처리방침
-              </button>
+              </a>
             </li>
           </ul>
         </div>

@@ -4,7 +4,7 @@
     "name": "dorms-check",
     "version": "0.1.0"
   },
-  "generatedAt": "2026-08-03T09:40:57.048Z",
+  "generatedAt": "2026-08-03T10:28:10.566Z",
   "app": {
     "name": "Play Math Archive",
     "url": "https://mathgame.kr",
@@ -21,8 +21,8 @@
   "tracks": {
     "security": {
       "claimed": true,
-      "score": 66,
-      "grade": "D",
+      "score": 94,
+      "grade": "A",
       "eligible": false
     },
     "edzip": {
@@ -38,12 +38,12 @@
       "severity": "high",
       "method": "deterministic",
       "serverVerifiable": true,
-      "status": "fail",
-      "observed": "누락: content-security-policy",
+      "status": "pass",
+      "observed": "content-security-policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'",
       "evidence": {
         "header": "content-security-policy",
-        "value": null,
-        "observedAt": "2026-08-03T09:40:43.719Z"
+        "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        "observedAt": "2026-08-03T10:27:53.177Z"
       }
     },
     {
@@ -57,7 +57,7 @@
       "evidence": {
         "header": "strict-transport-security",
         "value": "max-age=31556952",
-        "observedAt": "2026-08-03T09:40:43.721Z"
+        "observedAt": "2026-08-03T10:27:53.179Z"
       }
     },
     {
@@ -66,12 +66,12 @@
       "severity": "medium",
       "method": "deterministic",
       "serverVerifiable": true,
-      "status": "fail",
-      "observed": "누락: x-frame-options",
+      "status": "pass",
+      "observed": "x-frame-options: DENY",
       "evidence": {
         "header": "x-frame-options",
-        "value": null,
-        "observedAt": "2026-08-03T09:40:43.721Z"
+        "value": "DENY",
+        "observedAt": "2026-08-03T10:27:53.179Z"
       }
     },
     {
@@ -80,12 +80,12 @@
       "severity": "low",
       "method": "deterministic",
       "serverVerifiable": true,
-      "status": "fail",
-      "observed": "누락: x-content-type-options",
+      "status": "pass",
+      "observed": "x-content-type-options: nosniff",
       "evidence": {
         "header": "x-content-type-options",
-        "value": null,
-        "observedAt": "2026-08-03T09:40:43.721Z"
+        "value": "nosniff",
+        "observedAt": "2026-08-03T10:27:53.179Z"
       }
     },
     {
@@ -94,12 +94,12 @@
       "severity": "low",
       "method": "deterministic",
       "serverVerifiable": true,
-      "status": "fail",
-      "observed": "누락: referrer-policy",
+      "status": "pass",
+      "observed": "referrer-policy: strict-origin-when-cross-origin",
       "evidence": {
         "header": "referrer-policy",
-        "value": null,
-        "observedAt": "2026-08-03T09:40:43.721Z"
+        "value": "strict-origin-when-cross-origin",
+        "observedAt": "2026-08-03T10:27:53.179Z"
       }
     },
     {
@@ -108,12 +108,12 @@
       "severity": "low",
       "method": "deterministic",
       "serverVerifiable": true,
-      "status": "fail",
-      "observed": "누락: permissions-policy",
+      "status": "pass",
+      "observed": "permissions-policy: camera=(), microphone=(), geolocation=()",
       "evidence": {
         "header": "permissions-policy",
-        "value": null,
-        "observedAt": "2026-08-03T09:40:43.721Z"
+        "value": "camera=(), microphone=(), geolocation=()",
+        "observedAt": "2026-08-03T10:27:53.179Z"
       }
     },
     {
@@ -126,7 +126,7 @@
       "observed": "x-powered-by 미노출(양호)",
       "evidence": {
         "poweredBy": null,
-        "server": "GitHub.com"
+        "server": "cloudflare"
       }
     },
     {
@@ -337,9 +337,9 @@
       "method": "deterministic",
       "serverVerifiable": true,
       "status": "pass",
-      "observed": "응답 시간 112ms",
+      "observed": "응답 시간 240ms",
       "evidence": {
-        "ms": 112
+        "ms": 240
       }
     },
     {
@@ -361,9 +361,9 @@
       "method": "deterministic",
       "serverVerifiable": true,
       "status": "pass",
-      "observed": "압축: gzip",
+      "observed": "압축: br",
       "evidence": {
-        "encoding": "gzip"
+        "encoding": "br"
       }
     },
     {
@@ -710,5 +710,5 @@
     ],
     "note": "서버는 이 항목을 앱 URL 로 독립 재스캔해 대조한다. 불일치 시 발급 거부. 나머지(code.hardcoded-secret 등)는 자기신고로 투명 표기."
   },
-  "manifestSha256": "3363939dd855f40040b3f0d29e73c795b794729ec919ec7d1fed5532648d86e6"
+  "manifestSha256": "f59b538e3dbf768889b4db7015bf4f1cbc07ee1b83caf9df41d9fad58a9df25a"
 }

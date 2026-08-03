@@ -37,6 +37,8 @@ jobs:
           cp public/*.html dist/ 2>/dev/null || true
           cp -r public/images dist/ 2>/dev/null || true
           cp -r public/videos dist/ 2>/dev/null || true
+          cp -r public/privacy dist/ 2>/dev/null || true
+          cp -r public/sorce dist/ 2>/dev/null || true
           cp public/robots.txt dist/ 2>/dev/null || true
           cp public/placeholder.svg dist/ 2>/dev/null || true
           echo "✓ Copied public static files to dist/"

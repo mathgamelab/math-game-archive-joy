@@ -421,11 +421,29 @@ npx -y github:shinnanchanguk/dorms-check submit   # → .dorms-check/evidence/re
 
 헤더 변경 후 **GitHub 재배포 불필요**. DNS 전파 전엔 일부 경로가 예전 GitHub IP로 가서 스캐너가 헤더를 못 볼 수 있음.
 
+### init 시 학운위 케이스 3문항 (`edzipCase`)
+
+프롬프트 요구: 교사에게 물어 A/B/C/D 기록.
+
+1. 학생 개인정보·학습 콘텐츠(글·답안·이름 등)를 다루나?
+2. 그 정보가 학교 밖(외부 서버·클라우드·AI)으로 나가나?
+3. 나간다면 가명처리하거나 로컬에만 두나?
+
+현재 config: `edzipCase: "A"` (회원·학생 식별정보 미수집 가정). 교사 확인 후 수정 가능 → `apps/main/dorms-check.config.json`
+
 ### 개인정보처리방침
 
-- 앱 라우트: `/privacy` (`apps/main/src/pages/Privacy.tsx`) — 에듀집 필수항목 내용 구비
-- 푸터·학습SW 페이지에서 링크
-- 바깥 크롤러는 SPA 때문에 본문을 못 읽을 수 있음 (정적 HTML화 또는 `report.json` 업로드로 대응)
+- **정적 HTML (크롤러용)**: `public/privacy/index.html` → 배포 후 `https://mathgame.kr/privacy`
+- React 페이지: `apps/main/src/pages/Privacy.tsx` (앱 안 라우트, 내용 동기화 유지)
+- PDF 원본: `public/sorce/개인정보 처리방침(mathgamearchive_윤현준)_260711.pdf`
+- 메인 `index.html`에 방침 링크(크롤러용) 포함
+- 배포: `.github/workflows/deploy.yml`이 `public/privacy`를 `dist/privacy`로 복사
+
+### 도름스 신청 시
+
+1. [dorms.school](https://dorms.school) 로그인 → 앱에서 마크 신청  
+2. SPA 방침 미탐지 시: `apps/main/.dorms-check/evidence/report.json` 을 **「dorms-check 결과 올리기」**에 업로드  
+3. 최종 마크는 도름스 서버 재검사 결과로 발급 (이 도구 통과 ≠ 마크 보장)
 
 ---
 
@@ -435,9 +453,8 @@ npx -y github:shinnanchanguk/dorms-check submit   # → .dorms-check/evidence/re
 
 - `npx -y github:shinnanchanguk/dorms-check` 로 `security,edzip` 트랙 점검 (`apps/main`)
 - 코드·방침 기준 edzip 9항목 judge **pass** (방침 내용은 이미 있음)
-- 초기 스캔: 보안 헤더 없음(GitHub Pages), SPA로 `legal.privacy-policy` 미탐지 → 마크 미충족
-- Cloudflare에 `mathgame.kr` 연결, 호스팅케이알 네임서버 → Cloudflare로 교체, Active 확인
-- Transform Rules로 보안 헤더 5종 배포. Cloudflare IP 경로에서는 헤더 확인됨
-- 당시 로컬/일부 DNS는 아직 `185.199.*`(GitHub)라 dorms-check 재스캔이 헤더를 못 봄 → **DNS 전파 후 재스캔** 필요
-- 증빙: `apps/main/.dorms-check/evidence/report.json` (도름스 신청 시 업로드 가능)
-- 남은 이슈: DNS 전파 후 헤더 재검, SPA 방침 크롤 대응(정적 `/privacy` 또는 report.json)
+- Cloudflare 연결 + Transform Rules 보안 헤더 5종 → 재스캔 **보안 100/100**, 헤더 항목 통과
+- `edzipCase: A` (학생 개인정보·학습 콘텐츠 미취급, 교사 확인)
+- **정적 방침**: `public/privacy/index.html` 추가 + deploy에 `privacy`/`sorce` 복사
+- 증빙: `apps/main/.dorms-check/evidence/report.json`
+- **다음**: `main` 푸시로 Pages 배포 후 `dorms-check scan` 재실행 → 통과 시 submit → 도름스에 `report.json` 업로드

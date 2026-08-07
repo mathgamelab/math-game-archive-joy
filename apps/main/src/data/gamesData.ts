@@ -110,8 +110,8 @@ export const gamesData: Record<string, GameData[]> = {
     },
     {
       id: 'factor-ninja',
-      title: 'Factor Ninja',
-      description: `🎮게임명 : Factor Ninja
+      title: '소인수분해 닌자',
+      description: `🎮게임명 : 소인수분해 닌자
 📘 교과명 : 중학교 1학년/수와 연산
 📂 내용범주 : 소인수분해
 📌 내용요소 : 소수, 합성수, 인수분해, 소인수분해
@@ -131,12 +131,13 @@ export const gamesData: Record<string, GameData[]> = {
       type: '액션 게임',
       summary: '과일 숫자 닌자! 합성수는 슬래시로 쪼개고 소수는 탭으로 터뜨리며 소인수분해를 익히는 타임어택 게임',
       url: '/factor_ninja.html',
-      mobile: '지원'
+      mobile: '지원',
+      clayIcon: '/images/clay/games/factor-ninja.png'
     },
     {
       id: 'factor-slash',
-      title: 'Factor Slash',
-      description: `🎮게임명 : Factor Slash
+      title: '소인수분해 슬러시',
+      description: `🎮게임명 : 소인수분해 슬러시
 📘 교과명 : 중학교 1학년/수와 연산
 📂 내용범주 : 소인수분해
 📌 내용요소 : 소수, 합성수, 소인수분해, 인수쌍
@@ -154,9 +155,10 @@ export const gamesData: Record<string, GameData[]> = {
       terms: '소수, 합성수, 약수, 소인수분해',
       standard: '9수01-01',
       type: '액션 게임',
-      summary: '두 자리 수를 슬래시로 쪼개 소수만 남을 때까지 분해하는 소인수분해 액션 게임',
+      summary: '수를 슬래시로 쪼개 소수만 남을 때까지 분해하는 소인수분해 액션 게임 (후반 200까지)',
       url: '/factor_slash.html',
-      mobile: '지원'
+      mobile: '지원',
+      clayIcon: '/images/clay/games/factor-slash.png'
     },
     {
       id: 'shape-scanner',

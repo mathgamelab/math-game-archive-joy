@@ -155,7 +155,7 @@ export const gamesData: Record<string, GameData[]> = {
       terms: '소수, 합성수, 약수, 소인수분해',
       standard: '9수01-01',
       type: '액션 게임',
-      summary: '수를 슬래시로 쪼개 소수만 남을 때까지 분해하는 소인수분해 액션 게임 (후반 200까지)',
+      summary: '수를 슬래시로 쪼개 소수만 남을 때까지 분해하는 소인수분해 액션 게임',
       url: '/factor_slash.html',
       mobile: '지원',
       clayIcon: '/images/clay/games/factor-slash.png'

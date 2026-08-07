@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Factor Slash - 인수분해 슬래시</title>
+<title>소인수분해 슬러시</title>
 <style>
 /* ===== Factor Ninja와 동일 셸 (학교망/오프라인 대응) ===== */
 * { margin:0; padding:0; box-sizing:border-box;
@@ -121,7 +121,7 @@ button:active { transform:scale(.97); }
     </div>
     <div class="hud-card" style="text-align:center">
       <span class="hud-label">Time Left</span>
-      <span id="timeValue">01:30</span>
+      <span id="timeValue">01:00</span>
     </div>
     <div class="hud-right">
       <button id="pauseBtn" aria-label="일시 정지">❚❚</button>
@@ -132,8 +132,8 @@ button:active { transform:scale(.97); }
   <div class="screen show" id="startScreen">
     <div class="card">
       <span class="eyebrow cyan">수학 캐주얼 액션</span>
-      <h1>Factor Slash</h1>
-      <p class="sub">두 자리 수를 소수만 남을 때까지 쪼개세요</p>
+      <h1>소인수분해 슬러시</h1>
+      <p class="sub">수를 소수만 남을 때까지 쪼개세요 · 후반엔 200까지!</p>
 
       <div class="rules">
         <div class="rule">
@@ -153,7 +153,7 @@ button:active { transform:scale(.97); }
         </div>
       </div>
 
-      <button id="startBtn" class="btn-primary">게임 시작 (1분 30초)</button>
+      <button id="startBtn" class="btn-primary">게임 시작 (1분)</button>
     </div>
   </div>
 
@@ -190,7 +190,10 @@ button:active { transform:scale(.97); }
    설정 — 수업 상황에 맞춰 이 값만 바꾸면 됩니다
    ══════════════════════════════════════════════════ */
 const CONFIG = {
-  GAME_TIME:            90,      // 제한시간(초)
+  GAME_TIME:            60,      // 제한시간(초)
+  LATE_PHASE_TIME:      30,      // 이 시간 이하부터 큰 수 등장
+  LATE_MAX_VALUE:       200,     // 후반 최대 수
+  EARLY_MAX_VALUE:      99,      // 전반 최대 수
   MODE:                 'SMALLEST', // 'SMALLEST' = 가장 작은 소인수부터 / 'RANDOM' = 임의의 인수쌍
   COLOR_HINT:           true,    // false로 두면 소수·합성수 색이 같아져 판별 훈련 모드가 됩니다
   SPAWN_INTERVAL:       1.0,     // 새 숫자 등장 간격(초)
@@ -237,10 +240,12 @@ const splitValue = n => {
    숫자의 크기 구간이 색상(계열)을 정하고,
    같은 구간 안에서 소수는 아주 살짝 밝은 톤으로만 구분됩니다. */
 const BANDS = [
-  { max: 25,  h: 214, s: 88, label: '1–25'  },   // 파랑
-  { max: 50,  h: 158, s: 66, label: '26–50' },   // 청록
-  { max: 75,  h: 274, s: 70, label: '51–75' },   // 보라
-  { max: 100, h: 34,  s: 90, label: '76–99' }    // 주황
+  { max: 25,  h: 214, s: 88, label: '1–25'   },  // 파랑
+  { max: 50,  h: 158, s: 66, label: '26–50'  },  // 청록
+  { max: 75,  h: 274, s: 70, label: '51–75'  },  // 보라
+  { max: 100, h: 34,  s: 90, label: '76–99'  },  // 주황
+  { max: 150, h: 350, s: 72, label: '100–150'},  // 분홍
+  { max: 200, h: 18,  s: 82, label: '151–200'}   // 빨강
 ];
 const bandOf = v => BANDS.find(b => v <= b.max) || BANDS[BANDS.length - 1];
 
@@ -278,7 +283,9 @@ window.addEventListener('orientationchange', () => setTimeout(resize, 120));
 
 const radiusFor = v => {
   const base = Math.max(26, Math.min(46, UNIT * 0.062));
-  return v < 10 ? base * 0.80 : base;
+  if (v < 10) return base * 0.80;
+  if (v >= 100) return base * 1.12;
+  return base;
 };
 
 /* ══════════════ 상태 ══════════════ */
@@ -310,12 +317,14 @@ function makeBubble(value, x, y, vx, vy, rootId) {
 
 function spawnBubble() {
   const wantPrime = Math.random() < CONFIG.PRIME_RATIO;
+  const maxVal = timeLeft <= CONFIG.LATE_PHASE_TIME ? CONFIG.LATE_MAX_VALUE : CONFIG.EARLY_MAX_VALUE;
+  const span = maxVal - 9; // 10 ~ maxVal
   let v;
   let guard = 0;
   do {
-    v = 10 + ((Math.random() * 90) | 0);
+    v = 10 + ((Math.random() * span) | 0);
     guard++;
-  } while (isPrime(v) !== wantPrime && guard < 60);
+  } while (isPrime(v) !== wantPrime && guard < 80);
 
   const r = radiusFor(v);
   const speed = CONFIG.BASE_SPEED * (1 + CONFIG.SPEED_GROWTH * Math.floor(elapsed / CONFIG.DIFFICULTY_STEP));

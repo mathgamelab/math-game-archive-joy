@@ -283,11 +283,16 @@ function fruitBurstColor(value) {
 }
 
 /* ---------- 개체 ---------- */
+function fruitScale() {
+    // 스마트폰에서는 과일·숫자 크기를 70%로
+    return width <= 520 ? 0.7 : 1;
+}
 function Bubble(x, y, value, vx, vy, child) {
     this.x = x; this.y = y; this.prevX = x; this.prevY = y;
     this.value = value; this.isPrime = isPrime(value);
     this.fruit = fruitFor(value);
-    this.radius = Math.max(32, Math.min(52, 28 + Math.log(value) / Math.log(2) * 3.8));
+    var baseR = Math.max(32, Math.min(52, 28 + Math.log(value) / Math.log(2) * 3.8));
+    this.radius = baseR * fruitScale();
     this.vx = vx * SPEED_SCALE; this.vy = vy * SPEED_SCALE;
     this.gravity = 400 * SPEED_SCALE;
     this.spawnGrace = child ? 0.2 : 0;
@@ -312,7 +317,7 @@ Bubble.prototype.draw = function (c) {
     c.fillText(this.fruit, 0, 1);
     c.shadowBlur = 0; c.shadowOffsetY = 0;
     // 과일 한가운데 큰 숫자 (윤곽선으로 가독성)
-    var fs = Math.max(26, Math.floor(this.radius * 1.15));
+    var fs = Math.max(Math.round(26 * fruitScale()), Math.floor(this.radius * 1.15));
     var label = String(this.value);
     c.font = '900 ' + fs + 'px Pretendard,Apple SD Gothic Neo,sans-serif';
     c.lineJoin = 'round';

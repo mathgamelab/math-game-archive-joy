@@ -176,7 +176,7 @@ Error generating stack: `+i.message+`
 🎯 성취기준 :
 [9수01-01] 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다.
 📚 학습 유형 : 액션 분해 게임
-🔥 난이도 : ★★☆☆☆`,icon:"✂️",status:"playable",difficulty:"초급",estimatedTime:"10분",category:"수와 연산",content:"소인수분해",terms:"소수, 합성수, 약수, 소인수분해",standard:"9수01-01",type:"액션 게임",summary:"수를 슬래시로 쪼개 소수만 남을 때까지 분해하는 소인수분해 액션 게임 (후반 200까지)",url:"/factor_slash.html",mobile:"지원",clayIcon:"/images/clay/games/factor-slash.png"},{id:"shape-scanner",title:"도형 탐지기",description:`🎮게임명 : 도형 탐지기
+🔥 난이도 : ★★☆☆☆`,icon:"✂️",status:"playable",difficulty:"초급",estimatedTime:"10분",category:"수와 연산",content:"소인수분해",terms:"소수, 합성수, 약수, 소인수분해",standard:"9수01-01",type:"액션 게임",summary:"수를 슬래시로 쪼개 소수만 남을 때까지 분해하는 소인수분해 액션 게임",url:"/factor_slash.html",mobile:"지원",clayIcon:"/images/clay/games/factor-slash.png"},{id:"shape-scanner",title:"도형 탐지기",description:`🎮게임명 : 도형 탐지기
 📘 교과명 : 중학교 1학년/기하
 📂 내용범주 : 입체도형
 📌 내용요소 : 입체도형의 단면, 입체도형의 인식

@@ -109,6 +109,56 @@ export const gamesData: Record<string, GameData[]> = {
       mobile: '지원'
     },
     {
+      id: 'factor-ninja',
+      title: 'Factor Ninja',
+      description: `🎮게임명 : Factor Ninja
+📘 교과명 : 중학교 1학년/수와 연산
+📂 내용범주 : 소인수분해
+📌 내용요소 : 소수, 합성수, 인수분해, 소인수분해
+✏️ 학습 가능 용어 : 소수, 합성수, 약수, 인수, 소인수분해
+🎯 성취기준 :
+[9수01-01] 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다.
+📚 학습 유형 : 액션 타임어택 게임
+🔥 난이도 : ★★☆☆☆`,
+      icon: '🥷',
+      status: 'playable',
+      difficulty: '초급',
+      estimatedTime: '10분',
+      category: '수와 연산',
+      content: '소인수분해',
+      terms: '소수, 합성수, 약수, 소인수분해',
+      standard: '9수01-01',
+      type: '액션 게임',
+      summary: '과일 숫자 닌자! 합성수는 슬래시로 쪼개고 소수는 탭으로 터뜨리며 소인수분해를 익히는 타임어택 게임',
+      url: '/factor_ninja.html',
+      mobile: '지원'
+    },
+    {
+      id: 'factor-slash',
+      title: 'Factor Slash',
+      description: `🎮게임명 : Factor Slash
+📘 교과명 : 중학교 1학년/수와 연산
+📂 내용범주 : 소인수분해
+📌 내용요소 : 소수, 합성수, 소인수분해, 인수쌍
+✏️ 학습 가능 용어 : 소수, 합성수, 약수, 인수, 소인수분해
+🎯 성취기준 :
+[9수01-01] 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다.
+📚 학습 유형 : 액션 분해 게임
+🔥 난이도 : ★★☆☆☆`,
+      icon: '✂️',
+      status: 'playable',
+      difficulty: '초급',
+      estimatedTime: '10분',
+      category: '수와 연산',
+      content: '소인수분해',
+      terms: '소수, 합성수, 약수, 소인수분해',
+      standard: '9수01-01',
+      type: '액션 게임',
+      summary: '두 자리 수를 슬래시로 쪼개 소수만 남을 때까지 분해하는 소인수분해 액션 게임',
+      url: '/factor_slash.html',
+      mobile: '지원'
+    },
+    {
       id: 'shape-scanner',
       title: '도형 탐지기',
       description: `🎮게임명 : 도형 탐지기

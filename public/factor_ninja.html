@@ -144,7 +144,7 @@ button:active { transform:scale(.97); }
       <div class="rule">
         <div class="icon rose">⚠️</div>
         <div><p class="t rose">패널티</p>
-        <p class="note">조작 실수 <b>−10초</b>, 과일을 놓쳐 떨어뜨리면 <b>−1초</b>.</p></div>
+        <p class="note">조작 실수 <b>−5초</b>, 과일을 놓쳐 떨어뜨리면 <b>−1초</b>.</p></div>
       </div>
     </div>
 
@@ -284,8 +284,12 @@ function fruitBurstColor(value) {
 
 /* ---------- 개체 ---------- */
 function fruitScale() {
-    // 스마트폰에서는 과일·숫자 크기를 70%로
-    return width <= 520 ? 0.7 : 1;
+    // 스마트폰에서는 과일·숫자 크기를 60%로
+    return width <= 520 ? 0.6 : 1;
+}
+function gravityScale() {
+    // 스마트폰은 세로가 길어 낙하 가속이 과해지므로 중력을 낮춤
+    return width <= 520 ? 0.55 : 1;
 }
 function Bubble(x, y, value, vx, vy, child) {
     this.x = x; this.y = y; this.prevX = x; this.prevY = y;
@@ -294,7 +298,7 @@ function Bubble(x, y, value, vx, vy, child) {
     var baseR = Math.max(32, Math.min(52, 28 + Math.log(value) / Math.log(2) * 3.8));
     this.radius = baseR * fruitScale();
     this.vx = vx * SPEED_SCALE; this.vy = vy * SPEED_SCALE;
-    this.gravity = 400 * SPEED_SCALE;
+    this.gravity = 400 * SPEED_SCALE * gravityScale();
     this.spawnGrace = child ? 0.2 : 0;
     this.dead = false; this.missed = false;
 }
@@ -302,6 +306,8 @@ Bubble.prototype.update = function (dt) {
     if (this.spawnGrace > 0) this.spawnGrace -= dt;
     this.prevX = this.x; this.prevY = this.y;
     this.x += this.vx * dt; this.y += this.vy * dt; this.vy += this.gravity * dt;
+    // 스마트폰: 하단에서 과도하게 빨라지지 않도록 낙하 속도 상한
+    if (width <= 520 && this.vy > 480) this.vy = 480;
     if (this.x - this.radius < 0) { this.x = this.radius; this.vx *= -0.7; }
     else if (this.x + this.radius > width) { this.x = width - this.radius; this.vx *= -0.7; }
     if (this.y - this.radius > height + 30) { this.missed = true; }
@@ -385,8 +391,9 @@ function spawnBubble() {
     var x = Math.random() * (width - 120) + 60, y = height + 40, val;
     if (Math.random() < 0.4) val = PRIMES[Math.floor(Math.random() * PRIMES.length)];
     else { do { val = Math.floor(Math.random() * 88) + 10; } while (isPrime(val)); }
+    var launch = height * (width <= 520 ? 0.58 : 0.82);
     var vx = (width / 2 - x) * 0.35 + (Math.random() - 0.5) * 120;
-    var vy = -(Math.random() * 120 + height * 0.82);
+    var vy = -(Math.random() * 120 + launch);
     bubbles.push(new Bubble(x, y, val, vx, vy, false));
 }
 function explode(x, y, color, count) {
@@ -406,7 +413,7 @@ function note(x, y, text, kind) {
     setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 800);
 }
 function penalty(x, y, sec) {
-    var loss = (sec == null) ? 10 : sec;
+    var loss = (sec == null) ? 5 : sec;
     totalTimeLeft = Math.max(0, totalTimeLeft - loss);
     playPenalty(); vibrate(60);
     note(x || width / 2, y || height / 2, '-' + loss + '초', 'penalty');

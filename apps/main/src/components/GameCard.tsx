@@ -52,6 +52,7 @@ const CLAY_ICONS: Record<string, string> = {
   set_master: '/images/clay/games/set_master.png',
   'binary-number-quiz': '/images/clay/games/binary-number-quiz.png',
   'topology-simulator': '/images/clay/games/topology-simulator.png',
+  'exploring-polyhedra': '/images/clay/games/exploring-polyhedra.png',
   'factor-ninja': '/images/clay/games/factor-ninja.png',
   'factor-slash': '/images/clay/games/factor-slash.png',
 };

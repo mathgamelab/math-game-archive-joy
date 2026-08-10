@@ -580,6 +580,27 @@ export const gamesData: Record<string, GameData[]> = {
       summary: '뫼비우스의 띠·클라인 병 등 위상 공간을 돌려보며 탐구하는 3D 시뮬레이터',
       mobile: '지원',
       clayIcon: '/images/clay/games/topology-simulator.png'
+    },
+    {
+      id: 'exploring-polyhedra',
+      title: '다면체 공작소',
+      description: `🎮게임명 : 다면체 공작소
+📘 교과명 : 수학 체험
+📂 내용범주 : 기하·입체도형
+📌 내용요소 : 전개도와 입체, 정다면체·아르키메데스·마름모다면체, 면·모서리·꼭짓점
+✏️ 학습 가능 용어 : 전개도, 다면체, 정다면체, 아르키메데스 다면체, 오일러 지표
+🎯 성취기준 : 전개도를 접어 입체를 만들고, 면을 붙여 다면체를 탐구하며 면·모서리·꼭짓점의 관계를 이해한다.
+📚 학습 유형 : 수학 체험 시뮬레이터
+🔥 난이도 : ★★★☆☆`,
+      icon: '🔷',
+      status: 'playable',
+      difficulty: '중급',
+      estimatedTime: '15분',
+      url: '/exploring_polyhedra.html',
+      type: '수학 체험 시뮬레이터',
+      summary: '전개도를 접어 입체를 보고, 면을 한 장씩 붙여 다면체를 만드는 3D 공작소',
+      mobile: '지원',
+      clayIcon: '/images/clay/games/exploring-polyhedra.png'
     }
   ],
   'class-management': [],

@@ -105,7 +105,14 @@
     display:grid;place-items:center;cursor:pointer;font-family:inherit;backdrop-filter:blur(8px);
   }
   .panel-toggle svg{width:18px;height:18px;transition:transform .2s}
-  #panel.collapsed:not(.build-open) .menu-stack{display:none}
+  /* 접힌 메뉴: 보기=접기 슬라이더만, 만들기=도형 칩만 (모드 버튼 위에 유지) */
+  #panel.collapsed:not(.build-open) .chips,
+  #panel.collapsed:not(.build-open) .tabs,
+  #panel.collapsed:not(.build-open) #foldbar .facts,
+  #panel.collapsed:not(.build-open) #foldbar .legend,
+  #panel.collapsed:not(.build-open) #foldbar .row{display:none}
+  #panel.collapsed:not(.build-open) #foldbar .legend{min-height:0;margin:0}
+  #panel.collapsed:not(.build-open) #foldbar{padding:8px 10px}
   #panel.collapsed.build-open .chips,
   #panel.collapsed.build-open .tabs,
   #panel.collapsed.build-open #foldbar{display:none!important}
@@ -142,7 +149,12 @@
            padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px));overflow-y:auto;
            background:linear-gradient(90deg,rgba(var(--bg-rgb),0),rgba(var(--bg-rgb),.94) 14%)}
     #panel::-webkit-scrollbar{display:none}
-    #panel.collapsed:not(.build-open) .menu-stack{display:flex}
+    #panel.collapsed:not(.build-open) .chips,
+    #panel.collapsed:not(.build-open) .tabs{display:flex}
+    #panel.collapsed:not(.build-open) #foldbar .facts{display:flex}
+    #panel.collapsed:not(.build-open) #foldbar .legend{display:flex;min-height:calc(2 * 28px + 6px);margin-top:8px}
+    #panel.collapsed:not(.build-open) #foldbar .row{display:flex}
+    #panel.collapsed:not(.build-open) #foldbar{padding:10px 14px 12px}
     #panel.collapsed.build-open .chips,
     #panel.collapsed.build-open .tabs,
     #panel.collapsed.build-open #foldbar{display:revert!important}
@@ -219,23 +231,21 @@
 
 <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="sheetcard">
-    <h2 id="sheetTitle">이 앱에 대하여</h2>
-    <p>슬라이더를 움직이면 전개도가 입체로 접힙니다. 면은 종이처럼 <strong>모서리에서만 회전</strong>하므로 접히는 동안에도 면의 모양과 크기는 변하지 않습니다.</p>
-    <p>전개도는 "가장 가파른 모서리 자르기"로 자동 생성했고, 24개 입체 모두 <strong>면이 하나도 겹치지 않는</strong> 전개도가 되도록 절단 방향을 골랐습니다. 실제로 인쇄해 오려 붙일 수 있습니다.</p>
+    <h2 id="sheetTitle">어떻게 쓰나요?</h2>
+    <p>아래 슬라이더를 움직이면 <strong>전개도</strong>(펼친 모양)와 <strong>입체</strong>를 오가며 볼 수 있어요. 화면을 끌면 돌려 볼 수 있고, 아래 색 범례를 누르면 <strong>같은 모양의 면만</strong> 골라 볼 수 있어요.</p>
 
-    <h3>만들기 모드</h3>
-    <p>입체를 고른 뒤 아래 <strong>입체도형 만들기</strong> 버튼을 누르면 시작합니다. 붙일 도형을 선택하고 <strong>노랗게 빛나는 모서리</strong>를 누르면 그 모서리에 면이 한 장씩 접혀 붙습니다. 화면을 끌면 돌려볼 수 있고, 모서리를 톡 누르면 면이 붙습니다.</p>
-    <p>완성하면 V−E+F=2를 확인해 주고, 꼭짓점마다 모자란 각(360°−면들의 각의 합)을 모두 더한 값도 보여줍니다. 어떤 볼록다면체든 이 값은 늘 720°입니다.</p>
+    <h3>입체도형 만들기</h3>
+    <p>입체를 고른 뒤 <strong>입체도형 만들기</strong>를 누르면, 면을 한 장씩 붙여 가며 만들 수 있어요. 붙일 도형을 고르고 <strong>노랗게 빛나는 모서리</strong>를 누르면 그 자리에 면이 붙습니다.</p>
+    <p>다 만들고 나면 면·모서리·꼭짓점 개수로 <strong>꼭짓점 − 모서리 + 면 = 2</strong>인지 확인해 볼 수 있어요. (볼록다면체에서는 언제나 성립합니다.)</p>
 
     <h3>한 종류의 마름모만으로 132면체를 만들 수 있을까?</h3>
-    <p><strong>만들 수 없습니다.</strong> 합동인 마름모 하나만으로 만들 수 있는 볼록다면체는 면이 최대 <strong>30개</strong>입니다.</p>
-    <ol>
-      <li>마름모는 점대칭 도형입니다. 모든 면이 점대칭인 볼록다면체는 반드시 조노헤드론(zonohedron), 즉 <em>n</em>개의 생성벡터로 만드는 입체가 됩니다.</li>
-      <li>조노헤드론의 면 개수는 <em>n</em>(<em>n</em>−1)이므로 132면 = 12×11 → 생성벡터 12개.</li>
-      <li>모든 면이 합동이려면 12개 벡터가 어느 둘을 골라도 같은 각을 이뤄야 합니다(등각직선).</li>
-      <li>3차원에서 등각직선은 최대 <strong>6개</strong>(정이십면체의 5회 대칭축)뿐 → 면은 6×5=30개가 한계.</li>
-    </ol>
-    <p>마름모 탭에서 12·20·30면체는 색이 하나(합동인 마름모 한 종류), 90면체는 두 종류, 132면체는 세 종류인 것을 확인해 보세요.</p>
+    <p><strong>만들 수 없어요.</strong> 같은 마름모만 쓰면, 볼록한 입체는 면이 최대 <strong>30개</strong>까지예요.</p>
+    <p>그래서 132면체를 만들려면 <strong>각도가 다른 마름모가 여러 종류</strong> 필요해요. 마름모 탭에서 색을 비교해 보세요.</p>
+    <ul>
+      <li>12·20·30면체 → 색이 하나 (같은 마름모만 사용)</li>
+      <li>90면체 → 색이 두 가지</li>
+      <li>132면체 → 색이 세 가지</li>
+    </ul>
     <button class="close" id="closeSheet">닫기</button>
   </div>
 </div>
@@ -299,12 +309,12 @@ function zonohedron(gensRaw){
 }
 
 const RHOMBIC=[
-  {l:'12면체', n:'마름모 12면체', gens:CUBE,            note:'생성벡터 4개 · 4×3'},
-  {l:'20면체', n:'마름모 20면체', gens:ICO.slice(0,5),  note:'생성벡터 5개 · 5×4'},
-  {l:'30면체', n:'마름모 30면체', gens:ICO,             note:'생성벡터 6개 · 6×5'},
-  {l:'90면체', n:'마름모 90면체', gens:DOD,             note:'생성벡터 10개 · 10×9'},
-  {l:'132면체 T', n:'마름모 132면체 (T형)', gens:twelve(1+Math.SQRT2), note:'생성벡터 12개 · 12×11', dir:[-0.039628,0.735606,-0.676249]},
-  {l:'132면체 C', n:'마름모 132면체 (C형)', gens:twelve(Math.SQRT2-1), note:'생성벡터 12개 · 12×11'}
+  {l:'12면체', n:'마름모 12면체', gens:CUBE,            note:'같은 마름모 12장'},
+  {l:'20면체', n:'마름모 20면체', gens:ICO.slice(0,5),  note:'같은 마름모 20장'},
+  {l:'30면체', n:'마름모 30면체', gens:ICO,             note:'같은 마름모 30장'},
+  {l:'90면체', n:'마름모 90면체', gens:DOD,             note:'마름모 2종류 · 90면'},
+  {l:'132면체 T', n:'마름모 132면체 (T형)', gens:twelve(1+Math.SQRT2), note:'마름모 3종류 · 132면', dir:[-0.039628,0.735606,-0.676249]},
+  {l:'132면체 C', n:'마름모 132면체 (C형)', gens:twelve(Math.SQRT2-1), note:'마름모 3종류 · 132면'}
 ];
 const RDIR=V.norm([0.0805,0.6630,0.7443]);
 
@@ -804,7 +814,7 @@ function vertexConfig(P){
   return around.join('·');
 }
 function showInfo(M,P,edges,labels,colors,counts){
-  el('title').textContent=M.name+' 접기';
+  el('title').textContent=M.name;
   el('eyebrow').textContent = M.cat==='r' ? M.note : '꼭짓점 배열 '+vertexConfig(P);
   el('f-f').textContent=P.faces.length; el('f-e').textContent=edges.length; el('f-v').textContent=P.verts.length;
   const lg=el('legend'); lg.innerHTML='';

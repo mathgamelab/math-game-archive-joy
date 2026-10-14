@@ -71,11 +71,31 @@ const sanitizeFormData = (data: FormData): FormData => ({
 
 const loadDraft = (): { currentStep: number; formData: FormData } => {
   try {
-    clearEduGameStorage();
-    return { currentStep: 1, formData: createInitialFormData() };
+    const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!saved) return { currentStep: 1, formData: createInitialFormData() };
+
+    const parsed = JSON.parse(saved) as {
+      currentStep?: unknown;
+      formData?: Partial<FormData>;
+    };
+    const step = typeof parsed.currentStep === 'number'
+      ? Math.min(6, Math.max(1, Math.floor(parsed.currentStep)))
+      : 1;
+
+    return {
+      currentStep: step,
+      formData: sanitizeFormData({
+        ...createInitialFormData(),
+        ...(parsed.formData || {}),
+        structuredData: {
+          ...createInitialFormData().structuredData,
+          ...(parsed.formData?.structuredData || {}),
+        },
+      } as FormData),
+    };
   } catch {
     try {
-      clearEduGameStorage();
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
     } catch {
       // 저장소 접근이 차단된 환경에서는 메모리 상태로 계속 진행합니다.
     }

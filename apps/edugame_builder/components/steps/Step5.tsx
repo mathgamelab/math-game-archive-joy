@@ -16,7 +16,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
     <div className="space-y-8 animate-in">
       <div className="text-center space-y-4 mb-10">
         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">게임 세부 사항 <span className="text-purple-600">(Details)</span></h2>
-        <p className="text-slate-600 text-lg">오른쪽의 게임 로직, 학습 흐름, UI 에셋, 기술 규칙을 꼼꼼히 다듬어주세요. 이 내용이 Step6의 1차/2차(고급은 3차까지) 프롬프트에 핵심 근거로 반영됩니다.</p>
+        <p className="text-slate-600 text-lg">게임 로직, 학습 흐름, UI 에셋, 기술 규칙을 확인하세요. 1차 프롬프트만으로 완성형 게임을 만들고, 2차는 선택적인 품질 개선에 사용합니다.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[600px]">
@@ -61,7 +61,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
               핵심 로직 및 보상 체계 (Game Logic)
             </div>
             <textarea 
-              className="min-h-40 p-6 focus:outline-none resize-none text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
+              className="min-h-40 p-6 focus:outline-none resize-y text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
               value={formData.structuredData.gameLogic}
               onChange={(e) => updateField('structuredData.gameLogic', e.target.value)}
               placeholder="게임의 핵심 로직, 점수 계산 방식, 보상 체계 등을 기술적으로 구체화해주세요.&#10;&#10;예시:&#10;- 정답 시 +10점, 오답 시 -5점&#10;- 연속 정답 시 보너스 점수 2배&#10;- 게임 오버 조건: 시간 초과 또는 오답 3회"
@@ -70,7 +70,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
               학습 흐름 및 단계 구성 (Learning Flow)
             </div>
             <textarea
-              className="min-h-36 p-6 focus:outline-none resize-none text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
+              className="min-h-36 p-6 focus:outline-none resize-y text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
               value={formData.structuredData.learningFlow}
               onChange={(e) => updateField('structuredData.learningFlow', e.target.value)}
               placeholder="학습 목표를 달성하기 위한 단계, 문제 난이도 흐름, 피드백 방식을 작성해주세요."
@@ -79,7 +79,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
               UI 에셋 및 시각화 계획 (UI Assets)
             </div>
             <textarea 
-              className="h-48 p-6 focus:outline-none resize-none text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
+              className="min-h-48 p-6 focus:outline-none resize-y text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
               value={formData.structuredData.uiAssets}
               onChange={(e) => updateField('structuredData.uiAssets', e.target.value)}
               placeholder="게임의 UI 구성, 시각적 요소, 애니메이션 등을 구체적으로 설명해주세요.&#10;&#10;예시:&#10;- 게임형 대시보드: 점수, 시간, 진행률 표시&#10;- 성취도 시각화: 별 3개 시스템&#10;- 문제 카드: 카드 뒤집기 애니메이션"
@@ -88,7 +88,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
               기술 규칙 및 제약 (Technical Rules)
             </div>
             <textarea
-              className="min-h-32 p-6 focus:outline-none resize-none text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
+              className="min-h-32 p-6 focus:outline-none resize-y text-sm leading-relaxed custom-scrollbar placeholder:text-slate-400"
               value={formData.structuredData.rules}
               onChange={(e) => updateField('structuredData.rules', e.target.value)}
               placeholder="프레임워크, 데이터 관리, 반응형·접근성 등 반드시 지켜야 할 기술 규칙을 작성해주세요."
@@ -113,7 +113,7 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
-            초급자용 2단계 프롬프트 생성
+            기본형 프롬프트 생성
           </button>
           <button 
             onClick={() => {
@@ -128,12 +128,12 @@ const Step5: React.FC<Step5Props> = ({ formData, updateField, onNext }) => {
             <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
-            고급자용 3단계 프롬프트 생성
+            백엔드 포함 고급형 생성
           </button>
         </div>
         <p className="text-center text-sm text-slate-500 mt-4">
-          <span className="font-semibold text-purple-600">초급자용:</span> 1차(시스템/Level1) + 2차(보상강화/다음레벨) 프론트엔드 프롬프트 | 
-          <span className="font-semibold text-blue-600"> 고급자용:</span> 초급 1·2차 + 3차(백엔드 구성/연동) 프롬프트
+          <span className="font-semibold text-purple-600">기본형:</span> 1차 완성형 MVP + 2차 선택 개선 |
+          <span className="font-semibold text-blue-600"> 고급형:</span> 기본형 + 3차 선택 백엔드 저장·통계
         </p>
       </div>
     </div>

@@ -17,8 +17,14 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
   const [error, setError] = useState<string | null>(null);
 
   const normalizeIdea = (idea: Partial<GameIdea>): GameIdea | null => {
+    const category = idea.category === 'safe' || idea.category === 'immersive' || idea.category === 'experimental'
+      ? idea.category
+      : null;
     const title = typeof idea.title === 'string' ? stripMarkdownFormatting(idea.title) : '';
+    const gameConcept = typeof idea.gameConcept === 'string' ? stripMarkdownFormatting(idea.gameConcept) : '';
     const description = typeof idea.description === 'string' ? stripMarkdownFormatting(idea.description) : '';
+    const coreLoop = typeof idea.coreLoop === 'string' ? stripMarkdownFormatting(idea.coreLoop) : '';
+    const learningEvidence = typeof idea.learningEvidence === 'string' ? stripMarkdownFormatting(idea.learningEvidence) : '';
     const keyFeatures = Array.isArray(idea.keyFeatures)
       ? idea.keyFeatures
           .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
@@ -31,17 +37,36 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
           .map(stripMarkdownFormatting)
       : [];
     const classroomValue = typeof idea.classroomValue === 'string' ? stripMarkdownFormatting(idea.classroomValue) : '';
+    const rendering = idea.rendering === '2D' || idea.rendering === '2.5D' || idea.rendering === '3D'
+      ? idea.rendering
+      : '2D';
+    const complexity = idea.complexity === '낮음' || idea.complexity === '중간' || idea.complexity === '높음'
+      ? idea.complexity
+      : '중간';
+    const techApproach = typeof idea.techApproach === 'string' ? stripMarkdownFormatting(idea.techApproach) : '';
+    const risk = typeof idea.risk === 'string' ? stripMarkdownFormatting(idea.risk) : '';
+    const fallback = typeof idea.fallback === 'string' ? stripMarkdownFormatting(idea.fallback) : '';
 
-    if (!title || !description || keyFeatures.length === 0) {
+    if (!category || !title || !gameConcept || !description || !coreLoop || !learningEvidence || keyFeatures.length === 0
+      || !techApproach || !risk || !fallback) {
       return null;
     }
 
     return {
+      category,
       title,
+      gameConcept,
       description,
+      coreLoop,
+      learningEvidence,
       keyFeatures,
       curriculumAlignment,
-      classroomValue
+      classroomValue,
+      rendering,
+      techApproach,
+      complexity,
+      risk,
+      fallback,
     };
   };
 
@@ -56,7 +81,11 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
         const normalized = parsed
           .map((item) => normalizeIdea(item as Partial<GameIdea>))
           .filter((item): item is GameIdea => item !== null);
-        return normalized.length > 0 ? normalized : null;
+        const hasRequiredCategories = normalized.length === 3
+          && normalized[0].category === 'safe'
+          && normalized[1].category === 'immersive'
+          && normalized[2].category === 'experimental';
+        return hasRequiredCategories ? normalized : null;
       }
     } catch (e) {
       console.error('Failed to load saved ideas:', e);
@@ -158,7 +187,28 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
       : '';
 
     // 선택한 아이디어를 gameConcept에 저장
-    const gameConceptText = `${selectedIdea.title}\n\n${selectedIdea.description}\n\n주요 특징:\n${selectedIdea.keyFeatures.map(f => `- ${f}`).join('\n')}${curriculumBlock}${classroomValueBlock}`;
+    const gameConceptText = `${selectedIdea.title}
+
+${selectedIdea.gameConcept}
+
+요약:
+${selectedIdea.description}
+
+핵심 플레이 루프:
+${selectedIdea.coreLoop}
+
+학습 확인:
+${selectedIdea.learningEvidence}
+
+주요 특징:
+${selectedIdea.keyFeatures.map(f => `- ${f}`).join('\n')}
+
+구현 방식:
+- 표현: ${selectedIdea.rendering}
+- 기술: ${selectedIdea.techApproach}
+- 난이도: ${selectedIdea.complexity}
+- 위험: ${selectedIdea.risk}
+- 간소화 대안: ${selectedIdea.fallback}${curriculumBlock}${classroomValueBlock}`;
     updateField('gameConcept', gameConceptText);
   };
 
@@ -199,6 +249,12 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
     });
 
     return lines.length > 0 ? lines : [title];
+  };
+
+  const categoryLabel: Record<GameIdea['category'], string> = {
+    safe: '안전형',
+    immersive: '몰입형',
+    experimental: '실험형',
   };
 
   return (
@@ -253,17 +309,13 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
                   </div>
                 )}
 
-                {/* 아이콘 영역 */}
-                <div className="flex items-center justify-center mb-4">
-                  <div className={`
-                    w-20 h-20 rounded-full flex items-center justify-center text-4xl
-                    ${selectedIndex === index ? 'bg-blue-100' : 'bg-slate-100'}
-                    transition-colors
-                  `}>
-                    {index === 0 && '🎮'}
-                    {index === 1 && '⚡'}
-                    {index === 2 && '🌟'}
-                  </div>
+                <div className="mb-4 flex items-center justify-center gap-2">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                    {categoryLabel[idea.category]}
+                  </span>
+                  <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                    {idea.rendering} · {idea.complexity}
+                  </span>
                 </div>
 
                 {/* 제목 */}
@@ -275,10 +327,16 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
                   ))}
                 </h3>
 
-                {/* 설명 */}
-                <p className="text-sm text-slate-600 leading-relaxed mb-4 min-h-[64px]">
-                  {idea.description}
-                </p>
+                <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
+                  <h4 className="mb-1 text-[11px] font-bold uppercase tracking-wider text-blue-700">게임 컨셉</h4>
+                  <p className="text-sm leading-relaxed text-slate-700">{idea.gameConcept}</p>
+                </div>
+                <p className="mb-4 text-xs leading-relaxed text-slate-500">{idea.description}</p>
+
+                <div className="mb-4 rounded-xl bg-slate-50 p-3">
+                  <h4 className="mb-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">핵심 플레이</h4>
+                  <p className="text-sm leading-relaxed text-slate-700">{idea.coreLoop}</p>
+                </div>
 
                 {/* 주요 특징 */}
                 <div className="space-y-2 mb-4">
@@ -293,28 +351,29 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
                   </ul>
                 </div>
 
-                {/* 성취기준 반영 */}
-                {idea.curriculumAlignment.length > 0 && (
-                  <div className="space-y-2 mb-4">
-                    <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wider">성취기준 반영</h4>
-                    <ul className="space-y-1">
-                      {idea.curriculumAlignment.map((alignment, i) => (
-                        <li key={i} className="text-xs text-slate-700 flex items-start gap-2">
-                          <span className="text-emerald-500 mt-1">•</span>
-                          <span>{alignment}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                <div className="mb-4 space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">성취기준 반영</h4>
+                  <ul className="space-y-2">
+                    {idea.curriculumAlignment.map((alignment, i) => (
+                      <li key={i} className="text-xs leading-relaxed text-slate-700">• {alignment}</li>
+                    ))}
+                  </ul>
+                </div>
 
-                {/* 수업 활용 가치 */}
-                {idea.classroomValue && (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-                    <h4 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">수업 활용 가치</h4>
-                    <p className="text-xs text-slate-700 leading-relaxed">{idea.classroomValue}</p>
+                <details
+                  className="rounded-xl border border-slate-200 bg-white p-3"
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                >
+                  <summary className="cursor-pointer text-xs font-bold text-slate-600">학습·구현 상세 보기</summary>
+                  <div className="mt-3 space-y-3 text-xs leading-relaxed text-slate-700">
+                    <p><strong>학습 확인:</strong> {idea.learningEvidence}</p>
+                    <p><strong>기술:</strong> {idea.techApproach}</p>
+                    <p><strong>구현 위험:</strong> {idea.risk}</p>
+                    <p><strong>간소화 대안:</strong> {idea.fallback}</p>
+                    <p><strong>수업 활용:</strong> {idea.classroomValue}</p>
                   </div>
-                )}
+                </details>
               </div>
             ))}
           </div>

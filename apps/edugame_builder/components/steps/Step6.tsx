@@ -79,6 +79,7 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, onReset }) => {
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [copiedTarget, setCopiedTarget] = useState<'all' | '1' | '2' | '3' | null>(null);
+  const [activeSection, setActiveSection] = useState<'1' | '2' | '3'>('1');
   const [lastPromptLevel, setLastPromptLevel] = useState<string | undefined>(undefined);
   const requestIdRef = useRef(0);
 
@@ -122,12 +123,21 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, onReset }) => {
 
   const extractPromptSection = (sectionNumber: '1' | '2' | '3', fullText: string): string | null => {
     const headingRegex = new RegExp(
-      `##\\s*${sectionNumber}차 붙여넣기 프롬프트[\\s\\S]*?\\\`\\\`\\\`md\\n([\\s\\S]*?)\\n\\\`\\\`\\\``,
+      `##\\s*${sectionNumber}차[^\\n]*\\n\\\`\\\`\\\`md\\n([\\s\\S]*?)\\n\\\`\\\`\\\``,
       'm'
     );
     const match = fullText.match(headingRegex);
     const content = match?.[1]?.trim();
     return content && content.length > 0 ? content : null;
+  };
+
+  const replacePromptSection = (sectionNumber: '1' | '2' | '3', value: string) => {
+    const sectionRegex = new RegExp(
+      `(##\\s*${sectionNumber}차[^\\n]*\\n\\\`\\\`\\\`md\\n)([\\s\\S]*?)(\\n\\\`\\\`\\\`)`,
+      'm'
+    );
+    const nextPrompt = currentPrompt.replace(sectionRegex, (_match, start, _content, end) => `${start}${value}${end}`);
+    updateField('editedPrompt', nextPrompt);
   };
 
   const copyWithFeedback = async (text: string, target: 'all' | '1' | '2' | '3') => {
@@ -141,6 +151,7 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, onReset }) => {
   const prompt1 = extractPromptSection('1', currentPrompt);
   const prompt2 = extractPromptSection('2', currentPrompt);
   const prompt3 = extractPromptSection('3', currentPrompt);
+  const activePrompt = activeSection === '1' ? prompt1 : activeSection === '2' ? prompt2 : prompt3;
 
   return (
     <div className="space-y-8 animate-in pb-20">
@@ -148,10 +159,10 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, onReset }) => {
         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">최종 프롬프트 생성 <span className="text-green-600">(Result)</span></h2>
         <p className="text-slate-600 text-lg">
           {loading
-            ? 'Solar AI가 단계별 프롬프트를 생성 중입니다...'
+            ? 'Solar AI가 완성형 MVP 프롬프트를 정리 중입니다...'
             : error
               ? '기본 초안을 제공했습니다. 다시 생성하거나 직접 편집할 수 있습니다.'
-              : '1차 → 2차(고급은 3차) 순서대로 붙여넣어 사용하세요.'}
+              : '1차만으로 게임을 완성할 수 있습니다. 2차는 결과를 확인한 뒤 필요할 때만 사용하세요.'}
         </p>
       </div>
 
@@ -175,75 +186,80 @@ const Step6: React.FC<Step6Props> = ({ formData, updateField, onReset }) => {
               </div>
             </div>
           )}
-          <div className="rounded-2xl border-2 border-slate-400 bg-slate-900 text-slate-100 shadow-2xl overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 250px)', minHeight: '300px' }}>
-            <div className="flex justify-between items-center px-6 py-4 bg-slate-950 border-b-2 border-slate-700 flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-mono font-semibold text-slate-400">prompt.md</span>
-                <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">
-                  {isEditing ? '마크다운 편집' : '마크다운 미리보기'}
-                </span>
-              </div>
-              <div className="flex items-center justify-end gap-2 flex-wrap">
-                <button
-                  onClick={() => setIsEditing((editing) => !editing)}
-                  className="inline-flex h-8 items-center justify-center rounded-lg bg-slate-700 px-3 text-xs font-bold text-slate-100 transition-all hover:bg-slate-600"
-                >
-                  {isEditing ? '미리보기' : '편집'}
-                </button>
-                <button
-                  onClick={() => prompt1 && copyWithFeedback(prompt1, '1')}
-                  disabled={!prompt1}
-                  className="inline-flex items-center justify-center gap-1 rounded-lg text-xs font-bold transition-all bg-slate-700 hover:bg-slate-600 text-slate-100 h-8 px-3 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="1차 프롬프트만 복사"
-                >
-                  {copiedTarget === '1' ? <Icons.Check className="w-3 h-3" /> : <Icons.Copy className="w-3 h-3" />}
-                  {copiedTarget === '1' ? '1차 복사됨' : '1차만'}
-                </button>
-                <button
-                  onClick={() => prompt2 && copyWithFeedback(prompt2, '2')}
-                  disabled={!prompt2}
-                  className="inline-flex items-center justify-center gap-1 rounded-lg text-xs font-bold transition-all bg-slate-700 hover:bg-slate-600 text-slate-100 h-8 px-3 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="2차 프롬프트만 복사"
-                >
-                  {copiedTarget === '2' ? <Icons.Check className="w-3 h-3" /> : <Icons.Copy className="w-3 h-3" />}
-                  {copiedTarget === '2' ? '2차 복사됨' : '2차만'}
-                </button>
-                {prompt3 && (
+          <div className="overflow-hidden rounded-2xl border-2 border-slate-400 bg-slate-900 text-slate-100 shadow-2xl">
+            <div className="border-b border-slate-700 bg-slate-950 p-3 sm:px-6 sm:py-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap gap-2" role="tablist" aria-label="프롬프트 단계">
                   <button
-                    onClick={() => copyWithFeedback(prompt3, '3')}
-                    className="inline-flex items-center justify-center gap-1 rounded-lg text-xs font-bold transition-all bg-slate-700 hover:bg-slate-600 text-slate-100 h-8 px-3"
-                    title="3차 프롬프트만 복사"
+                    role="tab"
+                    aria-selected={activeSection === '1'}
+                    onClick={() => { setActiveSection('1'); setIsEditing(false); }}
+                    className={`rounded-lg px-3 py-2 text-xs font-bold ${activeSection === '1' ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-300'}`}
                   >
-                    {copiedTarget === '3' ? <Icons.Check className="w-3 h-3" /> : <Icons.Copy className="w-3 h-3" />}
-                    {copiedTarget === '3' ? '3차 복사됨' : '3차만'}
+                    1차 · 완성형 MVP
                   </button>
-                )}
-                <button 
-                  onClick={() => copyWithFeedback(currentPrompt, 'all')}
-                  disabled={!currentPrompt.trim()}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg text-base font-bold transition-all bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl h-10 px-6 transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
-                  title="전체 프롬프트 복사"
-                >
-                  {copiedTarget === 'all' ? <Icons.Check className="w-4 h-4" /> : <Icons.Copy className="w-4 h-4" />}
-                  {copiedTarget === 'all' ? '마크다운 복사 완료!' : '마크다운 전체 복사'}
-                </button>
+                  <button
+                    role="tab"
+                    aria-selected={activeSection === '2'}
+                    onClick={() => { setActiveSection('2'); setIsEditing(false); }}
+                    className={`rounded-lg px-3 py-2 text-xs font-bold ${activeSection === '2' ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-300'}`}
+                  >
+                    2차 · 선택 개선
+                  </button>
+                  {prompt3 && (
+                    <button
+                      role="tab"
+                      aria-selected={activeSection === '3'}
+                      onClick={() => { setActiveSection('3'); setIsEditing(false); }}
+                      className={`rounded-lg px-3 py-2 text-xs font-bold ${activeSection === '3' ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-300'}`}
+                    >
+                      3차 · 백엔드
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-slate-400">{activePrompt?.length.toLocaleString() || 0}자</span>
+                  <button
+                    onClick={() => setIsEditing((editing) => !editing)}
+                    disabled={!activePrompt}
+                    className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-700 px-3 text-xs font-bold text-slate-100 hover:bg-slate-600 disabled:opacity-40"
+                  >
+                    {isEditing ? '미리보기' : '직접 편집'}
+                  </button>
+                  <button
+                    onClick={() => activePrompt && copyWithFeedback(activePrompt, activeSection)}
+                    disabled={!activePrompt}
+                    className="inline-flex h-9 items-center justify-center gap-1 rounded-lg bg-green-600 px-4 text-xs font-bold text-white hover:bg-green-700 disabled:opacity-40"
+                  >
+                    {copiedTarget === activeSection ? <Icons.Check className="h-4 w-4" /> : <Icons.Copy className="h-4 w-4" />}
+                    {copiedTarget === activeSection ? '복사됨' : '현재 프롬프트 복사'}
+                  </button>
+                  <button
+                    onClick={() => copyWithFeedback(currentPrompt, 'all')}
+                    disabled={!currentPrompt.trim()}
+                    className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-700 px-3 text-xs font-bold text-slate-100 hover:bg-slate-600 disabled:opacity-40"
+                  >
+                    전체 복사
+                  </button>
+                </div>
               </div>
             </div>
-            
-            {isEditing ? (
-              <textarea
-                aria-label="마크다운 프롬프트 편집"
-                className="flex-1 w-full p-8 text-sm font-mono leading-relaxed whitespace-pre-wrap text-slate-200 bg-slate-900 border-0 focus:outline-none resize-none custom-scrollbar"
-                style={{ minHeight: '250px' }}
-                value={currentPrompt}
-                onChange={(e) => updateField('editedPrompt', e.target.value)}
-                placeholder="프롬프트를 편집하세요..."
-              />
-            ) : (
-              <div className="markdown-preview custom-scrollbar min-h-[250px] flex-1 overflow-y-auto bg-white p-6 text-slate-800 sm:p-8">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentPrompt}</ReactMarkdown>
-              </div>
-            )}
+
+            <div className="flex min-h-[360px] max-h-[calc(100vh-300px)] flex-col bg-white">
+              {isEditing ? (
+                <textarea
+                  aria-label={`${activeSection}차 프롬프트 편집`}
+                  className="min-h-[360px] flex-1 resize-none border-0 bg-slate-900 p-5 font-mono text-sm leading-relaxed text-slate-200 focus:outline-none sm:p-8"
+                  value={activePrompt || ''}
+                  onChange={(event) => replacePromptSection(activeSection, event.target.value)}
+                  placeholder="프롬프트를 편집하세요..."
+                />
+              ) : (
+                <div role="tabpanel" className="markdown-preview custom-scrollbar min-h-[360px] flex-1 overflow-y-auto p-5 text-slate-800 sm:p-8">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{activePrompt || '이 단계의 프롬프트가 없습니다.'}</ReactMarkdown>
+                </div>
+              )}
+            </div>
           </div>
 
           {currentPrompt && !error && (

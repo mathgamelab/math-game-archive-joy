@@ -1,7 +1,5 @@
 
 import React, { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { Icons } from '../constants';
 import { improveContentWithAI } from '../services/geminiService';
 
@@ -29,7 +27,7 @@ const AICoach: React.FC<AICoachProps> = ({ type, toolType, currentValue, onApply
     ? (currentValue.trim() || gameConcept?.trim())
     : currentValue.trim();
 
-  const handleImprove = async () => {
+  const handleImprove = async (refinement?: 'shorter' | 'alternative') => {
     if (!canGenerate) return;
     setLoading(true);
     setIsOpen(true);
@@ -37,7 +35,8 @@ const AICoach: React.FC<AICoachProps> = ({ type, toolType, currentValue, onApply
     setImprovedText(null);
 
     try {
-      const result = await improveContentWithAI(type, toolType, currentValue, curriculumStandard, gameConcept);
+      const sourceValue = improvedText || currentValue;
+      const result = await improveContentWithAI(type, toolType, sourceValue, curriculumStandard, gameConcept, refinement);
       if (!result) {
         throw new Error('AI가 개선 내용을 반환하지 않았습니다.');
       }
@@ -68,44 +67,54 @@ const AICoach: React.FC<AICoachProps> = ({ type, toolType, currentValue, onApply
       </button>
 
       {isOpen && (
-        <div role="dialog" aria-label="AI 코치 제안" className="absolute bottom-full right-0 mb-3 w-72 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl animate-in sm:w-80">
-          <div className="flex justify-between items-center mb-4">
-            <span className="flex items-center gap-2 text-xs font-bold text-[#5e7c62]">
-              <Icons.Bot className="w-4 h-4" /> AI COACH
-            </span>
-            <button onClick={() => setIsOpen(false)} aria-label="AI 코치 닫기" className="text-slate-400 hover:text-slate-600">&times;</button>
-          </div>
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4">
+          <div role="dialog" aria-modal="true" aria-label="AI 코치 제안" className="flex max-h-[min(720px,calc(100vh-2rem))] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in">
+            <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-200 px-5 py-4">
+              <span className="flex items-center gap-2 text-sm font-bold text-[#5e7c62]">
+                <Icons.Bot className="w-5 h-5" /> AI COACH
+              </span>
+              <button onClick={() => setIsOpen(false)} aria-label="AI 코치 닫기" className="px-2 text-2xl text-slate-400 hover:text-slate-600">&times;</button>
+            </div>
 
-          {loading ? (
-            <div className="flex flex-col items-center py-6 gap-3">
-              <div className="w-8 h-8 border-2 border-[#6f8f72] border-t-transparent rounded-full animate-spin" />
-              <p className="text-sm text-slate-500">{isGenerateMode ? '게임 설계를 생성 중...' : '더 나은 표현을 생각 중...'}</p>
-            </div>
-          ) : improvedText ? (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-[#d9e5da] bg-[#f3f7f3] p-3">
-                <div className="markdown-preview text-sm text-slate-700">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{improvedText}</ReactMarkdown>
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+              {loading ? (
+                <div className="flex flex-col items-center py-12 gap-3">
+                  <div className="w-8 h-8 border-2 border-[#6f8f72] border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-slate-500">{isGenerateMode ? '간결한 게임 명세를 생성 중...' : '더 나은 표현을 생각 중...'}</p>
                 </div>
-              </div>
-              <button 
-                onClick={() => { onApply(improvedText); setIsOpen(false); }}
-                className="primary-button w-full py-2 text-sm"
-              >
-                {isGenerateMode ? '생성된 내용 적용' : '개선된 내용 적용'}
-              </button>
-            </div>
-          ) : (
-            <div role="alert" className="space-y-3">
-              <p className="text-sm text-red-500 font-bold">{isGenerateMode ? '생성에 실패했습니다.' : '개선 제안을 생성하지 못했습니다.'}</p>
-              {error && (
-                <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-                  <p className="text-xs text-red-700 leading-relaxed">{error}</p>
+              ) : improvedText ? (
+                <div className="space-y-4">
+                  <p className="text-xs text-slate-500">내용을 직접 수정하거나 더 짧게 다시 생성할 수 있습니다.</p>
+                  <textarea
+                    aria-label="AI 생성 내용 편집"
+                    className="min-h-[320px] w-full resize-y rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed focus:outline-none"
+                    value={improvedText}
+                    onChange={(event) => setImprovedText(event.target.value)}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => void handleImprove('shorter')} className="secondary-button px-4 py-2 text-sm">더 짧게</button>
+                    <button onClick={() => void handleImprove('alternative')} className="secondary-button px-4 py-2 text-sm">다른 방향</button>
+                    <button
+                      onClick={() => { onApply(improvedText); setIsOpen(false); }}
+                      className="primary-button ml-auto px-5 py-2 text-sm"
+                    >
+                      {isGenerateMode ? '수정 내용 적용' : '개선 내용 적용'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div role="alert" className="space-y-3">
+                  <p className="text-sm text-red-500 font-bold">{isGenerateMode ? '생성에 실패했습니다.' : '개선 제안을 생성하지 못했습니다.'}</p>
+                  {error && (
+                    <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+                      <p className="text-xs text-red-700 leading-relaxed">{error}</p>
+                    </div>
+                  )}
+                  <button onClick={() => void handleImprove()} className="secondary-button px-4 py-2 text-sm">다시 시도</button>
                 </div>
               )}
-              <button onClick={handleImprove} className="secondary-button w-full py-2 text-sm">다시 시도</button>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

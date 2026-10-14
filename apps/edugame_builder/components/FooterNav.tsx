@@ -39,12 +39,12 @@ const FooterNav: React.FC<FooterNavProps> = ({ currentStep, formData, onNext, on
         </button>
       </div>
 
-      <div className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 z-40">
+      <div className="pointer-events-none fixed bottom-4 left-4 right-4 z-40 flex items-center justify-between md:hidden">
         <button 
           onClick={onPrev}
           disabled={currentStep === 1}
           aria-label="이전 단계"
-          className="secondary-button w-14 h-14 rounded-full shadow-2xl disabled:opacity-30"
+          className="secondary-button pointer-events-auto w-14 h-14 rounded-full shadow-2xl disabled:opacity-30"
         >
           <Icons.ArrowLeft className="w-7 h-7" />
         </button>
@@ -52,7 +52,7 @@ const FooterNav: React.FC<FooterNavProps> = ({ currentStep, formData, onNext, on
           onClick={onNext}
           disabled={isNextDisabled}
           aria-label="다음 단계"
-          className="primary-button w-16 h-16 rounded-full shadow-2xl disabled:opacity-30 disabled:pointer-events-none"
+          className="primary-button pointer-events-auto w-16 h-16 rounded-full shadow-2xl disabled:opacity-30 disabled:pointer-events-none"
         >
           <Icons.ArrowRight className="w-8 h-8" />
         </button>

@@ -235,6 +235,140 @@ ${result}`);
     : stripMarkdownFormatting(result);
 };
 
+export type PlanningQuestionId = 'learningAction' | 'mission' | 'motivation' | 'freeIdea';
+
+export interface PlanningQuestion {
+  id: PlanningQuestionId;
+  question: string;
+  suggestions: string[];
+  optional: boolean;
+}
+
+export const getFallbackPlanningQuestions = (): PlanningQuestion[] => [
+  {
+    id: 'learningAction',
+    question: '학생들이 이 내용을 어떻게 익혀보면 좋을까요?',
+    suggestions: [
+      '직접 움직여 보면서 원리를 발견하면 좋겠어요',
+      '여러 사례를 비교하면서 규칙을 찾으면 좋겠어요',
+      '작은 문제를 하나씩 해결하면서 익히면 좋겠어요',
+    ],
+    optional: false,
+  },
+  {
+    id: 'mission',
+    question: '그 활동을 어떤 미션으로 바꾸면 재미있을까요?',
+    suggestions: [
+      '필요한 단서를 찾아 최종 문제를 해결해요',
+      '주어진 재료로 목표 결과물을 완성해요',
+      '잘못된 부분을 찾아 고치며 다음 단계로 가요',
+    ],
+    optional: false,
+  },
+  {
+    id: 'motivation',
+    question: '학생들이 계속 도전할 목표는 무엇이면 좋을까요?',
+    suggestions: [
+      '미션을 해결하며 새로운 단계를 열어요',
+      '활동 결과로 공간이나 물건을 완성해요',
+      '스스로 이전 기록을 넘어보게 해요',
+    ],
+    optional: false,
+  },
+  {
+    id: 'freeIdea',
+    question: '떠오르는 장면이나 꼭 넣고 싶은 것이 있나요?',
+    suggestions: [
+      '수업에서 배운 표현과 예시가 자연스럽게 나오면 좋겠어요',
+      '친구들과 결과를 비교해 볼 장면이 있으면 좋겠어요',
+      '특별히 없어요. 앞의 답변을 바탕으로 추천해주세요',
+    ],
+    optional: true,
+  },
+];
+
+export const generatePlanningQuestions = async (
+  learningGoal: string,
+  subject: string,
+  curriculumStandard?: string,
+): Promise<PlanningQuestion[]> => {
+  const prompt = `교과: "${subject}"
+구체적인 학습 목표: "${learningGoal}"
+선택한 성취기준:
+${curriculumStandard || '입력 없음'}
+
+위 내용을 교육용 게임으로 만들기 전에 교사와 나눌 가벼운 기획 대화 4문항을 만드세요.
+
+규칙:
+1) 질문의 목적과 순서는 각각 learningAction(어떻게 익힐지), mission(어떤 미션으로 바꿀지), motivation(계속 도전할 목표), freeIdea(떠오르는 장면이나 추가 요청)입니다.
+2) 교사가 1분 안에 답할 수 있도록 친근하고 쉬운 한국어를 사용하세요.
+3) 교수설계, 평가, 오개념 같은 전문적인 질문은 하지 마세요.
+4) 각 문항에 성취기준과 학습 목표에 어울리는 예시 답변을 정확히 3개 제시하세요.
+5) 예시 답변은 서로 다른 방향이어야 하며, 그대로 선택해도 자연스러운 1문장으로 작성하세요.
+6) 배경이나 캐릭터만 바꾸는 피상적인 예시보다 학생이 실제로 하는 활동과 미션을 우선하세요.
+7) 마지막 freeIdea 문항만 optional을 true로 지정하세요.
+
+아래 JSON 배열만 반환하세요:
+[
+  {
+    "id": "learningAction",
+    "question": "질문",
+    "suggestions": ["예시 답변 1", "예시 답변 2", "예시 답변 3"],
+    "optional": false
+  },
+  {
+    "id": "mission",
+    "question": "질문",
+    "suggestions": ["예시 답변 1", "예시 답변 2", "예시 답변 3"],
+    "optional": false
+  },
+  {
+    "id": "motivation",
+    "question": "질문",
+    "suggestions": ["예시 답변 1", "예시 답변 2", "예시 답변 3"],
+    "optional": false
+  },
+  {
+    "id": "freeIdea",
+    "question": "질문",
+    "suggestions": ["예시 답변 1", "예시 답변 2", "예시 답변 3"],
+    "optional": true
+  }
+]`;
+
+  const response = await callSolar(prompt);
+  const parsed = extractJsonValue<unknown[]>(response, 'array');
+  const requiredIds: PlanningQuestionId[] = ['learningAction', 'mission', 'motivation', 'freeIdea'];
+
+  const normalized = requiredIds.map((id, index): PlanningQuestion | null => {
+    const item = parsed[index];
+    if (!item || typeof item !== 'object') return null;
+    const record = item as Record<string, unknown>;
+    const question = typeof record.question === 'string'
+      ? stripMarkdownFormatting(record.question)
+      : '';
+    const suggestions = Array.isArray(record.suggestions)
+      ? record.suggestions
+          .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+          .map(stripMarkdownFormatting)
+          .slice(0, 3)
+      : [];
+
+    if (record.id !== id || !question || suggestions.length !== 3) return null;
+    return {
+      id,
+      question,
+      suggestions,
+      optional: id === 'freeIdea',
+    };
+  });
+
+  if (normalized.some((question) => question === null)) {
+    throw new Error('기획 대화 질문 형식이 올바르지 않습니다.');
+  }
+  return normalized as PlanningQuestion[];
+};
+
 export interface GameIdea {
   category: 'safe' | 'immersive' | 'experimental';
   title: string;
@@ -252,7 +386,12 @@ export interface GameIdea {
   fallback: string;
 }
 
-export const generateGameIdeas = async (learningGoal: string, subject: string, curriculumStandard?: string): Promise<GameIdea[] | null> => {
+export const generateGameIdeas = async (
+  learningGoal: string,
+  subject: string,
+  curriculumStandard?: string,
+  planningBrief?: string,
+): Promise<GameIdea[] | null> => {
   const standards = curriculumStandard
     ? curriculumStandard.split('\n').map((s) => s.trim()).filter(Boolean)
     : [];
@@ -260,9 +399,12 @@ export const generateGameIdeas = async (learningGoal: string, subject: string, c
   const standardsText = standards.length > 0
     ? `\n선택한 성취기준:\n${standards.map((s, i) => `${i + 1}. ${s}`).join('\n')}`
     : '';
+  const planningText = planningBrief?.trim()
+    ? `\n\n교사와 나눈 짧은 기획 대화:\n${planningBrief.trim()}`
+    : '';
 
   const prompt = `교과: "${subject}"
-구체적인 학습 목표: "${learningGoal}"${standardsText}
+구체적인 학습 목표: "${learningGoal}"${standardsText}${planningText}
 
 위 정보를 바탕으로 실제 수업과 웹 브라우저에서 구현 가능한 교육용 게임 아이디어를 정확히 3개 제시하세요.
 
@@ -279,6 +421,7 @@ export const generateGameIdeas = async (learningGoal: string, subject: string, c
 10) 각 아이디어의 gameConcept에는 게임의 배경, 목표, 학습이 일어나는 방식을 구체적으로 설명하세요.
 11) 선택된 모든 성취기준을 curriculumAlignment에 빠짐없이 넣고, 원문을 그대로 쓴 뒤 '->' 다음에 게임 행동과 피드백을 연결하세요.
 12) 웹 브라우저에서 실제 구현 가능한 상호작용으로 설계하세요.
+13) 기획 대화가 제공된 경우 답변의 의도를 핵심 플레이 행동과 미션에 반영하되, 성취기준과 충돌하면 성취기준을 우선하세요.
 
 반드시 아래 JSON 배열 스키마만 반환하세요 (설명 문장/코드블록/마크다운 강조 기호 금지):
 [

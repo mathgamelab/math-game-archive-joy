@@ -17,6 +17,7 @@ const createInitialFormData = (): FormData => ({
   subject: '',
   grade: '',
   curriculumStandard: '',
+  curriculumStandardIds: '',
   gameConcept: '',
   learningGoal: '',
   mechanics: '',
@@ -37,7 +38,9 @@ const clearEduGameStorage = () => {
   localStorage.removeItem(DRAFT_STORAGE_KEY);
   for (let index = localStorage.length - 1; index >= 0; index -= 1) {
     const key = localStorage.key(index);
-    if (key?.startsWith('gameIdeas_')) localStorage.removeItem(key);
+    if (key?.startsWith('gameIdeas_') || key?.startsWith('gamePlanning_')) {
+      localStorage.removeItem(key);
+    }
   }
 };
 
@@ -51,6 +54,7 @@ const sanitizeFormData = (data: FormData): FormData => ({
   subject: toPlainString(data.subject) as FormData['subject'],
   grade: toPlainString(data.grade),
   curriculumStandard: toPlainString(data.curriculumStandard),
+  curriculumStandardIds: toPlainString(data.curriculumStandardIds),
   gameConcept: toPlainString(data.gameConcept),
   learningGoal: toPlainString(data.learningGoal),
   mechanics: toPlainString(data.mechanics),
@@ -153,6 +157,15 @@ const App: React.FC = () => {
     }
   };
 
+  const updateCurriculumSelection = (curriculumStandard: string, curriculumStandardIds: string, grade: string) => {
+    setFormData(prev => ({
+      ...prev,
+      curriculumStandard,
+      curriculumStandardIds,
+      grade,
+    }));
+  };
+
   const validateCurrentStep = (): boolean => {
     const requirements: Partial<Record<number, Array<[keyof FormData, string]>>> = {
       1: [['subject', '교과를 선택해주세요.']],
@@ -224,7 +237,13 @@ const App: React.FC = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case 1: return <Step1 formData={formData} setSubject={selectSubject} />;
-      case 2: return <Step2 formData={formData} updateField={updateField} />;
+      case 2: return (
+        <Step2
+          formData={formData}
+          updateField={updateField}
+          updateCurriculumSelection={updateCurriculumSelection}
+        />
+      );
       case 3: return <Step3 formData={formData} updateField={updateField} onNext={nextStep} />;
       case 4: return <Step4 formData={formData} updateField={updateField} />;
       case 5: return <Step5 formData={formData} updateField={updateField} onNext={nextStep} />;

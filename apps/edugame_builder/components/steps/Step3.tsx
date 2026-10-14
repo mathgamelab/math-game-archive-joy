@@ -2,7 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { FormData } from '../../types';
 import { Icons } from '../../constants';
-import { generateGameIdeas, GameIdea, stripMarkdownFormatting } from '../../services/geminiService';
+import {
+  generateGameIdeas,
+  generatePlanningQuestions,
+  getFallbackPlanningQuestions,
+  GameIdea,
+  PlanningQuestion,
+  stripMarkdownFormatting,
+} from '../../services/geminiService';
 
 interface Step3Props {
   formData: FormData;
@@ -13,8 +20,58 @@ interface Step3Props {
 const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
   const [ideas, setIdeas] = useState<GameIdea[]>([]);
   const [loading, setLoading] = useState(false);
+  const [planningLoading, setPlanningLoading] = useState(false);
+  const [questions, setQuestions] = useState<PlanningQuestion[]>([]);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answerDraft, setAnswerDraft] = useState('');
+  const [hasRequestedIdeas, setHasRequestedIdeas] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const createFingerprint = (value: string): string => {
+    let hash = 0;
+    for (let index = 0; index < value.length; index += 1) {
+      hash = ((hash << 5) - hash + value.charCodeAt(index)) | 0;
+    }
+    return Math.abs(hash).toString(36);
+  };
+
+  const planningContext = [
+    formData.subject,
+    formData.learningGoal.trim(),
+    formData.curriculumStandard.trim(),
+  ].join('|');
+  const planningStorageKey = `gamePlanning_${createFingerprint(planningContext)}`;
+
+  const buildPlanningBrief = (
+    planningQuestions: PlanningQuestion[] = questions,
+    planningAnswers: string[] = answers,
+  ): string => planningQuestions
+    .map((question, index) => {
+      const answer = planningAnswers[index]?.trim();
+      return answer ? `${question.question}\n${answer}` : '';
+    })
+    .filter(Boolean)
+    .join('\n\n');
+
+  const savePlanningSession = (
+    nextQuestions: PlanningQuestion[],
+    nextAnswers: string[],
+    nextQuestionIndex: number,
+    generated: boolean,
+  ) => {
+    try {
+      localStorage.setItem(planningStorageKey, JSON.stringify({
+        questions: nextQuestions,
+        answers: nextAnswers,
+        currentQuestion: nextQuestionIndex,
+        generated,
+      }));
+    } catch (storageError) {
+      console.warn('기획 대화 저장 실패:', storageError);
+    }
+  };
 
   const normalizeIdea = (idea: Partial<GameIdea>): GameIdea | null => {
     const category = idea.category === 'safe' || idea.category === 'immersive' || idea.category === 'experimental'
@@ -71,9 +128,14 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
   };
 
   // localStorage에서 저장된 아이디어 불러오기
-  const loadSavedIdeas = (): GameIdea[] | null => {
+  const getIdeasStorageKey = (planningBrief: string): string => {
+    const keySource = `${planningContext}|${planningBrief.trim()}`;
+    return `gameIdeas_${createFingerprint(keySource)}`;
+  };
+
+  const loadSavedIdeas = (planningBrief: string): GameIdea[] | null => {
     try {
-      const key = `gameIdeas_${formData.learningGoal.trim()}`;
+      const key = getIdeasStorageKey(planningBrief);
       const saved = localStorage.getItem(key);
       if (saved) {
         const parsed = JSON.parse(saved) as unknown;
@@ -94,16 +156,16 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
   };
 
   // localStorage에 아이디어 저장
-  const saveIdeas = (ideasToSave: GameIdea[]) => {
+  const saveIdeas = (ideasToSave: GameIdea[], planningBrief: string) => {
     try {
-      const key = `gameIdeas_${formData.learningGoal.trim()}`;
+      const key = getIdeasStorageKey(planningBrief);
       localStorage.setItem(key, JSON.stringify(ideasToSave));
     } catch (e) {
       console.error('Failed to save ideas:', e);
     }
   };
 
-  const loadIdeas = async (forceRefresh: boolean = false) => {
+  const loadIdeas = async (forceRefresh: boolean = false, planningBrief = buildPlanningBrief()) => {
     if (!formData.learningGoal.trim()) {
       setError('먼저 Step 2에서 구체적인 학습 목표를 입력해주세요.');
       return;
@@ -111,9 +173,10 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
 
     // 강제 새로고침이 아니고 저장된 아이디어가 있으면 불러오기
     if (!forceRefresh) {
-      const savedIdeas = loadSavedIdeas();
+      const savedIdeas = loadSavedIdeas(planningBrief);
       if (savedIdeas && savedIdeas.length > 0) {
         setIdeas(savedIdeas);
+        setHasRequestedIdeas(true);
         
         // gameConcept가 있으면 일치하는 것을 선택
         if (formData.gameConcept.trim()) {
@@ -130,14 +193,19 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
     }
 
     setLoading(true);
+    setHasRequestedIdeas(true);
     setError(null);
     setSelectedIndex(null);
+    if (questions.length > 0) {
+      savePlanningSession(questions, answers, questions.length, true);
+    }
 
     try {
       const result = await generateGameIdeas(
         formData.learningGoal,
         formData.subject,
-        formData.curriculumStandard
+        formData.curriculumStandard,
+        planningBrief,
       );
 
       if (result && result.length > 0) {
@@ -147,7 +215,7 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
 
         if (normalized.length > 0) {
           setIdeas(normalized);
-          saveIdeas(normalized); // 생성된 아이디어 저장
+          saveIdeas(normalized, planningBrief); // 생성된 아이디어 저장
         } else {
           setError('게임 아이디어 형식이 올바르지 않습니다. 다시 시도해주세요.');
         }
@@ -170,11 +238,92 @@ const Step3: React.FC<Step3Props> = ({ formData, updateField, onNext }) => {
   };
 
   useEffect(() => {
-    // 컴포넌트 마운트 시 저장된 아이디어 불러오기 또는 생성
-    if (formData.learningGoal.trim()) {
-      loadIdeas(false); // 저장된 것이 있으면 불러오기
-    }
+    if (!formData.learningGoal.trim()) return;
+
+    const initializePlanning = async () => {
+      try {
+        const saved = localStorage.getItem(planningStorageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved) as {
+            questions?: PlanningQuestion[];
+            answers?: string[];
+            currentQuestion?: number;
+            generated?: boolean;
+          };
+          const savedQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
+          const savedAnswers = Array.isArray(parsed.answers) ? parsed.answers : [];
+          if (savedQuestions.length === 4) {
+            const nextQuestionIndex = typeof parsed.currentQuestion === 'number'
+              ? Math.min(savedQuestions.length, Math.max(0, parsed.currentQuestion))
+              : 0;
+            setQuestions(savedQuestions);
+            setAnswers(savedAnswers);
+            setCurrentQuestion(nextQuestionIndex);
+            if (parsed.generated) {
+              const brief = buildPlanningBrief(savedQuestions, savedAnswers);
+              setHasRequestedIdeas(true);
+              await loadIdeas(false, brief);
+            }
+            return;
+          }
+        }
+      } catch (storageError) {
+        console.warn('저장된 기획 대화를 불러오지 못했습니다:', storageError);
+      }
+
+      setPlanningLoading(true);
+      try {
+        const generatedQuestions = await generatePlanningQuestions(
+          formData.learningGoal,
+          formData.subject,
+          formData.curriculumStandard,
+        );
+        setQuestions(generatedQuestions);
+        setAnswers(Array(generatedQuestions.length).fill(''));
+        savePlanningSession(generatedQuestions, Array(generatedQuestions.length).fill(''), 0, false);
+      } catch (requestError) {
+        console.warn('맞춤 기획 질문 생성 실패, 기본 질문을 사용합니다:', requestError);
+        const fallbackQuestions = getFallbackPlanningQuestions();
+        setQuestions(fallbackQuestions);
+        setAnswers(Array(fallbackQuestions.length).fill(''));
+        savePlanningSession(fallbackQuestions, Array(fallbackQuestions.length).fill(''), 0, false);
+      } finally {
+        setPlanningLoading(false);
+      }
+    };
+
+    void initializePlanning();
   }, []);
+
+  const submitAnswer = (answer: string) => {
+    const trimmed = answer.trim();
+    const question = questions[currentQuestion];
+    if (!question || (!trimmed && !question.optional)) return;
+
+    const nextAnswers = [...answers];
+    nextAnswers[currentQuestion] = trimmed;
+    const nextQuestionIndex = currentQuestion + 1;
+    setAnswers(nextAnswers);
+    setCurrentQuestion(nextQuestionIndex);
+    setAnswerDraft(nextAnswers[nextQuestionIndex] || '');
+    savePlanningSession(questions, nextAnswers, nextQuestionIndex, false);
+  };
+
+  const handleAIRecommendation = () => {
+    submitAnswer('구체적인 방향은 AI가 성취기준과 학습 목표에 맞춰 추천해주세요.');
+  };
+
+  const restartPlanning = () => {
+    setIdeas([]);
+    setSelectedIndex(null);
+    setHasRequestedIdeas(false);
+    setAnswers(Array(questions.length).fill(''));
+    setCurrentQuestion(0);
+    setAnswerDraft('');
+    setError(null);
+    updateField('gameConcept', '');
+    savePlanningSession(questions, Array(questions.length).fill(''), 0, false);
+  };
 
   const handleSelect = (index: number) => {
     setSelectedIndex(index);
@@ -255,7 +404,7 @@ ${selectedIdea.keyFeatures.map(f => `- ${f}`).join('\n')}
     <div className="space-y-8 animate-in pb-20">
       <div className="text-center space-y-4 mb-10">
         <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900">게임 컨셉 선택 <span className="text-blue-600">(Concept)</span></h2>
-        <p className="text-slate-600 text-lg">학습 목표를 달성하기 위한 게임 아이디어를 선택하세요.</p>
+        <p className="text-slate-600 text-lg">AI와 짧게 이야기한 뒤 우리 수업에 맞는 게임 아이디어를 만들어보세요.</p>
       </div>
 
       {/* 선택한 학습 목표 표시 */}
@@ -263,6 +412,182 @@ ${selectedIdea.keyFeatures.map(f => `- ${f}`).join('\n')}
         <h4 className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-3">선택한 학습 목표</h4>
         <p className="text-slate-700 text-lg leading-relaxed">"{formData.learningGoal || '아직 입력된 내용이 없습니다.'}"</p>
       </div>
+
+      {/* 게임 기획 대화 */}
+      {ideas.length === 0 && !hasRequestedIdeas && (
+        <section className="overflow-hidden rounded-3xl border-2 border-slate-200 bg-white shadow-xl">
+          <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-4 md:px-7">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white">
+                <Icons.Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-slate-900">AI 게임 기획 대화</h3>
+                <p className="text-xs text-slate-500">예시를 고쳐 쓰거나 자유롭게 답할 수 있어요.</p>
+              </div>
+            </div>
+            {questions.length > 0 && currentQuestion < questions.length && (
+              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
+                {currentQuestion + 1} / {questions.length}
+              </span>
+            )}
+          </div>
+
+          {planningLoading && (
+            <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+              <p className="font-bold text-slate-600">성취기준에 어울리는 질문을 준비하고 있어요...</p>
+            </div>
+          )}
+
+          {!planningLoading && questions.length > 0 && currentQuestion < questions.length && (
+            <div className="space-y-6 p-5 md:p-7">
+              {answers.slice(0, currentQuestion).map((answer, index) => answer && (
+                <div key={questions[index].id} className="space-y-2">
+                  <div className="max-w-[88%] rounded-2xl rounded-tl-md bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
+                    {questions[index].question}
+                  </div>
+                  <div className="ml-auto max-w-[88%] rounded-2xl rounded-tr-md bg-blue-600 px-4 py-3 text-sm text-white">
+                    {answer}
+                  </div>
+                </div>
+              ))}
+
+              <div className="max-w-[92%] rounded-2xl rounded-tl-md bg-slate-100 px-4 py-4 text-slate-800">
+                <p className="font-bold leading-relaxed">{questions[currentQuestion].question}</p>
+                {questions[currentQuestion].optional && (
+                  <p className="mt-1 text-xs text-slate-500">선택 질문이에요. 떠오르는 것이 없다면 건너뛰어도 괜찮아요.</p>
+                )}
+              </div>
+
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">이런 식으로 답해보세요</p>
+                <div className="flex flex-wrap gap-2">
+                  {questions[currentQuestion].suggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onClick={() => setAnswerDraft(suggestion)}
+                      className={`rounded-full border px-4 py-2 text-left text-sm font-semibold transition-colors ${
+                        answerDraft === suggestion
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50'
+                      }`}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <form
+                className="space-y-3"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitAnswer(answerDraft);
+                }}
+              >
+                <textarea
+                  value={answerDraft}
+                  onChange={(event) => setAnswerDraft(event.target.value)}
+                  rows={3}
+                  maxLength={300}
+                  placeholder="예시를 선택하거나 자유롭게 적어주세요…"
+                  className="w-full resize-none rounded-2xl border-2 border-slate-200 px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                />
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <button
+                    type="button"
+                    onClick={handleAIRecommendation}
+                    className="rounded-xl px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                  >
+                    잘 모르겠어요, AI가 추천해줘
+                  </button>
+                  <div className="flex gap-2">
+                    {questions[currentQuestion].optional && (
+                      <button
+                        type="button"
+                        onClick={() => submitAnswer('')}
+                        className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                      >
+                        건너뛰기
+                      </button>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={!answerDraft.trim()}
+                      className={`rounded-xl px-5 py-2.5 text-sm font-bold text-white transition ${
+                        answerDraft.trim()
+                          ? 'bg-blue-600 hover:bg-blue-700'
+                          : 'cursor-not-allowed bg-slate-300'
+                      }`}
+                    >
+                      {currentQuestion === questions.length - 1 ? '대화 마치기' : '답하고 다음'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              {currentQuestion === 0 && (
+                <div className="border-t border-slate-100 pt-4 text-center">
+                  <button
+                    type="button"
+                    onClick={() => loadIdeas(true, '')}
+                    className="text-sm font-bold text-slate-400 underline decoration-slate-300 underline-offset-4 hover:text-slate-600"
+                  >
+                    대화 없이 바로 아이디어 만들기
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!planningLoading && questions.length > 0 && currentQuestion >= questions.length && (
+            <div className="space-y-5 p-5 md:p-7">
+              <div className="text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <Icons.Check className="h-7 w-7" />
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-900">원하는 게임의 모습이 잡혔어요</h3>
+                <p className="mt-1 text-sm text-slate-500">이 대화를 학습 목표와 성취기준에 함께 반영할게요.</p>
+              </div>
+
+              <div className="space-y-3 rounded-2xl bg-slate-50 p-4 md:p-5">
+                {questions.map((question, index) => answers[index]?.trim() && (
+                  <div key={question.id} className="flex gap-3 text-sm">
+                    <span className="mt-0.5 text-blue-500">●</span>
+                    <div>
+                      <p className="font-bold text-slate-700">{question.question}</p>
+                      <p className="mt-0.5 leading-relaxed text-slate-600">{answers[index]}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentQuestion(0);
+                    setAnswerDraft(answers[0] || '');
+                  }}
+                  className="rounded-2xl border-2 border-slate-200 px-5 py-3 font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  답변 수정하기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => loadIdeas(true, buildPlanningBrief())}
+                  className="flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 font-bold text-white shadow-lg transition hover:bg-blue-700 hover:scale-105"
+                >
+                  <Icons.Sparkles className="h-5 w-5" />
+                  이 내용으로 게임 컨셉 만들기
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* 에러 메시지 */}
       {error && (
@@ -274,6 +599,19 @@ ${selectedIdea.keyFeatures.map(f => `- ${f}`).join('\n')}
       {/* 게임 아이디어 카드들 */}
       {ideas.length > 0 && (
         <div className="space-y-6">
+          <div className="flex flex-col gap-3 rounded-2xl border border-blue-100 bg-blue-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-bold text-blue-900">기획 대화를 반영한 게임 컨셉이에요.</p>
+              <p className="text-sm text-blue-700">마음에 드는 아이디어를 하나 선택해주세요.</p>
+            </div>
+            <button
+              type="button"
+              onClick={restartPlanning}
+              className="shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-blue-100"
+            >
+              기획 대화 다시 하기
+            </button>
+          </div>
           <div role="radiogroup" aria-label="게임 아이디어 선택" className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {ideas.map((idea, index) => (
               <div
@@ -421,9 +759,9 @@ ${selectedIdea.keyFeatures.map(f => `- ${f}`).join('\n')}
       )}
 
       {/* 아이디어가 없고 로딩도 아닐 때 */}
-      {!loading && ideas.length === 0 && !error && formData.learningGoal.trim() && (
+      {!loading && !planningLoading && hasRequestedIdeas && ideas.length === 0 && !error && formData.learningGoal.trim() && (
         <div className="text-center py-20">
-          <p className="text-slate-400">위의 버튼을 클릭하여 게임 아이디어를 생성하세요.</p>
+          <p className="text-slate-400">게임 아이디어를 생성하지 못했습니다. 다시 시도해주세요.</p>
         </div>
       )}
     </div>

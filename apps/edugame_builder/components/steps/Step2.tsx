@@ -8,6 +8,7 @@ import AICoach from '../AICoach';
 interface Step2Props {
   formData: FormData;
   updateField: (field: string, value: any) => void;
+  updateCurriculumSelection: (curriculumStandard: string, curriculumStandardIds: string, grade: string) => void;
 }
 
 type StandardWithMeta = Standard & { schoolLevel: string; grade: string; subject: string };
@@ -18,9 +19,8 @@ const MAIN_SUBJECTS: Set<string> = new Set([
   '기술가정', '정보', '제2외국어', '기타'
 ]);
 
-const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
+const Step2: React.FC<Step2Props> = ({ formData, updateField, updateCurriculumSelection }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStandard, setSelectedStandard] = useState<StandardWithMeta | null>(null);
   const [selectedGrades, setSelectedGrades] = useState<Set<string>>(new Set());
   const example = (formData.subject && GAME_EXAMPLES[formData.subject]) || GAME_EXAMPLES['기타'];
   
@@ -144,7 +144,6 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
   useEffect(() => {
     setSelectedGrades(new Set());
     setSearchTerm('');
-    setSelectedStandard(null);
   }, [formData.subject]);
 
   const toggleGrade = (grade: string) => {
@@ -162,17 +161,56 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
     [formData.curriculumStandard]
   );
 
+  const getStandardKey = (standard: StandardWithMeta): string =>
+    [standard.schoolLevel, standard.subject, standard.grade, standard.id].join('|');
+
+  const selectedKeys = useMemo(() => {
+    const storedKeys = formData.curriculumStandardIds
+      ? formData.curriculumStandardIds.split('\n').filter(Boolean)
+      : [];
+    if (storedKeys.length > 0) return storedKeys;
+
+    // 기존 초안에는 코드가 없으므로 같은 문구 중 첫 번째 항목만 선택 상태로 복원합니다.
+    return selectedList
+      .map(text => allStandardsWithMeta.find(standard => standard.text === text))
+      .filter((standard): standard is StandardWithMeta => Boolean(standard))
+      .map(getStandardKey);
+  }, [allStandardsWithMeta, formData.curriculumStandardIds, selectedList]);
+
+  const selectedStandards = useMemo(() => {
+    const standardsByKey = new Map(
+      allStandardsWithMeta.map(standard => [getStandardKey(standard), standard])
+    );
+    return selectedKeys
+      .map(key => standardsByKey.get(key))
+      .filter((standard): standard is StandardWithMeta => Boolean(standard));
+  }, [allStandardsWithMeta, selectedKeys]);
+
   const toggleStandard = (standard: StandardWithMeta) => {
-    const isSelected = selectedList.includes(standard.text);
-    let newList;
-    if (isSelected) {
-      newList = selectedList.filter(item => item !== standard.text);
-    } else {
-      newList = [...selectedList, standard.text];
-    }
-    updateField('curriculumStandard', newList.join('\n'));
-    updateField('grade', newList.length > 0 ? standard.grade : '');
-    setSelectedStandard(standard);
+    const standardKey = getStandardKey(standard);
+    const isSelected = selectedKeys.includes(standardKey);
+    const nextKeys = isSelected
+      ? selectedKeys.filter(key => key !== standardKey)
+      : [...selectedKeys, standardKey];
+    const standardsByKey = new Map(
+      allStandardsWithMeta.map(item => [getStandardKey(item), item])
+    );
+    const nextStandards = nextKeys
+      .map(key => standardsByKey.get(key))
+      .filter((item): item is StandardWithMeta => Boolean(item));
+    const selectedGradeLabels = Array.from(new Set(
+      nextStandards.map(item => item.grade)
+    ));
+
+    updateCurriculumSelection(
+      nextStandards.map(item => item.text).join('\n'),
+      nextKeys.join('\n'),
+      selectedGradeLabels.join(', '),
+    );
+  };
+
+  const clearStandards = () => {
+    updateCurriculumSelection('', '', '');
   };
 
   // 경로 생성 함수
@@ -213,6 +251,7 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
                   return (
                     <button
                       key={grade}
+                      type="button"
                       onClick={() => toggleGrade(grade)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                         selectedGrades.has(grade)
@@ -226,6 +265,7 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
                 })}
                 {selectedGrades.size > 0 && (
                   <button
+                    type="button"
                     onClick={() => setSelectedGrades(new Set())}
                     className="px-2 py-1.5 text-[10px] text-orange-600 hover:underline font-medium"
                     title="모두 해제"
@@ -267,35 +307,31 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
             {filteredStandards.length > 0 ? (
               <div className="divide-y divide-slate-50">
                 {filteredStandards.map((s) => {
-                  const isChecked = selectedList.includes(s.text);
+                  const isChecked = selectedKeys.includes(getStandardKey(s));
                   return (
-                    <div 
+                    <button
+                      type="button"
                       key={`${s.id}-${s.grade}`}
                       onClick={() => toggleStandard(s)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          toggleStandard(s);
-                        }
-                      }}
                       role="checkbox"
                       aria-checked={isChecked}
-                      tabIndex={0}
-                      className={`group flex items-start gap-4 p-4 cursor-pointer transition-all border-l-4 ${
-                        selectedStandard?.id === s.id && selectedStandard?.grade === s.grade
-                          ? 'bg-orange-50 border-orange-500' 
-                          : isChecked 
+                      className={`group flex w-full items-start gap-4 p-4 text-left cursor-pointer transition-all border-l-4 ${
+                        isChecked
                           ? 'bg-orange-50/40 border-orange-300' 
                           : 'hover:bg-slate-50 border-transparent'
                       }`}
                     >
-                      <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                        isChecked 
-                          ? 'bg-orange-500 border-orange-500 text-white' 
-                          : 'border-slate-200 bg-white group-hover:border-orange-300'
-                      }`}>
-                        {isChecked && <Icons.Check className="w-3 h-3 stroke-[3]" />}
-                      </div>
+                      <span
+                        aria-hidden="true"
+                        className={`mt-1 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded border-2 ${
+                          isChecked
+                            ? 'border-transparent text-white'
+                            : 'border-slate-200 bg-white group-hover:border-slate-400'
+                        }`}
+                        style={isChecked ? { backgroundColor: '#f97316', color: '#ffffff' } : undefined}
+                      >
+                        {isChecked && <Icons.Check className="h-3 w-3 stroke-[3]" />}
+                      </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                           <span className="text-[10px] font-bold bg-slate-800 text-white px-2 py-0.5 rounded">{s.id}</span>
@@ -303,7 +339,7 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
                         </div>
                         <p className="text-slate-700 text-sm font-medium leading-relaxed line-clamp-2">{s.text}</p>
                       </div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -315,30 +351,30 @@ const Step2: React.FC<Step2Props> = ({ formData, updateField }) => {
             )}
           </div>
 
-          {selectedList.length > 0 && (
+          {selectedStandards.length > 0 && (
             <div className="p-4 bg-slate-50 border-t border-slate-100">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-tighter">선택됨 ({selectedList.length})</span>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-tighter">선택됨 ({selectedStandards.length})</span>
                 <button 
-                  onClick={() => updateField('curriculumStandard', '')}
+                  type="button"
+                  onClick={clearStandards}
                   className="text-[10px] text-red-500 hover:underline font-bold"
                 >
                   모두 지우기
                 </button>
               </div>
               <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">
-                {selectedList.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-white text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 shadow-sm">
-                    <span className="truncate max-w-[200px]">{item}</span>
+                {selectedStandards.map((standard) => (
+                  <div key={getStandardKey(standard)} className="flex items-center gap-2 bg-white text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-200 shadow-sm">
+                    <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">{standard.id}</span>
+                    <span className="truncate max-w-[200px]">{standard.text}</span>
                     <button 
+                      type="button"
                       onClick={(e) => { 
                         e.stopPropagation(); 
-                        const standard = allStandardsWithMeta.find(s => s.text === item);
-                        if (standard) {
-                          toggleStandard(standard);
-                        }
+                        toggleStandard(standard);
                       }} 
-                      aria-label={`성취기준 선택 해제: ${item}`}
+                      aria-label={`성취기준 선택 해제: ${standard.id} ${standard.text}`}
                       className="text-slate-300 hover:text-red-500 transition-colors"
                     >
                       &times;

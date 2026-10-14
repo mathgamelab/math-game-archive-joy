@@ -12,6 +12,7 @@ export interface FormData {
   subject: SubjectType;
   grade: string;
   curriculumStandard: string;
+  curriculumStandardIds: string;
   gameConcept: string;
   learningGoal: string;
   mechanics: string;

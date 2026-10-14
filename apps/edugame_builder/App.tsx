@@ -12,6 +12,7 @@ import FooterNav from './components/FooterNav';
 import IdeaBooster from './components/IdeaBooster';
 
 const DRAFT_STORAGE_KEY = 'edugameBuilderDraftV2';
+const HARD_RELOAD_FLAG = 'edugameHardReload';
 
 const createInitialFormData = (): FormData => ({
   subject: '',
@@ -73,7 +74,33 @@ const sanitizeFormData = (data: FormData): FormData => ({
     : undefined,
 });
 
+const isHardReload = (): boolean => {
+  try {
+    const requested = sessionStorage.getItem(HARD_RELOAD_FLAG) === '1';
+    sessionStorage.removeItem(HARD_RELOAD_FLAG);
+
+    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    if (!navigation || navigation.type !== 'reload') return false;
+    if (requested) return true;
+
+    const timing = navigation as PerformanceNavigationTiming & { deliveryType?: string };
+    const servedFromCache = timing.deliveryType === 'cache' || navigation.transferSize === 0;
+    return !servedFromCache && navigation.responseStatus === 200;
+  } catch {
+    return false;
+  }
+};
+
 const loadDraft = (): { currentStep: number; formData: FormData } => {
+  if (isHardReload()) {
+    try {
+      clearEduGameStorage();
+    } catch {
+      // 저장소를 비우지 못해도 이번 화면은 처음 단계로 시작합니다.
+    }
+    return { currentStep: 1, formData: createInitialFormData() };
+  }
+
   try {
     const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
     if (!saved) return { currentStep: 1, formData: createInitialFormData() };
@@ -124,6 +151,24 @@ const App: React.FC = () => {
       console.warn('초안 저장 실패:', error);
     }
   }, [currentStep, formData]);
+
+  useEffect(() => {
+    const markHardReload = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      const hardReload = ((event.ctrlKey || event.metaKey) && event.shiftKey && key === 'r')
+        || (event.ctrlKey && key === 'f5')
+        || (event.shiftKey && key === 'f5');
+      if (!hardReload) return;
+      try {
+        sessionStorage.setItem(HARD_RELOAD_FLAG, '1');
+      } catch {
+        // 단축키 표시를 저장하지 못해도 캐시를 우회한 새로고침은 아래에서 구분합니다.
+      }
+    };
+
+    window.addEventListener('keydown', markHardReload, true);
+    return () => window.removeEventListener('keydown', markHardReload, true);
+  }, []);
 
   useEffect(() => {
     if (!notice) return;
